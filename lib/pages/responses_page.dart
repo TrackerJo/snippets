@@ -14,10 +14,12 @@ class ResponsesPage extends StatefulWidget {
   final String userResponse;
   final String question;
   final String theme;
+  final List<String> userDiscussionUsers;
   const ResponsesPage(
       {super.key,
       required this.snippetId,
       this.userResponse = "~~~",
+      this.userDiscussionUsers = const ["SSSS"],
       required this.question,
       required this.theme});
 
@@ -29,6 +31,7 @@ class _ResponsesPageState extends State<ResponsesPage> {
   Stream? responsesListStream;
   String userDisplayName = "";
   String userResponse = "";
+  List<dynamic> discussionUsers = [];
 
   void getResponsesList() async {
     var responsesList =
@@ -52,17 +55,27 @@ class _ResponsesPageState extends State<ResponsesPage> {
     if (widget.userResponse != "~~~") {
       setState(() {
         userResponse = widget.userResponse;
+        discussionUsers = widget.userDiscussionUsers;
       });
     } else {
-      String response =
+      Map<String, dynamic> response =
           (await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-              .getUserResponse(widget.snippetId))["answer"];
+              .getUserResponse(widget.snippetId));
       if (mounted) {
         setState(() {
-          userResponse = response;
+          userResponse = response["answer"];
+          discussionUsers = response["discussionUsers"];
         });
       }
     }
+  }
+
+  List<String> dynmicListToStringList(List<dynamic> oldList) {
+    List<String> newList = [];
+    for (var item in oldList) {
+      newList.add(item.toString());
+    }
+    return newList;
   }
 
   @override
@@ -113,6 +126,21 @@ class _ResponsesPageState extends State<ResponsesPage> {
       builder: (context, AsyncSnapshot snapshot) {
         //Make checks
         if (snapshot.hasData) {
+          if (snapshot.data == "EMPTY") {
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ResponseTile(
+                question: widget.question,
+                response: userResponse,
+                displayName: userDisplayName,
+                snippetId: widget.snippetId,
+                userId: FirebaseAuth.instance.currentUser!.uid,
+                isDisplayOnly: false,
+                theme: widget.theme,
+                discussionUsers: discussionUsers,
+              ),
+            );
+          }
           if (snapshot.data!.docs.length != null) {
             if (snapshot.data.docs.length + 1 != 0) {
               return SizedBox(
@@ -134,10 +162,16 @@ class _ResponsesPageState extends State<ResponsesPage> {
                               userId: FirebaseAuth.instance.currentUser!.uid,
                               isDisplayOnly: false,
                               theme: widget.theme,
+                              discussionUsers: discussionUsers,
                             ),
                           );
                         }
                         index -= 1;
+                        if (snapshot.data.docs[0] == "EMPTY") {
+                          return Center(
+                            child: Text("No responses yet"),
+                          );
+                        }
                         return Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: ResponseTile(
@@ -148,6 +182,8 @@ class _ResponsesPageState extends State<ResponsesPage> {
                               snippetId: widget.snippetId,
                               theme: widget.theme,
                               userId: snapshot.data.docs[index]["uid"],
+                              discussionUsers: snapshot.data.docs[index]
+                                  ["discussionUsers"],
                               goToComments: () async {
                                 bool refresh = await Navigator.of(context).push(
                                     CustomPageRoute(
@@ -164,6 +200,8 @@ class _ResponsesPageState extends State<ResponsesPage> {
                                       question: widget.question,
                                       isDisplayOnly: true,
                                       theme: widget.theme,
+                                      discussionUsers: snapshot.data.docs[index]
+                                          ["discussionUsers"],
                                     ),
                                   );
                                 }));

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:snippets/pages/discussions_page.dart';
 import 'package:snippets/pages/find_profile_page.dart';
 import 'package:snippets/pages/home_page.dart';
 import 'package:snippets/pages/profile_page.dart';
@@ -61,6 +62,22 @@ class CustomNavBar extends StatelessWidget {
                         CustomPageRoute(
                           builder: (BuildContext context) {
                             return const HomePage();
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    iconSize: 35,
+                    icon: Icon(pageIndex == 3
+                        ? Icons.chat_bubble
+                        : Icons.chat_bubble_outline),
+                    onPressed: () {
+                      if (pageIndex == 3) return;
+                      Navigator.of(context).pushReplacement(
+                        CustomPageRoute(
+                          builder: (BuildContext context) {
+                            return const DiscussionsPage();
                           },
                         ),
                       );

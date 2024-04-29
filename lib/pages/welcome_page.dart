@@ -43,11 +43,27 @@ class _WelcomePageState extends State<WelcomePage> {
           setState(() {
             _isLoading = false;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(val!),
-            ),
-          );
+          showModalBottomSheet<void>(
+              context: context,
+              backgroundColor: Colors.red,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(23),
+                  topRight: Radius.circular(23),
+                ),
+              ),
+              builder: (BuildContext context) {
+                return SizedBox(
+                    height: 100,
+                    width: double.infinity,
+                    child: Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Text(
+                          val.toString(),
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 20),
+                        )));
+              });
         }
       });
     }

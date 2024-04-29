@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:snippets/templates/colorsSys.dart';
 
@@ -107,12 +108,15 @@ class _MessageTileState extends State<MessageTile> {
                 //         ),
                 //       ),
                 // SizedBox(width: widget.sentByMe ? 0 : 10),
-                Text(
-                  widget.message,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
+                Flexible(
+                  child: Text(
+                    widget.message,
+                    softWrap: true,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
                 SizedBox(width: 10),

@@ -52,4 +52,5 @@ class HelperFunctions {
     return Map<String, dynamic>.from(
         Map<String, dynamic>.from(jsonDecode(userData)));
   }
+
 }

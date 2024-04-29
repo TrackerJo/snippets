@@ -37,6 +37,7 @@ class _QuestionPageState extends State<QuestionPage> {
         ResponsesPage(
             snippetId: widget.snippetId,
             userResponse: answer,
+            userDiscussionUsers: [FirebaseAuth.instance.currentUser!.uid],
             question: widget.question,
             theme: widget.theme));
   }

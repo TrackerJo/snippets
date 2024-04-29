@@ -17,6 +17,7 @@ class ResponseTile extends StatefulWidget {
   final bool isDisplayOnly;
   final void Function()? goToComments;
   final String theme;
+  final List<dynamic> discussionUsers;
   const ResponseTile(
       {super.key,
       required this.displayName,
@@ -26,6 +27,7 @@ class ResponseTile extends StatefulWidget {
       required this.question,
       required this.theme,
       this.isDisplayOnly = false,
+      required this.discussionUsers,
       this.goToComments});
 
   @override

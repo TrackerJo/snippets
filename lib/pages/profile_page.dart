@@ -8,6 +8,7 @@ import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/custom_nav_bar.dart';
 import 'package:snippets/widgets/custom_page_route.dart';
+import 'package:snippets/widgets/friend_tile.dart';
 import 'package:snippets/widgets/friends_count.dart';
 
 import '../api/auth.dart';
@@ -33,6 +34,10 @@ class _ProfilePageState extends State<ProfilePage> {
   bool isFriends = false;
   bool sentFriendRequest = false;
   bool hasFriendRequest = false;
+  int numberOfFriends = 0;
+  int numberOfMutualFriends = 0;
+  Map<String, dynamic> profileData = {};
+  List<Map<String, dynamic>> mutualFriends = [];
 
   void getProfileData() async {
     String userDisplayName = "";
@@ -40,33 +45,85 @@ class _ProfilePageState extends State<ProfilePage> {
     if (widget.uid == "") {
       userDisplayName = (await HelperFunctions.getUserDisplayNameFromSF())!;
       currentUser = true;
+      Map<String, dynamic> viewerData =
+          (await HelperFunctions.getUserDataFromSF());
+      setState(() {
+        profileData = viewerData;
+        numberOfFriends = viewerData["friends"].length;
+      });
     } else if (widget.uid == FirebaseAuth.instance.currentUser!.uid) {
       currentUser = true;
+      Map<String, dynamic> viewerData =
+          (await HelperFunctions.getUserDataFromSF());
+      setState(() {
+        profileData = viewerData;
+        numberOfFriends = viewerData["friends"].length;
+      });
     } else {
-      userDisplayName =
+      Map<String, dynamic> viewerData =
           (await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-              .getUserData(widget.uid))["fullname"];
-      List<dynamic> friendsList =
-          (await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-              .getFriendsList());
-      if (friendsList.contains(widget.uid)) {
+              .getUserData(widget.uid));
+      setState(() {
+        profileData = viewerData;
+        numberOfFriends = viewerData["friends"].length;
+      });
+      Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+      List<dynamic> friendsList = userData["friends"];
+      int mutualFriends = 0;
+      List<Map<String, dynamic>> mutualFriendsList = [];
+      for (dynamic friend in friendsList) {
+        for (dynamic friend2 in viewerData["friends"]) {
+          if (friend["userId"] == friend2["userId"]) {
+            mutualFriends++;
+            mutualFriendsList.add(friend);
+          }
+        }
+      }
+      setState(() {
+        numberOfMutualFriends = mutualFriends;
+        this.mutualFriends = mutualFriendsList;
+      });
+      userDisplayName = viewerData["fullname"];
+
+      bool areFriends = false;
+      for (dynamic friend in friendsList) {
+        String friendId = friend["userId"];
+        print("friend: $friendId , widget.uid: ${widget.uid}");
+        print(FirebaseAuth.instance.currentUser!.uid);
+        if (friend["userId"] == widget.uid) {
+          print("are friends");
+          areFriends = true;
+          break;
+        }
+      }
+      if (areFriends) {
         setState(() {
           isFriends = true;
         });
       } else {
-        bool friendRequest =
-            (await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-                .checkFriendRequest(widget.uid));
+        List<dynamic> outgoingFriendRequests = userData["outgoingRequests"];
+        bool friendRequest = false;
+        for (dynamic request in outgoingFriendRequests) {
+          if (request["userId"] == widget.uid) {
+            friendRequest = true;
+            break;
+          }
+        }
         if (friendRequest) {
           setState(() {
             sentFriendRequest = true;
           });
         }
-        Map<String, dynamic> userData =
-            (await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-                .getUserData(FirebaseAuth.instance.currentUser!.uid));
+
         List<dynamic> friendRequests = userData["friendRequests"];
-        if (friendRequests.contains(widget.uid)) {
+        bool hasRequest = false;
+        for (dynamic request in friendRequests) {
+          if (request["userId"] == widget.uid) {
+            hasRequest = true;
+            break;
+          }
+        }
+        if (hasRequest) {
           setState(() {
             hasFriendRequest = true;
           });
@@ -99,9 +156,100 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  void showFriendsPopup() {
+    showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: ColorSys.background,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(23),
+            topRight: Radius.circular(23),
+          ),
+        ),
+        builder: (BuildContext context) {
+          return SizedBox(
+              height: MediaQuery.of(context).size.height - 100,
+              width: MediaQuery.of(context).size.width,
+              child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    children: [
+                      Text("Friends",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 30,
+                          )),
+                      const SizedBox(height: 20),
+                      Expanded(
+                        child: ListView.builder(
+                            itemCount: profileData["friends"].length,
+                            itemBuilder: (BuildContext context, int index) {
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: FriendTile(
+                                    displayName: profileData["friends"][index]
+                                        ["displayName"],
+                                    uid: profileData["friends"][index]
+                                        ["userId"],
+                                    username: profileData["friends"][index]
+                                        ["username"]),
+                              );
+                            }),
+                      ),
+                    ],
+                  )));
+        });
+  }
+
+  void showMutualFriendsPopup() {
+    showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: ColorSys.background,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(23),
+            topRight: Radius.circular(23),
+          ),
+        ),
+        builder: (BuildContext context) {
+          return SizedBox(
+              height: MediaQuery.of(context).size.height - 100,
+              width: MediaQuery.of(context).size.width,
+              child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    children: [
+                      Text("Mutual Friends",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 30,
+                          )),
+                      const SizedBox(height: 20),
+                      Expanded(
+                        child: ListView.builder(
+                            itemCount: mutualFriends.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: FriendTile(
+                                    displayName: mutualFriends[index]
+                                        ["displayName"],
+                                    uid: mutualFriends[index]["userId"],
+                                    username: mutualFriends[index]["username"]),
+                              );
+                            }),
+                      ),
+                    ],
+                  )));
+        });
+  }
+
   void sendFriendRequest() async {
     await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-        .sendFriendRequest(widget.uid);
+        .sendFriendRequest(widget.uid, displayName, profileData["username"],
+            profileData["FCMToken"]);
 
     setState(() {
       sentFriendRequest = true;
@@ -110,7 +258,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void removeFriend() async {
     await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-        .removeFriend(widget.uid);
+        .removeFriend(widget.uid, displayName, profileData["username"]);
     setState(() {
       isFriends = false;
     });
@@ -118,7 +266,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void cancelFriendRequest() async {
     await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-        .cancelFriendRequest(widget.uid);
+        .cancelFriendRequest(widget.uid, displayName, profileData["username"]);
     setState(() {
       sentFriendRequest = false;
     });
@@ -126,7 +274,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void acceptFriendRequest() async {
     await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-        .acceptFriendRequest(widget.uid);
+        .acceptFriendRequest(widget.uid, displayName, profileData["username"],
+            profileData["FCMToken"]);
     setState(() {
       hasFriendRequest = false;
       sentFriendRequest = false;
@@ -140,7 +289,7 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(
-          title: isCurrentUser ? "Your Profile" : displayName + "'s Profile",
+          title: isCurrentUser ? "Your Profile" : displayName + " ",
           showBackButton: widget.showBackButton,
           onBackButtonPressed: () {
             Navigator.of(context).pop();
@@ -177,10 +326,18 @@ class _ProfilePageState extends State<ProfilePage> {
                                         print("Log Out");
                                         logout();
                                       },
-                                      child: Text("Log Out"),
+                                      child: Text("Log Out",
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 15)),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: ColorSys.primarySolid,
-                                      )),
+                                          backgroundColor:
+                                              ColorSys.primarySolid,
+                                          elevation: 10,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12)),
+                                          shadowColor: ColorSys.primary)),
                                 ),
                               ),
                             ],
@@ -201,21 +358,30 @@ class _ProfilePageState extends State<ProfilePage> {
           BackgroundTile(),
           Column(
             children: [
+              const SizedBox(height: 20),
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Column(
-                    children: [
-                      Icon(Icons.account_circle,
-                          color: Colors.white, size: 100),
-                    ],
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width - 100,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        //Write three sentences of filler text here
+                        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec purus nec nunc. Nullam nec purus nec nunc.",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 20),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      FriendsCount(),
-                    ],
+                  const SizedBox(height: 20),
+                  FriendsCount(
+                    isCurrentUser: isCurrentUser,
+                    friends: numberOfFriends,
+                    mutualFriends: numberOfMutualFriends,
+                    onFriendsButtonPressed: showFriendsPopup,
+                    onMutualFriendsButtonPressed: showMutualFriendsPopup,
                   ),
                 ],
               ),
@@ -225,7 +391,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SizedBox(
-                      width: 200,
+                      width: 250,
                       child: ElevatedButton(
                           onPressed: () {
                             HapticFeedback.mediumImpact();
@@ -266,6 +432,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     )
                   ],
                 ),
+              const SizedBox(height: 20),
             ],
           ),
         ],

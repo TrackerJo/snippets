@@ -1,6 +1,11 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
+import 'package:snippets/api/notifications.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/pages/responses_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
@@ -34,8 +39,10 @@ class _DiscussionPageState extends State<DiscussionPage> {
     userId: "",
     question: "",
     theme: "",
+    discussionUsers: [],
   );
 
+  ScrollController _scrollController = ScrollController();
   Stream<QuerySnapshot>? chats;
   TextEditingController messageController = TextEditingController();
   String displayName = "";
@@ -76,6 +83,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
         isDisplayOnly: true,
         question: widget.responseTile.question,
         theme: widget.responseTile.theme,
+        discussionUsers: widget.responseTile.discussionUsers,
       );
     });
   }
@@ -230,23 +238,60 @@ class _DiscussionPageState extends State<DiscussionPage> {
         builder: (context, AsyncSnapshot snapshot) {
           return snapshot.hasData
               ? ListView.builder(
+                  controller: _scrollController,
                   itemCount: snapshot.data.docs.length,
                   scrollDirection: Axis.vertical,
+                  reverse: true,
                   itemBuilder: (context, index) {
-                    print(snapshot.data.docs[index]['message']);
+                    print(snapshot
+                            .data.docs[snapshot.data.docs.length - index - 1]
+                        ['message']);
+
+                    if (snapshot.data
+                                    .docs[snapshot.data.docs.length - index - 1]
+                                ['senderUsername'] !=
+                            username &&
+                        index == 0) {
+                      if (!snapshot.data
+                          .docs[snapshot.data.docs.length - index - 1]['readBy']
+                          .contains(FirebaseAuth.instance.currentUser!.uid)) {
+                        snapshot
+                            .data
+                            .docs[snapshot.data.docs.length - index - 1]
+                                ['readBy']
+                            .add(FirebaseAuth.instance.currentUser!.uid);
+                        Database(uid: FirebaseAuth.instance.currentUser!.uid)
+                            .updateReadBy(
+                                widget.responseTile.snippetId,
+                                widget.responseTile.userId,
+                                snapshot
+                                    .data
+                                    .docs[snapshot.data.docs.length - index - 1]
+                                    .id);
+                      }
+                    }
+
                     return MessageTile(
-                        message: snapshot.data.docs[index]['message'],
-                        sender: snapshot.data.docs[index]['senderDisplayName'],
+                        message: snapshot.data
+                                .docs[snapshot.data.docs.length - index - 1]
+                            ['message'],
+                        sender: snapshot.data
+                                .docs[snapshot.data.docs.length - index - 1]
+                            ['senderDisplayName'],
                         sentByMe: username ==
-                            snapshot.data.docs[index]['senderUsername'],
+                            snapshot.data
+                                    .docs[snapshot.data.docs.length - index - 1]
+                                ['senderUsername'],
                         theme: widget.theme,
-                        time: snapshot.data.docs[index]['date'].toDate());
+                        time: snapshot.data
+                            .docs[snapshot.data.docs.length - index - 1]['date']
+                            .toDate());
                   })
               : Container();
         });
   }
 
-  sendMessage() {
+  void sendMessage() async {
     if (messageController.text.isNotEmpty) {
       Map<String, dynamic> chatMessageMap = {
         "message": messageController.text,
@@ -254,14 +299,92 @@ class _DiscussionPageState extends State<DiscussionPage> {
         "senderId": FirebaseAuth.instance.currentUser!.uid,
         "senderDisplayName": displayName,
         "date": DateTime.now(),
+        "readBy": [FirebaseAuth.instance.currentUser!.uid]
       };
 
-      Database(uid: FirebaseAuth.instance.currentUser!.uid)
+      print(displayTile.discussionUsers);
+      Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+      Map<String, dynamic> userMap = {
+        "userId": FirebaseAuth.instance.currentUser!.uid,
+        "FCMToken": userData['FCMToken'],
+      };
+      print(userMap);
+      List<dynamic> users = displayTile.discussionUsers;
+      if (!isUserInDiscussion()) {
+        print("Adding user to discussion");
+        users.add(userMap);
+
+        await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+            .updateDiscussionUsers(widget.responseTile.snippetId,
+                widget.responseTile.userId, userMap);
+        await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+            .addUserToDiscussion(
+                FirebaseAuth.instance.currentUser!.uid,
+                widget.responseTile.snippetId,
+                widget.responseTile.userId,
+                widget.responseTile.question,
+                widget.theme);
+      }
+
+      await Database(uid: FirebaseAuth.instance.currentUser!.uid)
           .sendDiscussionMessage(widget.responseTile.snippetId,
               widget.responseTile.userId, chatMessageMap);
+      var url = Uri.https('us-central1-snippets2024.cloudfunctions.net',
+          '/sendDiscussionNotification');
+      var snippetId = widget.responseTile.snippetId;
+      var responseId = widget.responseTile.userId;
+      var snippetQuestion = widget.responseTile.question;
+      var responseName = widget.responseTile.displayName;
+      var senderName = displayName;
+      var message = messageController.text;
+      print(users);
+      var targetIds = getDiscussionUsersFCMToken(users);
+      print(targetIds);
+      await PushNotifications().sendNotification(
+          title: "$responseName - $snippetQuestion",
+          body: "$senderName: $message",
+          targetIds: targetIds,
+          data: {
+            "snippetId": snippetId,
+            "responseId": responseId,
+            "snippetQuestion": snippetQuestion,
+            "responseName": responseName,
+            "senderName": senderName,
+            "message": message,
+            "response": widget.responseTile.response,
+            "theme": widget.theme,
+            "discussionUsers": users,
+            "type": "discussion"
+          });
+
       setState(() {
         messageController.clear();
       });
+      //Scroll to the bottom of the list
+      // _scrollController.animateTo(_scrollController.position.maxScrollExtent,
+      //     duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
     }
+  }
+
+  bool isUserInDiscussion() {
+    bool isUserInDiscussion = false;
+    print(displayTile.discussionUsers);
+    for (Map<String, dynamic> element in displayTile.discussionUsers) {
+      if (element['userId'] as String ==
+          FirebaseAuth.instance.currentUser!.uid) {
+        isUserInDiscussion = true;
+      }
+    }
+    return isUserInDiscussion;
+  }
+
+  List<String> getDiscussionUsersFCMToken(List<dynamic> users) {
+    List<String> FCMToken = [];
+    users.forEach((element) {
+      if (element['userId'] != FirebaseAuth.instance.currentUser!.uid) {
+        FCMToken.add(element['FCMToken']);
+      }
+    });
+    return FCMToken;
   }
 }

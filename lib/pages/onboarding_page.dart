@@ -59,13 +59,14 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                   content: 'New conversations every day'),
               makePage(
                   image: 'assets/slide_3.png',
-                  title: '3 new prompts every day, 6 new people every day',
-                  content: 'Answer prompts by the hour to meet 2 new people'),
+                  title: '3 new prompts every day, 1 new person every week',
+                  content:
+                      'Every week you will be randomly matched with a new person'),
               makePage(
                   image: 'assets/slide_4.png',
                   title: 'Stay in touch with new and old friends',
                   content:
-                      'Reply to friends’ answers and add new people as friends',
+                      'Have real time discussions with your friends and new people',
                   lastPage: true),
             ],
           ),
@@ -111,7 +112,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                     fontWeight: FontWeight.w400)),
             if (lastPage)
               const SizedBox(
-                height: 50,
+                height: 30,
               ),
             if (lastPage)
               ElevatedButton(
@@ -126,14 +127,14 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                 },
                 child: Text(
                   'Get Started',
-                  style: TextStyle(color: Colors.white, fontSize: 20),
+                  style: TextStyle(color: Colors.white, fontSize: 15),
                 ),
                 style: ElevatedButton.styleFrom(
-                  primary: ColorSys.primary,
+                  backgroundColor: ColorSys.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                 ),
               ),
           ]),

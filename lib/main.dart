@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -40,15 +41,11 @@ class _MainAppState extends State<MainApp> {
     print("######### DEVICE TOKEN #########");
     print(deviceToken);
     bool status = await Auth().isUserLoggedIn();
+    Auth().listenToAuthState();
     setState(() {
       isSignedIn = status;
     });
-    if (status) {
-      Map<String, dynamic> userData =
-          await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-              .getUserData(FirebaseAuth.instance.currentUser!.uid);
-      await HelperFunctions.saveUserDataSF(jsonEncode(userData));
-    }
+    if (status) {}
   }
 
   @override

@@ -8,16 +8,21 @@ class CustomAppBar extends StatelessWidget {
   final String theme;
   final void Function()? onBackButtonPressed;
   final bool showSettingsButton;
+  final bool showFriendsButton;
   final void Function()? onSettingsButtonPressed;
-  const CustomAppBar({
-    super.key,
-    required this.title,
-    this.showBackButton = false,
-    this.onBackButtonPressed,
-    this.showSettingsButton = false,
-    this.onSettingsButtonPressed,
-    this.theme = "purple",
-  });
+  final void Function()? onFriendsButtonPressed;
+  final bool hasFriendRequests;
+  const CustomAppBar(
+      {super.key,
+      required this.title,
+      this.showBackButton = false,
+      this.onBackButtonPressed,
+      this.showSettingsButton = false,
+      this.onSettingsButtonPressed,
+      this.theme = "purple",
+      this.showFriendsButton = false,
+      this.onFriendsButtonPressed,
+      this.hasFriendRequests = false});
 
   @override
   Widget build(BuildContext context) {
@@ -91,12 +96,44 @@ class CustomAppBar extends StatelessWidget {
           // actions: [],
           actions: [
             if (showSettingsButton)
-              IconButton(
-                splashColor: ColorSys.primary,
-                splashRadius: 25,
-                icon: const Icon(Icons.settings),
-                onPressed: onSettingsButtonPressed,
-                color: Color.fromARGB(255, 0, 0, 0),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: IconButton(
+                  splashColor: ColorSys.primary,
+                  splashRadius: 25,
+                  icon: const Icon(Icons.settings),
+                  onPressed: onSettingsButtonPressed,
+                  color: Color.fromARGB(255, 0, 0, 0),
+                ),
+              ),
+            if (showFriendsButton)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Stack(
+                  children: [
+                    //Dot
+                    if (hasFriendRequests)
+                      Positioned(
+                        right: 10,
+                        top: 5,
+                        child: Container(
+                          height: 10,
+                          width: 10,
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                        ),
+                      ),
+                    IconButton(
+                      splashColor: ColorSys.primary,
+                      splashRadius: 25,
+                      icon: const Icon(Icons.people),
+                      onPressed: onFriendsButtonPressed,
+                      color: Color.fromARGB(255, 0, 0, 0),
+                    ),
+                  ],
+                ),
               ),
           ],
         ),

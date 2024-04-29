@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:snippets/api/database.dart';
 import 'package:snippets/pages/responses_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
+import 'package:snippets/templates/input_decoration.dart';
 
 import '../helper/helper_function.dart';
 import '../pages/question_page.dart';
@@ -31,6 +32,8 @@ class SnippetTile extends StatefulWidget {
 }
 
 class _SnippetTileState extends State<SnippetTile> {
+  TextEditingController answerController = TextEditingController();
+
   @override
   void initState() {
     // TODO: implement initState
@@ -67,15 +70,7 @@ class _SnippetTileState extends State<SnippetTile> {
         child: ListTile(
           onTap: () => {
             if (!widget.isAnswered)
-              {
-                nextScreen(
-                  context,
-                  QuestionPage(
-                      question: widget.question,
-                      snippetId: widget.snippetId,
-                      theme: widget.theme),
-                ),
-              }
+              {}
             else
               {
                 nextScreen(
@@ -87,16 +82,38 @@ class _SnippetTileState extends State<SnippetTile> {
                 ),
               }
           },
-          trailing: CircleAvatar(
-            backgroundColor: widget.isAnswered
-                ? const Color.fromARGB(225, 56, 255, 76)
-                : const Color.fromARGB(225, 255, 52, 52),
-            child: widget.questionType == 'stranger'
-                ? Image.asset("assets/stranger_icon.png", scale: 1.75)
-                : const Icon(
-                    Icons.question_answer,
-                    color: Color.fromARGB(255, 0, 0, 0),
-                  ),
+          trailing: IconButton(
+            icon: !widget.isAnswered
+                ? Icon(Icons.send)
+                : Icon(Icons.arrow_forward_ios),
+            onPressed: () async {
+              // show options
+              if (!widget.isAnswered) {
+                await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+                    .submitAnswer(widget.snippetId, answerController.text);
+                // Navigator.of(context).pop();
+                //Go to responses page
+
+                nextScreen(
+                    context,
+                    ResponsesPage(
+                        snippetId: widget.snippetId,
+                        userResponse: answerController.text,
+                        userDiscussionUsers: [
+                          FirebaseAuth.instance.currentUser!.uid
+                        ],
+                        question: widget.question,
+                        theme: widget.theme));
+              } else {
+                nextScreen(
+                  context,
+                  ResponsesPage(
+                      snippetId: widget.snippetId,
+                      question: widget.question,
+                      theme: widget.theme),
+                );
+              }
+            },
           ),
           title: Text(
             widget.question,
@@ -108,16 +125,15 @@ class _SnippetTileState extends State<SnippetTile> {
               height: 0,
             ),
           ),
-          subtitle: Text(
-            "Time Left: ${widget.timeLeft}",
-            style: const TextStyle(
-              color: Color.fromARGB(119, 12, 12, 12),
-              fontSize: 15,
-              fontFamily: 'Inknut Antiqua',
-              fontWeight: FontWeight.w400,
-              height: 0,
-            ),
-          ),
+          subtitle: !widget.isAnswered
+              ? Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextFormField(
+                      controller: answerController,
+                      decoration: textInputDecoration.copyWith(
+                          hintText: "Enter answer here")),
+                )
+              : null,
         ),
       ),
     );

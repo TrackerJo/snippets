@@ -1,10 +1,19 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
+import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/pages/friends_page.dart';
+import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/custom_nav_bar.dart';
+import 'package:snippets/widgets/helper_functions.dart';
 import 'package:snippets/widgets/snippet_tile.dart';
 
 import '../api/database.dart';
@@ -20,9 +29,17 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   Stream? currentSnippetsStream;
   Map<String, dynamic>? userData;
+  String friendsView = "friends";
+  bool hasFriendRequests = false;
 
   getUserData() async {
     userData = await HelperFunctions.getUserDataFromSF();
+    //Check if user has friend requests
+    if (userData!["friendRequests"].length > 0) {
+      setState(() {
+        hasFriendRequests = true;
+      });
+    }
     if (mounted) {
       setState(() {
         userData = userData;
@@ -84,7 +101,14 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(kToolbarHeight),
-          child: CustomAppBar(title: 'Snippets'),
+          child: CustomAppBar(
+            title: 'Snippets',
+            showFriendsButton: true,
+            onFriendsButtonPressed: () {
+              nextScreen(context, FriendsPage());
+            },
+            hasFriendRequests: hasFriendRequests,
+          ),
         ),
         bottomNavigationBar: PreferredSize(
           preferredSize: Size.fromHeight(kToolbarHeight),
@@ -98,6 +122,42 @@ class _HomePageState extends State<HomePage> {
               // mainAxisSize: MainAxisSize.max,
               children: [
                 SizedBox(height: 20),
+                // ElevatedButton(
+                //   onPressed: () async {
+                //     var url = Uri.https(
+                //         'us-central1-snippets2024.cloudfunctions.net',
+                //         '/sendDiscussionNotifications');
+                //     var snippetId = "NK7CwyZi0YlyGCX5VTdz";
+                //     var responseId = "r8mcsQblJVcvjTQsvzHUkJHW8MJ3";
+                //     var snippetQuestion = "Favorite Breakfast?";
+                //     var responseName = "Jake Nash";
+                //     var senderName = "Bill Kemme";
+                //     var message = "I love pancakes!";
+                //     var targetIds = [
+                //       "fJBU2wkmSpOq2ncRPqddqI:APA91bG6Br4xor46lU-1FyMh-HkGQmoBobYB_cSyh5_ByqVW9-n9ks3qLXrgj8mhafQ2eK7X5o9tEEpl_-cI0H4z85GiaIX_vmAvtz3PS07gp1z6-f73Ex_CDdFKEMsXugjCKaCxSKTl"
+                //     ];
+                //     try {
+                //       HttpsCallableResult result = await FirebaseFunctions
+                //           .instance
+                //           .httpsCallable('sendDiscussionNotificationsCall')
+                //           .call({
+                //         "snippetId": snippetId,
+                //         "responseId": responseId,
+                //         "snippetQuestion": snippetQuestion,
+                //         "responseName": responseName,
+                //         "senderName": senderName,
+                //         "message": message,
+                //         "targetIds": targetIds,
+                //         "response": "widget.responseTile.response",
+                //         "theme": "widget.theme",
+                //       });
+                //       print(result.data);
+                //     } catch (e) {
+                //       print(e);
+                //     }
+                //   },
+                //   child: Text("Send notification via API"),
+                // ),
                 snippetsList(),
               ],
             ),

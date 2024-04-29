@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -29,8 +30,8 @@ class Auth {
         case "user-not-found":
           return "No user found with that email.";
 
-        case "wrong-password":
-          return "Incorrect password.";
+        case "INVALID_LOGIN_CREDENTIALS":
+          return "Incorrect email or password";
 
         default:
           return e.message;
@@ -72,5 +73,24 @@ class Auth {
   Future<bool> isUserLoggedIn() async {
     User? user = _auth.currentUser;
     return user != null;
+  }
+
+  void listenToAuthState() {
+    StreamSubscription stream = Stream.empty().listen((event) {});
+    if (FirebaseAuth.instance.currentUser != null) {
+      stream = Database(uid: FirebaseAuth.instance.currentUser!.uid)
+          .userDataStream();
+    }
+
+    _auth.authStateChanges().listen((User? user) {
+      if (user == null) {
+        print("Cancelling");
+        stream.cancel();
+      } else {
+        print("Starting");
+        stream = Database(uid: FirebaseAuth.instance.currentUser!.uid)
+            .userDataStream();
+      }
+    });
   }
 }

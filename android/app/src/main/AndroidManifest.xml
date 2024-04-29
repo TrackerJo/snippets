@@ -2,7 +2,10 @@
     <application
         android:label="snippets"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
+         <!-- <meta-data -->
+          <!-- android:name="com.google.firebase.messaging.default_notification_icon" -->
+          <!-- android:resource="@mipmap-mdpi/launcher_icon.png" /> -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
