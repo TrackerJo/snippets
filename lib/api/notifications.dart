@@ -7,6 +7,7 @@ import 'package:snippets/main.dart';
 import 'package:snippets/pages/discussion_page.dart';
 import 'package:snippets/pages/find_profile_page.dart';
 import 'package:snippets/pages/home_page.dart';
+import 'package:snippets/pages/profile_page.dart';
 import 'package:snippets/pages/question_page.dart';
 import 'package:snippets/pages/welcome_page.dart';
 import 'package:snippets/widgets/custom_page_route.dart';
@@ -88,6 +89,18 @@ class PushNotifications {
                     isDisplayOnly: true,
                   ),
                   theme: message.data['theme']);
+            },
+          ),
+        );
+      } else if (message.data['type'] == "friendRequest" ||
+          message.data['type'] == "friendRequestAccepted") {
+        navigatorKey.currentState?.push(
+          CustomPageRoute(
+            builder: (BuildContext context) {
+              return ProfilePage(
+                uid: message.data['userId'],
+                showNavBar: false,
+              );
             },
           ),
         );

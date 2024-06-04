@@ -5,6 +5,7 @@ import 'package:snippets/api/database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/pages/welcome_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
+import 'package:snippets/templates/input_decoration.dart';
 import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/custom_nav_bar.dart';
 import 'package:snippets/widgets/custom_page_route.dart';
@@ -38,6 +39,8 @@ class _ProfilePageState extends State<ProfilePage> {
   int numberOfMutualFriends = 0;
   Map<String, dynamic> profileData = {};
   List<Map<String, dynamic>> mutualFriends = [];
+
+  TextEditingController descriptionController = TextEditingController();
 
   void getProfileData() async {
     String userDisplayName = "";
@@ -312,33 +315,50 @@ class _ProfilePageState extends State<ProfilePage> {
                           padding: const EdgeInsets.all(32.0),
                           child: Column(
                             children: [
-                              GestureDetector(
-                                onTap: () {
-                                  HapticFeedback.mediumImpact();
-                                  print("Log Out");
-                                  logout();
-                                },
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                      onPressed: () {
-                                        HapticFeedback.mediumImpact();
-                                        print("Log Out");
-                                        logout();
-                                      },
-                                      child: Text("Log Out",
-                                          style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 15)),
-                                      style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              ColorSys.primarySolid,
-                                          elevation: 10,
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12)),
-                                          shadowColor: ColorSys.primary)),
-                                ),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                    onPressed: () {
+                                      HapticFeedback.mediumImpact();
+                                      print("Log Out");
+                                      logout();
+                                    },
+                                    child: Text("Log Out",
+                                        style: const TextStyle(
+                                            color: Colors.white, fontSize: 15)),
+                                    style: ElevatedButton.styleFrom(
+                                        backgroundColor: ColorSys.primarySolid,
+                                        elevation: 10,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12)),
+                                        shadowColor: ColorSys.primary)),
+                              ),
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                    onPressed: () {
+                                      HapticFeedback.mediumImpact();
+                                      descriptionController.text =
+                                          profileData["description"];
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return showDiscriptionPopup();
+                                        },
+                                      );
+                                    },
+                                    child: Text("Edit Description",
+                                        style: const TextStyle(
+                                            color: Colors.white, fontSize: 15)),
+                                    style: ElevatedButton.styleFrom(
+                                        backgroundColor: ColorSys.primarySolid,
+                                        elevation: 10,
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(12)),
+                                        shadowColor: ColorSys.primary)),
                               ),
                             ],
                           )));
@@ -367,7 +387,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
                         //Write three sentences of filler text here
-                        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec purus nec nunc. Nullam nec purus nec nunc.",
+                        profileData["description"] ?? "",
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 20,
@@ -437,6 +457,58 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget showDiscriptionPopup() {
+    return AlertDialog(
+      backgroundColor: ColorSys.background,
+      title: Text("Profile's Description",
+          style: TextStyle(color: ColorSys.primary)),
+      content: SizedBox(
+        width: 300,
+        height: 300,
+        child: Column(
+          children: [
+            Text(
+                "Enter a short description about yourself. This will be visible to other users.",
+                style: TextStyle(color: Colors.white)),
+            const SizedBox(
+              height: 20,
+            ),
+            TextField(
+              controller: descriptionController,
+              maxLines: 7,
+              decoration: textInputDecoration.copyWith(
+                hintText: 'Description',
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: Text("Cancel"),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: ColorSys.primary,
+          ),
+          onPressed: () async {
+            setState(() {
+              profileData["description"] = descriptionController.text;
+            });
+
+            await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+                .updateUserDescription(descriptionController.text);
+            Navigator.of(context).pop();
+          },
+          child: Text("Save", style: TextStyle(color: Colors.white)),
+        ),
+      ],
     );
   }
 }

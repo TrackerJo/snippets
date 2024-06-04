@@ -31,6 +31,7 @@ class Database {
       "uid": uid,
       "phoneNumber": phoneNumber != null ? phoneNumber.international : "none",
       "friends": [],
+      "description": "Hey there! I'm using Snippets.",
       "friendRequests": [],
       "answeredSnippets": [],
       "discussions": [],
@@ -177,7 +178,7 @@ class Database {
 
     await PushNotifications().sendNotification(
         title: "$displayName just sent you a friend request!",
-        body: "Tap here to accept",
+        body: "Tap here to view request.",
         targetIds: [
           friendFCMToken
         ],
@@ -427,6 +428,20 @@ class Database {
           .collection("answers")
           .doc(element["answerId"])
           .get();
+      if (!answerData.exists) {
+        //Remove discussion from user's list
+        await userCollection.doc(userId).update({
+          "discussions": FieldValue.arrayRemove([
+            {
+              "snippetId": element["snippetId"],
+              "answerId": element["answerId"],
+              "snippetQuestion": element["snippetQuestion"],
+              "theme": element["theme"],
+            }
+          ]),
+        });
+        continue;
+      }
       discussionsData.add({
         "snippetQuestion": element["snippetQuestion"],
         "answerUser": answerData["displayName"],
@@ -466,5 +481,11 @@ class Database {
     });
     //On Auth State change end stream
     return streamListen;
+  }
+
+  Future updateUserDescription(String description) async {
+    await userCollection.doc(uid).update({
+      "description": description,
+    });
   }
 }

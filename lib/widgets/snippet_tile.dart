@@ -131,7 +131,21 @@ class _SnippetTileState extends State<SnippetTile> {
                   child: TextFormField(
                       controller: answerController,
                       decoration: textInputDecoration.copyWith(
-                          hintText: "Enter answer here")),
+                        hintText: "Enter answer here",
+                        //Border color: color: ColorSys.primarySolid,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20.0),
+                            borderSide: BorderSide(color: ColorSys.primary)),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20.0),
+                            borderSide: BorderSide(color: ColorSys.secondary)),
+                        //   borderRadius: BorderRadius.circular(20.0),
+                        //   borderSide: BorderSide(
+                        //     color: ColorSys.primarySolid,
+                        //     width: 20,
+                        //   ),
+                        // ),
+                      )),
                 )
               : null,
         ),

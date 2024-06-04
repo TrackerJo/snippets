@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:snippets/api/database.dart';
 import 'package:snippets/pages/home_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
+import 'package:snippets/templates/input_decoration.dart';
 
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_page_route.dart';
@@ -15,6 +18,7 @@ class OnBoardingPage extends StatefulWidget {
 class _OnBoardingPageState extends State<OnBoardingPage> {
   PageController _pageController = PageController();
   int currentIndex = 0;
+  TextEditingController descriptionController = TextEditingController();
 
   @override
   void initState() {
@@ -117,12 +121,11 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
             if (lastPage)
               ElevatedButton(
                 onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    CustomPageRoute(
-                      builder: (BuildContext context) {
-                        return const HomePage();
-                      },
-                    ),
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return showDiscriptionPopup();
+                    },
                   );
                 },
                 child: Text(
@@ -162,5 +165,68 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
       }
     }
     return indicators;
+  }
+
+  Widget showDiscriptionPopup() {
+    return AlertDialog(
+      backgroundColor: ColorSys.background,
+      title: Text("Profile's Description",
+          style: TextStyle(color: ColorSys.primary)),
+      content: SizedBox(
+        width: 300,
+        height: 300,
+        child: Column(
+          children: [
+            Text(
+                "Enter a short description about yourself. This will be visible to other users.",
+                style: TextStyle(color: Colors.white)),
+            const SizedBox(
+              height: 20,
+            ),
+            TextField(
+              controller: descriptionController,
+              maxLines: 7,
+              decoration: textInputDecoration.copyWith(
+                hintText: 'Description',
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+            Navigator.of(context).pushReplacement(
+              CustomPageRoute(
+                builder: (BuildContext context) {
+                  return const HomePage();
+                },
+              ),
+            );
+          },
+          child: Text("Skip"),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: ColorSys.primary,
+          ),
+          onPressed: () async {
+            Navigator.of(context).pop();
+            await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+                .updateUserDescription(descriptionController.text);
+
+            Navigator.of(context).pushReplacement(
+              CustomPageRoute(
+                builder: (BuildContext context) {
+                  return const HomePage();
+                },
+              ),
+            );
+          },
+          child: Text("Save", style: TextStyle(color: Colors.white)),
+        ),
+      ],
+    );
   }
 }
