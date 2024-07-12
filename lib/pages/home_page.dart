@@ -1,16 +1,9 @@
-import 'dart:convert';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
-import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/pages/friends_page.dart';
-import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/custom_nav_bar.dart';
 import 'package:snippets/widgets/helper_functions.dart';
@@ -100,28 +93,28 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: PreferredSize(
-          preferredSize: Size.fromHeight(kToolbarHeight),
+          preferredSize: const Size.fromHeight(kToolbarHeight),
           child: CustomAppBar(
             title: 'Snippets',
             showFriendsButton: true,
             onFriendsButtonPressed: () {
-              nextScreen(context, FriendsPage());
+              nextScreen(context, const FriendsPage());
             },
             hasFriendRequests: hasFriendRequests,
           ),
         ),
-        bottomNavigationBar: PreferredSize(
+        bottomNavigationBar: const PreferredSize(
           preferredSize: Size.fromHeight(kToolbarHeight),
           child: CustomNavBar(pageIndex: 1),
         ),
-        backgroundColor: Color(0xFF232323),
+        backgroundColor: const Color(0xFF232323),
         body: Stack(
           children: [
-            BackgroundTile(),
+            const BackgroundTile(),
             Column(
               // mainAxisSize: MainAxisSize.max,
               children: [
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 // ElevatedButton(
                 //   onPressed: () async {
                 //     var url = Uri.https(
@@ -207,10 +200,10 @@ class _HomePageState extends State<HomePage> {
                     }),
               );
             } else {
-              return Center();
+              return const Center();
             }
           } else {
-            return Center();
+            return const Center();
           }
         } else {
           return Center(

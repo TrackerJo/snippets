@@ -1,15 +1,9 @@
-import 'dart:async';
-import 'dart:convert';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:snippets/api/auth.dart';
-import 'package:snippets/api/database.dart';
 import 'package:snippets/api/notifications.dart';
-import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/pages/home_page.dart';
-import 'package:snippets/pages/onboarding_page.dart';
 import 'package:snippets/pages/welcome_page.dart';
 
 import 'firebase_options.dart';
@@ -59,7 +53,7 @@ class _MainAppState extends State<MainApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: isSignedIn ? const HomePage() : WelcomePage(),
+      home: isSignedIn ? const HomePage() : const WelcomePage(),
       navigatorKey: navigatorKey,
     );
   }

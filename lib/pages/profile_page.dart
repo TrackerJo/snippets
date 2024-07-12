@@ -178,8 +178,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   padding: const EdgeInsets.all(32.0),
                   child: Column(
                     children: [
-                      Text("Friends",
-                          style: const TextStyle(
+                      const Text("Friends",
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 30,
                           )),
@@ -224,8 +224,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   padding: const EdgeInsets.all(32.0),
                   child: Column(
                     children: [
-                      Text("Mutual Friends",
-                          style: const TextStyle(
+                      const Text("Mutual Friends",
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 30,
                           )),
@@ -290,9 +290,9 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
+        preferredSize: const Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(
-          title: isCurrentUser ? "Your Profile" : displayName + " ",
+          title: isCurrentUser ? "Your Profile" : "$displayName ",
           showBackButton: widget.showBackButton,
           onBackButtonPressed: () {
             Navigator.of(context).pop();
@@ -323,16 +323,16 @@ class _ProfilePageState extends State<ProfilePage> {
                                       print("Log Out");
                                       logout();
                                     },
-                                    child: Text("Log Out",
-                                        style: const TextStyle(
-                                            color: Colors.white, fontSize: 15)),
                                     style: ElevatedButton.styleFrom(
                                         backgroundColor: ColorSys.primarySolid,
                                         elevation: 10,
                                         shape: RoundedRectangleBorder(
                                             borderRadius:
                                                 BorderRadius.circular(12)),
-                                        shadowColor: ColorSys.primary)),
+                                        shadowColor: ColorSys.primary),
+                                    child: const Text("Log Out",
+                                        style: TextStyle(
+                                            color: Colors.white, fontSize: 15))),
                               ),
                               const SizedBox(height: 20),
                               SizedBox(
@@ -349,16 +349,16 @@ class _ProfilePageState extends State<ProfilePage> {
                                         },
                                       );
                                     },
-                                    child: Text("Edit Description",
-                                        style: const TextStyle(
-                                            color: Colors.white, fontSize: 15)),
                                     style: ElevatedButton.styleFrom(
                                         backgroundColor: ColorSys.primarySolid,
                                         elevation: 10,
                                         shape: RoundedRectangleBorder(
                                             borderRadius:
                                                 BorderRadius.circular(12)),
-                                        shadowColor: ColorSys.primary)),
+                                        shadowColor: ColorSys.primary),
+                                    child: const Text("Edit Description",
+                                        style: TextStyle(
+                                            color: Colors.white, fontSize: 15))),
                               ),
                             ],
                           )));
@@ -367,15 +367,15 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
       bottomNavigationBar: widget.showNavBar
-          ? PreferredSize(
+          ? const PreferredSize(
               preferredSize: Size.fromHeight(kToolbarHeight),
               child: CustomNavBar(pageIndex: 0),
             )
           : null,
-      backgroundColor: Color(0xFF232323),
+      backgroundColor: const Color(0xFF232323),
       body: Stack(
         children: [
-          BackgroundTile(),
+          const BackgroundTile(),
           Column(
             children: [
               const SizedBox(height: 20),
@@ -470,7 +470,7 @@ class _ProfilePageState extends State<ProfilePage> {
         height: 300,
         child: Column(
           children: [
-            Text(
+            const Text(
                 "Enter a short description about yourself. This will be visible to other users.",
                 style: TextStyle(color: Colors.white)),
             const SizedBox(
@@ -491,7 +491,7 @@ class _ProfilePageState extends State<ProfilePage> {
           onPressed: () {
             Navigator.of(context).pop();
           },
-          child: Text("Cancel"),
+          child: const Text("Cancel"),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
@@ -506,7 +506,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 .updateUserDescription(descriptionController.text);
             Navigator.of(context).pop();
           },
-          child: Text("Save", style: TextStyle(color: Colors.white)),
+          child: const Text("Save", style: TextStyle(color: Colors.white)),
         ),
       ],
     );

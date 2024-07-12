@@ -21,18 +21,18 @@ class _FindProfilePageState extends State<FindProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
+      appBar: const PreferredSize(
         preferredSize: Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(title: "Search"),
       ),
-      bottomNavigationBar: PreferredSize(
+      bottomNavigationBar: const PreferredSize(
         preferredSize: Size.fromHeight(kToolbarHeight),
         child: CustomNavBar(pageIndex: 2),
       ),
-      backgroundColor: Color(0xFF232323),
+      backgroundColor: const Color(0xFF232323),
       body: Stack(
         children: [
-          BackgroundTile(),
+          const BackgroundTile(),
           Center(
               child: Column(children: [
             const SizedBox(height: 20),
@@ -81,7 +81,7 @@ class _FindProfilePageState extends State<FindProfilePage> {
       builder: (context, AsyncSnapshot snapshot) {
         //Make checks
         if (profileName == "") {
-          return Center();
+          return const Center();
         }
         if (snapshot.hasData) {
           if (snapshot.data!.docs.length != null) {
@@ -119,13 +119,13 @@ class _FindProfilePageState extends State<FindProfilePage> {
                     }),
               );
             } else {
-              return Center();
+              return const Center();
             }
           } else {
-            return Center();
+            return const Center();
           }
         } else {
-          return Center(
+          return const Center(
               //     child: CircularProgressIndicator(
               //   color: Theme.of(context).primaryColor,
               // ));

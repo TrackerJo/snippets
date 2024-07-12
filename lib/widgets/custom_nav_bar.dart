@@ -16,7 +16,7 @@ class CustomNavBar extends StatelessWidget {
       children: [
         Material(
           elevation: 10,
-          shadowColor: Color(0xB5D1AEFF),
+          shadowColor: const Color(0xB5D1AEFF),
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(23),
             topRight: Radius.circular(23),
@@ -26,7 +26,7 @@ class CustomNavBar extends StatelessWidget {
               height: 70,
               decoration: ShapeDecoration(
                 gradient: ColorSys.purpleBarGradient,
-                shape: RoundedRectangleBorder(
+                shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(23),
                     topRight: Radius.circular(23),

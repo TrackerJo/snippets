@@ -40,7 +40,7 @@ class _ProfileTileState extends State<ProfileTile> {
           },
           title: Text(
             widget.displayName,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.black,
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -48,14 +48,14 @@ class _ProfileTileState extends State<ProfileTile> {
           ),
           subtitle: Text(
             '@${widget.username}',
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.black,
               fontSize: 15,
               fontWeight: FontWeight.w400,
             ),
           ),
           trailing: IconButton(
-            icon: Icon(Icons.arrow_forward_ios),
+            icon: const Icon(Icons.arrow_forward_ios),
             onPressed: () {
               nextScreen(
                   context,

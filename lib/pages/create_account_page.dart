@@ -1,11 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:phone_input/phone_input_package.dart';
 import 'package:snippets/api/auth.dart';
 import 'package:snippets/api/database.dart';
 
-import 'package:snippets/pages/home_page.dart';
 import 'package:snippets/pages/onboarding_page.dart';
 import 'package:snippets/pages/welcome_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
@@ -38,7 +36,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       bool isUsernameTaken = await Database().checkUsername(username);
       if (isUsernameTaken) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text("Username is already taken"),
           ),
         );
@@ -76,7 +74,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF232323),
+      backgroundColor: const Color(0xFF232323),
       body: SingleChildScrollView(
           child: Padding(
               padding:
@@ -229,7 +227,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       const SizedBox(height: 10),
                       Text.rich(TextSpan(
                           text: "Already have an account? ",
-                          style: TextStyle(color: Colors.white),
+                          style: const TextStyle(color: Colors.white),
                           children: [
                             TextSpan(
                                 text: "Sign in here",

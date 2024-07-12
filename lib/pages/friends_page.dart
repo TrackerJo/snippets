@@ -37,7 +37,7 @@ class _FriendsPageState extends State<FriendsPage> {
       this.friends = friends;
       this.friendRequests = friendRequests;
       this.outgoingRequests = outgoingRequests;
-      this.numberOfRequests = friendRequests.length;
+      numberOfRequests = friendRequests.length;
     });
   }
 
@@ -59,17 +59,17 @@ class _FriendsPageState extends State<FriendsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: PreferredSize(
+        appBar: const PreferredSize(
           preferredSize: Size.fromHeight(kToolbarHeight),
           child: CustomAppBar(
             title: 'Friends',
           ),
         ),
-        backgroundColor: Color(0xFF232323),
+        backgroundColor: const Color(0xFF232323),
         body: Column(
           children: [
             Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
                     color: Color.fromARGB(207, 56, 56, 56),
@@ -83,6 +83,16 @@ class _FriendsPageState extends State<FriendsPage> {
                   Container(
                     width: MediaQuery.of(context).size.width / 3 - 30,
                     height: 70,
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: friendsView == "friends"
+                              ? ColorSys.primary
+                              : Colors.transparent,
+                          width: 2.0,
+                        ),
+                      ),
+                    ),
                     child: TextButton(
                       onPressed: () {
                         setState(() {
@@ -99,28 +109,28 @@ class _FriendsPageState extends State<FriendsPage> {
                         ),
                       ),
                     ),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: friendsView == "friends"
-                              ? ColorSys.primary
-                              : Colors.transparent,
-                          width: 2.0,
-                        ),
-                      ),
-                    ),
                   ),
                   Container(
                     height: 50,
                     width: 1,
                     color: Colors.transparent,
-                    margin: EdgeInsets.symmetric(horizontal: 5),
+                    margin: const EdgeInsets.symmetric(horizontal: 5),
                   ),
                   Container(
                     height: 70,
                     width: numberOfRequests > 0
                         ? MediaQuery.of(context).size.width / 3 + 10
                         : MediaQuery.of(context).size.width / 3 - 15,
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: friendsView == "friendRequests"
+                              ? ColorSys.primary
+                              : Colors.transparent,
+                          width: 2.0,
+                        ),
+                      ),
+                    ),
                     child: TextButton(
                       onPressed: () {
                         setState(() {
@@ -147,7 +157,7 @@ class _FriendsPageState extends State<FriendsPage> {
                             ),
                           ),
                           if (numberOfRequests > 0)
-                            SizedBox(
+                            const SizedBox(
                               width: 5,
                             ),
                           if (numberOfRequests > 0)
@@ -162,7 +172,7 @@ class _FriendsPageState extends State<FriendsPage> {
                                   numberOfRequests < 10
                                       ? numberOfRequests.toString()
                                       : "9+",
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                       color: Colors.white, fontSize: 12),
                                 ),
                               ),
@@ -170,26 +180,26 @@ class _FriendsPageState extends State<FriendsPage> {
                         ],
                       ),
                     ),
+                  ),
+                  Container(
+                    height: 50,
+                    width: 1,
+                    color: Colors.transparent,
+                    margin: const EdgeInsets.symmetric(horizontal: 5),
+                  ),
+                  Container(
+                    width: MediaQuery.of(context).size.width / 3 - 10,
+                    height: 70,
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
-                          color: friendsView == "friendRequests"
+                          color: friendsView == "outgoingRequests"
                               ? ColorSys.primary
                               : Colors.transparent,
                           width: 2.0,
                         ),
                       ),
                     ),
-                  ),
-                  Container(
-                    height: 50,
-                    width: 1,
-                    color: Colors.transparent,
-                    margin: EdgeInsets.symmetric(horizontal: 5),
-                  ),
-                  Container(
-                    width: MediaQuery.of(context).size.width / 3 - 10,
-                    height: 70,
                     child: TextButton(
                       onPressed: () {
                         setState(() {
@@ -203,16 +213,6 @@ class _FriendsPageState extends State<FriendsPage> {
                           color: ColorSys.primary,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: friendsView == "outgoingRequests"
-                              ? ColorSys.primary
-                              : Colors.transparent,
-                          width: 2.0,
                         ),
                       ),
                     ),
@@ -315,13 +315,13 @@ class _FriendsPageState extends State<FriendsPage> {
             onXPressed: () async {
               await Database(uid: FirebaseAuth.instance.currentUser!.uid)
                   .cancelFriendRequest(
-                      this.outgoingRequests[index]["userId"],
-                      this.outgoingRequests[index]["displayName"],
-                      this.outgoingRequests[index]["username"]);
+                      outgoingRequests[index]["userId"],
+                      outgoingRequests[index]["displayName"],
+                      outgoingRequests[index]["username"]);
               setState(() {
-                this.outgoingRequests.removeWhere((element) =>
+                outgoingRequests.removeWhere((element) =>
                     element["userId"] ==
-                    this.outgoingRequests[index]["userId"]);
+                    outgoingRequests[index]["userId"]);
               });
               //Refresh outgoing requests
             },

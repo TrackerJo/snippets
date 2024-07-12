@@ -52,7 +52,7 @@ class CustomAppBar extends StatelessWidget {
                       : theme == "blue"
                           ? ColorSys.blueGreenGradient
                           : ColorSys.purpleBarGradient,
-              shape: RoundedRectangleBorder(
+              shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(23),
                   bottomRight: Radius.circular(23),
@@ -103,7 +103,7 @@ class CustomAppBar extends StatelessWidget {
                   splashRadius: 25,
                   icon: const Icon(Icons.settings),
                   onPressed: onSettingsButtonPressed,
-                  color: Color.fromARGB(255, 0, 0, 0),
+                  color: const Color.fromARGB(255, 0, 0, 0),
                 ),
               ),
             if (showFriendsButton)
@@ -130,7 +130,7 @@ class CustomAppBar extends StatelessWidget {
                       splashRadius: 25,
                       icon: const Icon(Icons.people),
                       onPressed: onFriendsButtonPressed,
-                      color: Color.fromARGB(255, 0, 0, 0),
+                      color: const Color.fromARGB(255, 0, 0, 0),
                     ),
                   ],
                 ),

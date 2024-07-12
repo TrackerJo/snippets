@@ -5,8 +5,6 @@ import 'package:snippets/pages/responses_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
 
-import '../helper/helper_function.dart';
-import '../pages/question_page.dart';
 import 'helper_functions.dart';
 
 class SnippetTile extends StatefulWidget {
@@ -84,8 +82,8 @@ class _SnippetTileState extends State<SnippetTile> {
           },
           trailing: IconButton(
             icon: !widget.isAnswered
-                ? Icon(Icons.send)
-                : Icon(Icons.arrow_forward_ios),
+                ? const Icon(Icons.send)
+                : const Icon(Icons.arrow_forward_ios),
             onPressed: () async {
               // show options
               if (!widget.isAnswered) {

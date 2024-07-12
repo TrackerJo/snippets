@@ -1,10 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:async/async.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:phone_input/phone_input_package.dart';
 
 import '../helper/helper_function.dart';
@@ -341,7 +338,7 @@ class Database {
     Stream snapshot = userCollection
         .where("searchKey", isGreaterThanOrEqualTo: search.toLowerCase())
         .where("searchKey",
-            isLessThanOrEqualTo: search.toLowerCase() + "\uf8ff")
+            isLessThanOrEqualTo: "${search.toLowerCase()}\uf8ff")
         .snapshots();
 
     return snapshot;

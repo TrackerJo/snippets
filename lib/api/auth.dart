@@ -76,7 +76,7 @@ class Auth {
   }
 
   void listenToAuthState() {
-    StreamSubscription stream = Stream.empty().listen((event) {});
+    StreamSubscription stream = const Stream.empty().listen((event) {});
     if (FirebaseAuth.instance.currentUser != null) {
       stream = Database(uid: FirebaseAuth.instance.currentUser!.uid)
           .userDataStream();

@@ -1,20 +1,12 @@
-import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:snippets/api/notifications.dart';
 import 'package:snippets/helper/helper_function.dart';
-import 'package:snippets/pages/responses_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
-import 'package:snippets/templates/input_decoration.dart';
 import 'package:snippets/widgets/background_tile.dart';
-import 'package:snippets/widgets/comment_tile.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
-import 'package:snippets/widgets/custom_page_route.dart';
-import 'package:snippets/widgets/helper_functions.dart';
 import 'package:snippets/widgets/message_tile.dart';
 import 'package:snippets/widgets/response_tile.dart';
 
@@ -32,7 +24,7 @@ class DiscussionPage extends StatefulWidget {
 }
 
 class _DiscussionPageState extends State<DiscussionPage> {
-  ResponseTile displayTile = ResponseTile(
+  ResponseTile displayTile = const ResponseTile(
     displayName: "",
     snippetId: "",
     response: "",
@@ -42,7 +34,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
     discussionUsers: [],
   );
 
-  ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
   Stream<QuerySnapshot>? chats;
   TextEditingController messageController = TextEditingController();
   String displayName = "";
@@ -96,7 +88,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
       },
       child: Scaffold(
         appBar: PreferredSize(
-          preferredSize: Size.fromHeight(kToolbarHeight),
+          preferredSize: const Size.fromHeight(kToolbarHeight),
           child: CustomAppBar(
             title: "Discussion",
             showBackButton: true,
@@ -124,7 +116,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
               Expanded(
                 child: TextFormField(
                   controller: messageController,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                   ),
                   decoration: const InputDecoration(
@@ -167,7 +159,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
         backgroundColor: ColorSys.background,
         body: Stack(
           children: [
-            BackgroundTile(),
+            const BackgroundTile(),
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -195,7 +187,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
                             children: [
                               Text(
                                 displayTile.displayName,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -203,16 +195,16 @@ class _DiscussionPageState extends State<DiscussionPage> {
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                "Q: " + displayTile.question,
-                                style: TextStyle(
+                                "Q: ${displayTile.question}",
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,
                                 ),
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                "A: " + displayTile.response,
-                                style: TextStyle(
+                                "A: ${displayTile.response}",
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,
                                 ),
@@ -380,11 +372,11 @@ class _DiscussionPageState extends State<DiscussionPage> {
 
   List<String> getDiscussionUsersFCMToken(List<dynamic> users) {
     List<String> FCMToken = [];
-    users.forEach((element) {
+    for (var element in users) {
       if (element['userId'] != FirebaseAuth.instance.currentUser!.uid) {
         FCMToken.add(element['FCMToken']);
       }
-    });
+    }
     return FCMToken;
   }
 }

@@ -4,7 +4,6 @@ import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:snippets/api/auth.dart';
 import 'package:snippets/pages/create_account_page.dart';
 import 'package:snippets/pages/home_page.dart';
-import 'package:snippets/pages/onboarding_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
 
@@ -72,7 +71,7 @@ class _WelcomePageState extends State<WelcomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF232323),
+      backgroundColor: const Color(0xFF232323),
       body: SingleChildScrollView(
           child: Padding(
               padding:
@@ -168,9 +167,9 @@ class _WelcomePageState extends State<WelcomePage> {
                                 },
                               )),
                       const SizedBox(height: 10),
-                      Row(children: <Widget>[
+                      const Row(children: <Widget>[
                         Expanded(child: Divider(color: Colors.white)),
-                        const Padding(
+                        Padding(
                             padding: EdgeInsets.symmetric(horizontal: 10),
                             child: Text("OR",
                                 style: TextStyle(color: Colors.white))),
@@ -187,7 +186,7 @@ class _WelcomePageState extends State<WelcomePage> {
                       const SizedBox(height: 10),
                       Text.rich(TextSpan(
                           text: "Don't have an account? ",
-                          style: TextStyle(color: Colors.white),
+                          style: const TextStyle(color: Colors.white),
                           children: [
                             TextSpan(
                                 text: "Register here",

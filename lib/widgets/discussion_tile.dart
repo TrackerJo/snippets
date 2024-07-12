@@ -47,15 +47,15 @@ class DiscussionTile extends StatelessWidget {
                 ),
               ),
               child: ListTile(
-                  title: Text(answerUser + " - " + question,
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(lastMessageSender + ": " + lastMessage),
+                  title: Text("$answerUser - $question",
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text("$lastMessageSender: $lastMessage"),
                   onTap: () {
                     // navigate to discussion page
                     nextScreen(
                         context,
                         DiscussionPage(
-                          responseTile: new ResponseTile(
+                          responseTile: ResponseTile(
                             displayName: answerUser,
                             response: answerResponse,
                             userId: discussionId,
@@ -68,7 +68,7 @@ class DiscussionTile extends StatelessWidget {
                           theme: theme,
                         ));
                   },
-                  trailing: Icon(Icons.arrow_forward_ios),
+                  trailing: const Icon(Icons.arrow_forward_ios),
                   leading: //Make a blue dot
                       !hasBeenRead
                           ? Container(

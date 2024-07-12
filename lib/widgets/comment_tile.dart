@@ -1,10 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:snippets/pages/profile_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 
-import '../api/database.dart';
 import 'helper_functions.dart';
 
 class CommentTile extends StatefulWidget {
@@ -49,16 +47,16 @@ class _CommentTileState extends State<CommentTile> {
   Widget build(BuildContext context) {
     return Material(
       elevation: 10,
-      shadowColor: Color(0xD185FFBD),
+      shadowColor: const Color(0xD185FFBD),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: 350,
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
         decoration: ShapeDecoration(
           gradient: LinearGradient(
-            begin: Alignment(0.00, -1.00),
-            end: Alignment(0, 1),
-            colors: [ColorSys.secondary, Color(0xD185FFBD)],
+            begin: const Alignment(0.00, -1.00),
+            end: const Alignment(0, 1),
+            colors: [ColorSys.secondary, const Color(0xD185FFBD)],
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -88,7 +86,7 @@ class _CommentTileState extends State<CommentTile> {
                         );
                       },
                       child: Text(
-                        widget.displayName + " Commented",
+                        "${widget.displayName} Commented",
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
@@ -105,7 +103,7 @@ class _CommentTileState extends State<CommentTile> {
                   ],
                 ),
               ),
-              Divider(
+              const Divider(
                 thickness: 2,
               ),
               Text(

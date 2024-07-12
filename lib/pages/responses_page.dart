@@ -90,7 +90,7 @@ class _ResponsesPageState extends State<ResponsesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
+        preferredSize: const Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(
           title: "Responses",
           theme: widget.theme,
@@ -103,14 +103,14 @@ class _ResponsesPageState extends State<ResponsesPage> {
       backgroundColor: ColorSys.background,
       body: Stack(
         children: [
-          BackgroundTile(),
+          const BackgroundTile(),
           SizedBox(
             width: MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 responsesList(),
               ],
             ),
@@ -168,7 +168,7 @@ class _ResponsesPageState extends State<ResponsesPage> {
                         }
                         index -= 1;
                         if (snapshot.data.docs[0] == "EMPTY") {
-                          return Center(
+                          return const Center(
                             child: Text("No responses yet"),
                           );
                         }
@@ -212,10 +212,10 @@ class _ResponsesPageState extends State<ResponsesPage> {
                         );
                       }));
             } else {
-              return Center();
+              return const Center();
             }
           } else {
-            return Center();
+            return const Center();
           }
         } else {
           return Center(

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class FriendsCount extends StatelessWidget {
   final bool isCurrentUser;
@@ -28,7 +27,7 @@ class FriendsCount extends StatelessWidget {
               onTap: onMutualFriendsButtonPressed,
               child: Column(
                 children: [
-                  Text("Mutual Friends",
+                  const Text("Mutual Friends",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
@@ -36,7 +35,7 @@ class FriendsCount extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       )),
                   Text(mutualFriends.toString(),
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: Colors.white,
                           fontSize: 20,
                           fontWeight: FontWeight.bold)),
@@ -58,13 +57,13 @@ class FriendsCount extends StatelessWidget {
             onTap: onFriendsButtonPressed,
             child: Column(
               children: [
-                Text("Friends",
+                const Text("Friends",
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.bold)),
                 Text(friends.toString(),
-                    style: TextStyle(
+                    style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.bold)),

@@ -37,11 +37,11 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
+      appBar: const PreferredSize(
         preferredSize: Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(title: 'Welcome to Snippets'),
       ),
-      backgroundColor: Color(0xFF232323),
+      backgroundColor: const Color(0xFF232323),
       body: Stack(
         alignment: Alignment.bottomCenter,
         children: <Widget>[
@@ -75,7 +75,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
             ],
           ),
           Container(
-            margin: EdgeInsets.only(bottom: 40),
+            margin: const EdgeInsets.only(bottom: 40),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: _buildIndicator(),
@@ -88,20 +88,20 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
 
   Widget makePage({image, title, content, lastPage = false}) {
     return Container(
-      padding: EdgeInsets.only(left: 50, right: 50, bottom: 60),
+      padding: const EdgeInsets.only(left: 50, right: 50, bottom: 60),
       child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Image.asset(image),
-              padding: EdgeInsets.symmetric(horizontal: 20),
             ),
             const SizedBox(
               height: 30,
             ),
             Text(title,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                     fontSize: 30,
                     color: Colors.white,
                     fontWeight: FontWeight.bold)),
@@ -110,7 +110,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
             ),
             Text(content,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                     fontSize: 20,
                     color: Colors.grey,
                     fontWeight: FontWeight.w400)),
@@ -128,16 +128,16 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                     },
                   );
                 },
-                child: Text(
-                  'Get Started',
-                  style: TextStyle(color: Colors.white, fontSize: 15),
-                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColorSys.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                ),
+                child: const Text(
+                  'Get Started',
+                  style: TextStyle(color: Colors.white, fontSize: 15),
                 ),
               ),
           ]),
@@ -146,10 +146,10 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
 
   Widget _indicator(bool isActive) {
     return AnimatedContainer(
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       height: 8,
       width: isActive ? 30 : 8,
-      margin: EdgeInsets.only(right: 5),
+      margin: const EdgeInsets.only(right: 5),
       decoration: BoxDecoration(
           color: ColorSys.primary, borderRadius: BorderRadius.circular(5)),
     );
@@ -177,7 +177,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
         height: 300,
         child: Column(
           children: [
-            Text(
+            const Text(
                 "Enter a short description about yourself. This will be visible to other users.",
                 style: TextStyle(color: Colors.white)),
             const SizedBox(
@@ -205,7 +205,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
               ),
             );
           },
-          child: Text("Skip"),
+          child: const Text("Skip"),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
@@ -224,7 +224,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
               ),
             );
           },
-          child: Text("Save", style: TextStyle(color: Colors.white)),
+          child: const Text("Save", style: TextStyle(color: Colors.white)),
         ),
       ],
     );

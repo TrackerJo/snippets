@@ -1,11 +1,9 @@
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:snippets/api/auth.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/pages/discussion_page.dart';
-import 'package:snippets/pages/find_profile_page.dart';
 import 'package:snippets/pages/home_page.dart';
 import 'package:snippets/pages/profile_page.dart';
 import 'package:snippets/pages/question_page.dart';
@@ -14,7 +12,7 @@ import 'package:snippets/widgets/custom_page_route.dart';
 import 'package:snippets/widgets/response_tile.dart';
 
 class PushNotifications {
-  FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   Future<String> getDeviceToken() async {
     String? token = await _firebaseMessaging.getToken();
     return (token != null) ? token : "";
@@ -22,7 +20,7 @@ class PushNotifications {
 
   Future<void> initNotifications() async {
     await _firebaseMessaging.requestPermission();
-    String? fcmToken = await _firebaseMessaging.getToken()!;
+    String? fcmToken = await _firebaseMessaging.getToken();
     print("FCM Token: $fcmToken");
     initPushNotifications();
   }
@@ -47,7 +45,7 @@ class PushNotifications {
       navigatorKey.currentState?.pushAndRemoveUntil(
         CustomPageRoute(
           builder: (BuildContext context) {
-            return HomePage();
+            return const HomePage();
           },
         ),
         (Route<dynamic> route) => false,
@@ -68,7 +66,7 @@ class PushNotifications {
         navigatorKey.currentState?.pushAndRemoveUntil(
           CustomPageRoute(
             builder: (BuildContext context) {
-              return HomePage();
+              return const HomePage();
             },
           ),
           (Route<dynamic> route) => false,

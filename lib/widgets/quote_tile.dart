@@ -1,7 +1,5 @@
-import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class QuoteTile extends StatelessWidget {
   const QuoteTile({super.key});
@@ -19,7 +17,7 @@ class QuoteTile extends StatelessWidget {
             color: Colors.blue,
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Center(
+          child: const Center(
             child: Text(
               'Quote',
               style: TextStyle(

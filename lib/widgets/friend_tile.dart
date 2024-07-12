@@ -50,7 +50,7 @@ class _FriendTileState extends State<FriendTile> {
           },
           title: Text(
             widget.displayName,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.black,
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -58,7 +58,7 @@ class _FriendTileState extends State<FriendTile> {
           ),
           subtitle: Text(
             '@${widget.username}',
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.black,
               fontSize: 15,
               fontWeight: FontWeight.w400,
@@ -70,21 +70,21 @@ class _FriendTileState extends State<FriendTile> {
             children: [
               if (widget.showCheck)
                 IconButton(
-                  icon: Icon(Icons.check),
+                  icon: const Icon(Icons.check),
                   onPressed: () {
                     widget.onCheckPressed!();
                   },
                 ),
               if (widget.showX)
                 IconButton(
-                  icon: Icon(Icons.close),
+                  icon: const Icon(Icons.close),
                   onPressed: () {
                     widget.onXPressed!();
                   },
                 ),
               if (!widget.showX && !widget.showCheck)
                 IconButton(
-                  icon: Icon(Icons.arrow_forward_ios),
+                  icon: const Icon(Icons.arrow_forward_ios),
                   onPressed: () {
                     nextScreen(
                         context,

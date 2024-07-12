@@ -46,7 +46,7 @@ class _QuestionPageState extends State<QuestionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
+        preferredSize: const Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(
           title: widget.question,
           theme: widget.theme,
@@ -56,10 +56,10 @@ class _QuestionPageState extends State<QuestionPage> {
           },
         ),
       ),
-      backgroundColor: Color(0xFF232323),
+      backgroundColor: const Color(0xFF232323),
       body: Stack(
         children: [
-          BackgroundTile(),
+          const BackgroundTile(),
           SizedBox(
             width: MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height - 200,
@@ -87,13 +87,11 @@ class _QuestionPageState extends State<QuestionPage> {
                     },
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () => {
                     submitAnswer(),
                   },
-                  child: Text('Submit',
-                      style: TextStyle(fontSize: 20, color: Colors.black)),
                   style: ElevatedButton.styleFrom(
                     elevation: 10,
                     shadowColor: widget.theme == "sunset"
@@ -103,7 +101,7 @@ class _QuestionPageState extends State<QuestionPage> {
                             : widget.theme == "blue"
                                 ? ColorSys.secondarySolid
                                 : ColorSys.primarySolid,
-                    minimumSize: Size(150, 50),
+                    minimumSize: const Size(150, 50),
                     backgroundColor: widget.theme == "sunset"
                         ? ColorSys.sunset
                         : widget.theme == "sunrise"
@@ -115,6 +113,8 @@ class _QuestionPageState extends State<QuestionPage> {
                       borderRadius: BorderRadius.circular(20.0),
                     ),
                   ),
+                  child: const Text('Submit',
+                      style: TextStyle(fontSize: 20, color: Colors.black)),
                 ),
               ],
             ),

@@ -1,11 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:snippets/pages/discussion_page.dart';
 import 'package:snippets/pages/profile_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 
-import '../api/database.dart';
 import 'helper_functions.dart';
 
 class ResponseTile extends StatefulWidget {
@@ -112,7 +110,7 @@ class _ResponseTileState extends State<ResponseTile> {
                         child: Expanded(
                           child: Text(
                             widget.isDisplayOnly
-                                ? widget.displayName + "'s Response"
+                                ? "${widget.displayName}'s Response"
                                 : widget.displayName,
                             style: const TextStyle(
                               fontSize: 15,
@@ -132,7 +130,7 @@ class _ResponseTileState extends State<ResponseTile> {
                   ],
                 ),
               ),
-              Divider(
+              const Divider(
                 thickness: 2,
               ),
               Text(
@@ -146,7 +144,6 @@ class _ResponseTileState extends State<ResponseTile> {
                 Row(
                   children: [
                     ElevatedButton(
-                      child: const Text("Open Discussion"),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: widget.theme == "sunset"
                             ? ColorSys.sunset
@@ -168,6 +165,7 @@ class _ResponseTileState extends State<ResponseTile> {
                               theme: widget.theme,
                             ));
                       },
+                      child: const Text("Open Discussion"),
                     ),
 
                     // IconButton(
