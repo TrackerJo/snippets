@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:snippets/api/database.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
@@ -46,6 +47,9 @@ class _FindProfilePageState extends State<FindProfilePage> {
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: TextFormField(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                        },
                         decoration: textInputDecoration.copyWith(
                           hintText: "Enter Profile Name",
                           fillColor: const Color.fromARGB(255, 156, 225, 255),

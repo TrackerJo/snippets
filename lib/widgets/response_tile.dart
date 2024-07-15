@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:snippets/pages/discussion_page.dart';
 import 'package:snippets/pages/profile_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
@@ -157,6 +158,7 @@ class _ResponseTileState extends State<ResponseTile> {
                       ),
                       onPressed: () {
                         if (widget.isDisplayOnly) return;
+                        HapticFeedback.mediumImpact();
                         nextScreen(
                             context,
                             DiscussionPage(

@@ -168,65 +168,70 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
   }
 
   Widget showDiscriptionPopup() {
-    return AlertDialog(
-      backgroundColor: ColorSys.background,
-      title: Text("Profile's Description",
-          style: TextStyle(color: ColorSys.primary)),
-      content: SizedBox(
-        width: 300,
-        height: 300,
-        child: Column(
-          children: [
-            const Text(
-                "Enter a short description about yourself. This will be visible to other users.",
-                style: TextStyle(color: Colors.white)),
-            const SizedBox(
-              height: 20,
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: SingleChildScrollView(
+        child: AlertDialog(
+          backgroundColor: ColorSys.background,
+          title: Text("Profile's Description",
+              style: TextStyle(color: ColorSys.primary)),
+          content: SizedBox(
+            width: 300,
+            height: 300,
+            child: Column(
+              children: [
+                const Text(
+                    "Enter a short description about yourself. This will be visible to other users.",
+                    style: TextStyle(color: Colors.white)),
+                const SizedBox(
+                  height: 20,
+                ),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 7,
+                  decoration: textInputDecoration.copyWith(
+                    hintText: 'Description',
+                  ),
+                ),
+              ],
             ),
-            TextField(
-              controller: descriptionController,
-              maxLines: 7,
-              decoration: textInputDecoration.copyWith(
-                hintText: 'Description',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushReplacement(
+                  CustomPageRoute(
+                    builder: (BuildContext context) {
+                      return const HomePage();
+                    },
+                  ),
+                );
+              },
+              child: const Text("Skip"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorSys.primary,
               ),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+                    .updateUserDescription(descriptionController.text);
+        
+                Navigator.of(context).pushReplacement(
+                  CustomPageRoute(
+                    builder: (BuildContext context) {
+                      return const HomePage();
+                    },
+                  ),
+                );
+              },
+              child: const Text("Save", style: TextStyle(color: Colors.white)),
             ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-            Navigator.of(context).pushReplacement(
-              CustomPageRoute(
-                builder: (BuildContext context) {
-                  return const HomePage();
-                },
-              ),
-            );
-          },
-          child: const Text("Skip"),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: ColorSys.primary,
-          ),
-          onPressed: () async {
-            Navigator.of(context).pop();
-            await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-                .updateUserDescription(descriptionController.text);
-
-            Navigator.of(context).pushReplacement(
-              CustomPageRoute(
-                builder: (BuildContext context) {
-                  return const HomePage();
-                },
-              ),
-            );
-          },
-          child: const Text("Save", style: TextStyle(color: Colors.white)),
-        ),
-      ],
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:snippets/api/database.dart';
 import 'package:snippets/pages/responses_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
@@ -71,6 +72,7 @@ class _SnippetTileState extends State<SnippetTile> {
               {}
             else
               {
+                HapticFeedback.mediumImpact(),
                 nextScreen(
                   context,
                   ResponsesPage(
@@ -94,7 +96,7 @@ class _SnippetTileState extends State<SnippetTile> {
                     .submitAnswer(widget.snippetId, answerController.text, widget.question, widget.theme);
                 // Navigator.of(context).pop();
                 //Go to responses page
-
+                HapticFeedback.mediumImpact();
                 nextScreen(
                     context,
                     ResponsesPage(
@@ -106,6 +108,7 @@ class _SnippetTileState extends State<SnippetTile> {
                         question: widget.question,
                         theme: widget.theme));
               } else {
+                HapticFeedback.mediumImpact();
                 nextScreen(
                   context,
                   ResponsesPage(

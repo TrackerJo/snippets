@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:snippets/pages/profile_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/widgets/helper_functions.dart';
@@ -31,6 +32,7 @@ class _ProfileTileState extends State<ProfileTile> {
             borderRadius: BorderRadius.circular(12),
           ),
           onTap: () {
+            HapticFeedback.mediumImpact();
             nextScreen(
                 context,
                 ProfilePage(
@@ -57,6 +59,7 @@ class _ProfileTileState extends State<ProfileTile> {
           trailing: IconButton(
             icon: const Icon(Icons.arrow_forward_ios),
             onPressed: () {
+              HapticFeedback.mediumImpact();
               nextScreen(
                   context,
                   ProfilePage(

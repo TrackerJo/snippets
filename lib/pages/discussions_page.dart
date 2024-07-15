@@ -24,6 +24,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
     if (mounted) {
       setState(() {
         discussions = discussions;
+        print(discussions);
       });
     }
   }
@@ -47,30 +48,39 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
         child: CustomNavBar(pageIndex: 3),
       ),
       backgroundColor: const Color(0xFF232323),
-      body: Stack(
-        
+      body: ListView(
         children: [
-          const BackgroundTile(),
-          ListView(
-            children: [
-              const SizedBox(height: 20),
-              for (var discussion in discussions)
-                DiscussionTile(
-                  snippetId: discussion["snippetId"],
-                  discussionId: discussion["answerId"],
-                  question: discussion["snippetQuestion"],
-                  answerUser: discussion["answerUser"],
-                  lastMessageSender: discussion["lastMessage"]
-                      ["senderDisplayName"],
-                  lastMessage: discussion["lastMessage"]["message"],
-                  hasBeenRead: discussion["lastMessage"]["readBy"]
-                      .contains(FirebaseAuth.instance.currentUser!.uid),
-                  theme: discussion["theme"],
-                  answerResponse: discussion["answerResponse"],
-                  discussionUsers: discussion["discussionUsers"],
-                )
-            ],
-          )
+          const SizedBox(height: 20),
+          Center(
+            child: Column(
+              children: [
+                if(discussions == [] || discussions.isEmpty || discussions == null) 
+            Text("No discussions yet", style: TextStyle(color: Colors.white, fontSize: 20)),
+          if(discussions == [] || discussions.isEmpty || discussions == null)
+            SizedBox(height: 20),
+          if(discussions == [] || discussions.isEmpty || discussions == null)
+            Text("Join a discussion by sending a message in a discussion", style: TextStyle(color: Colors.white, fontSize: 20), textAlign: TextAlign.center, ),
+           
+              ],
+            ),
+          ),
+               
+                
+          for (var discussion in discussions)
+            DiscussionTile(
+              snippetId: discussion["snippetId"],
+              discussionId: discussion["answerId"],
+              question: discussion["snippetQuestion"],
+              answerUser: discussion["answerUser"],
+              lastMessageSender: discussion["lastMessage"]
+                  ["senderDisplayName"],
+              lastMessage: discussion["lastMessage"]["message"],
+              hasBeenRead: discussion["lastMessage"]["readBy"]
+                  .contains(FirebaseAuth.instance.currentUser!.uid),
+              theme: discussion["theme"],
+              answerResponse: discussion["answerResponse"],
+              discussionUsers: discussion["discussionUsers"],
+            )
         ],
       ),
     );

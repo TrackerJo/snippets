@@ -295,243 +295,257 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: CustomAppBar(
-          title: isCurrentUser ? "Your Profile" : "$displayName ",
-          showBackButton: widget.showBackButton,
-          onBackButtonPressed: () {
-            
-            Navigator.of(context).pop();
-          },
-          showSettingsButton: isCurrentUser,
-          onSettingsButtonPressed: () {
-            showModalBottomSheet<void>(
-                context: context,
-                backgroundColor: ColorSys.background,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(23),
-                    topRight: Radius.circular(23),
+    return GestureDetector(
+       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: CustomAppBar(
+            title: isCurrentUser ? "Your Profile" : "$displayName ",
+            showBackButton: widget.showBackButton,
+            onBackButtonPressed: () {
+              
+              Navigator.of(context).pop();
+            },
+            showSettingsButton: isCurrentUser,
+            onSettingsButtonPressed: () {
+              showModalBottomSheet<void>(
+                  context: context,
+                  backgroundColor: ColorSys.background,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(23),
+                      topRight: Radius.circular(23),
+                    ),
                   ),
-                ),
-                builder: (BuildContext context) {
-                  return SizedBox(
-                      height: 200,
-                      child: Padding(
-                          padding: const EdgeInsets.all(32.0),
-                          child: Column(
-                            children: [
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                    onPressed: () {
-                                      HapticFeedback.mediumImpact();
-                                      print("Log Out");
-                                      logout();
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                        backgroundColor: ColorSys.primarySolid,
-                                        elevation: 10,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12)),
-                                        shadowColor: ColorSys.primary),
-                                    child: const Text("Log Out",
-                                        style: TextStyle(
-                                            color: Colors.white, fontSize: 15))),
-                              ),
-                              const SizedBox(height: 20),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                    onPressed: () {
-                                      HapticFeedback.mediumImpact();
-                                      descriptionController.text =
-                                          profileData["description"];
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return showDiscriptionPopup();
-                                        },
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                        backgroundColor: ColorSys.primarySolid,
-                                        elevation: 10,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12)),
-                                        shadowColor: ColorSys.primary),
-                                    child: const Text("Edit Description",
-                                        style: TextStyle(
-                                            color: Colors.white, fontSize: 15))),
-                              ),
-                            ],
-                          )));
-                });
-          },
+                  builder: (BuildContext context) {
+                    return SizedBox(
+                        height: 200,
+                        child: Padding(
+                            padding: const EdgeInsets.all(32.0),
+                            child: Column(
+                              children: [
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                      onPressed: () {
+                                        HapticFeedback.mediumImpact();
+                                        print("Log Out");
+                                        logout();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: ColorSys.primarySolid,
+                                          elevation: 10,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12)),
+                                          shadowColor: ColorSys.primary),
+                                      child: const Text("Log Out",
+                                          style: TextStyle(
+                                              color: Colors.white, fontSize: 15))),
+                                ),
+                                const SizedBox(height: 20),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                      onPressed: () {
+                                        HapticFeedback.mediumImpact();
+                                        descriptionController.text =
+                                            profileData["description"];
+                                        showDiscriptionPopup(context);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: ColorSys.primarySolid,
+                                          elevation: 10,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12)),
+                                          shadowColor: ColorSys.primary),
+                                      child: const Text("Edit Description",
+                                          style: TextStyle(
+                                              color: Colors.white, fontSize: 15))),
+                                ),
+                              ],
+                            )));
+                  });
+            },
+          ),
         ),
-      ),
-      bottomNavigationBar: widget.showNavBar
-          ? const PreferredSize(
-              preferredSize: Size.fromHeight(kToolbarHeight),
-              child: CustomNavBar(pageIndex: 0),
-            )
-          : null,
-      backgroundColor: const Color(0xFF232323),
-      body: gotData ? Stack(
-        children: [
-          const BackgroundTile(),
-          Column(
-            children: [
-              const SizedBox(height: 20),
-              Column(
-                children: [
-                  if(profileData["description"] != null && profileData["description"] != "")
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width - 100,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        //Write three sentences of filler text here
-                        profileData["description"] ?? "",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
+        bottomNavigationBar: widget.showNavBar
+            ? const PreferredSize(
+                preferredSize: Size.fromHeight(kToolbarHeight),
+                child: CustomNavBar(pageIndex: 0),
+              )
+            : null,
+        backgroundColor: const Color(0xFF232323),
+        body: gotData ? Stack(
+          children: [
+            const BackgroundTile(),
+            Column(
+              children: [
+                const SizedBox(height: 20),
+                Column(
+                  children: [
+                    if(profileData["description"] != null && profileData["description"] != "")
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width - 100,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          //Write three sentences of filler text here
+                          profileData["description"] ?? "",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  if(profileData["description"] != null && profileData["description"] != "")
-                  const SizedBox(height: 20),
-                  FriendsCount(
-                    isCurrentUser: isCurrentUser,
-                    friends: numberOfFriends,
-                    mutualFriends: numberOfMutualFriends,
-                    onFriendsButtonPressed: showFriendsPopup,
-                    onMutualFriendsButtonPressed: showMutualFriendsPopup,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              if (!isCurrentUser)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    isLoading ?  const CircularProgressIndicator() 
-                    : SizedBox(
-                      width: 250,
-                      child: ElevatedButton(
-                          onPressed: () async {
-                            setState(() {
-                              isLoading = true;
-                            });
-                            HapticFeedback.mediumImpact();
-                            if (isFriends) {
-                              await removeFriend();
-                            } else {
-                              if (hasFriendRequest) {
-                                await acceptFriendRequest();
-                                setState(() {
-                                  isLoading = false;
-                                });
-                                return;
-                              }
-                              if (sentFriendRequest) {
-                                await cancelFriendRequest();
-                                setState(() {
-                                  isLoading = false;
-                                });
-                                return;
-                              }
-
-                              await sendFriendRequest();
-                            }
-                            setState(() {
-                              isLoading = false;
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isFriends ||
-                                    sentFriendRequest ||
-                                    hasFriendRequest
-                                ? Colors.transparent
-                                : ColorSys.primary,
-                            elevation: 10,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                                side: BorderSide(
-                                    color: ColorSys.primarySolid, width: 2)),
-                          ),
-                          child: Text(isFriends
-                              ? "Unfriend"
-                              : hasFriendRequest
-                                  ? "Accept Friend Request"
-                                  : sentFriendRequest
-                                      ? "Friend Request Sent"
-                                      : "Add Friend")),
-                    )
+                    if(profileData["description"] != null && profileData["description"] != "")
+                    const SizedBox(height: 20),
+                    FriendsCount(
+                      isCurrentUser: isCurrentUser,
+                      friends: numberOfFriends,
+                      mutualFriends: numberOfMutualFriends,
+                      onFriendsButtonPressed: showFriendsPopup,
+                      onMutualFriendsButtonPressed: showMutualFriendsPopup,
+                    ),
                   ],
                 ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ],
-      ) : const SizedBox(),
+                const SizedBox(height: 20),
+                if (!isCurrentUser)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      isLoading ?  const CircularProgressIndicator() 
+                      : SizedBox(
+                        width: 250,
+                        child: ElevatedButton(
+                            onPressed: () async {
+                              setState(() {
+                                isLoading = true;
+                              });
+                              HapticFeedback.mediumImpact();
+                              if (isFriends) {
+                                await removeFriend();
+                              } else {
+                                if (hasFriendRequest) {
+                                  await acceptFriendRequest();
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                  return;
+                                }
+                                if (sentFriendRequest) {
+                                  await cancelFriendRequest();
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                  return;
+                                }
+      
+                                await sendFriendRequest();
+                              }
+                              setState(() {
+                                isLoading = false;
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isFriends ||
+                                      sentFriendRequest ||
+                                      hasFriendRequest
+                                  ? Colors.transparent
+                                  : ColorSys.primary,
+                              elevation: 10,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                  side: BorderSide(
+                                      color: ColorSys.primarySolid, width: 2)),
+                            ),
+                            child: Text(isFriends
+                                ? "Unfriend"
+                                : hasFriendRequest
+                                    ? "Accept Friend Request"
+                                    : sentFriendRequest
+                                        ? "Friend Request Sent"
+                                        : "Add Friend")),
+                      )
+                    ],
+                  ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ],
+        ) : const SizedBox(),
+      ),
     );
   }
 
-  Widget showDiscriptionPopup() {
-    return AlertDialog(
-      backgroundColor: ColorSys.background,
-      title: Text("Profile's Description",
-          style: TextStyle(color: ColorSys.primary)),
-      content: SizedBox(
-        width: 300,
-        height: 300,
-        child: Column(
-          children: [
-            const Text(
-                "Enter a short description about yourself. This will be visible to other users.",
-                style: TextStyle(color: Colors.white)),
-            const SizedBox(
-              height: 20,
-            ),
-            TextField(
-              controller: descriptionController,
-              maxLines: 7,
-              decoration: textInputDecoration.copyWith(
-                hintText: 'Description',
+  showDiscriptionPopup(BuildContext context) {
+    return showDialog(
+      context: context,
+
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+
+      return GestureDetector(
+         onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: SingleChildScrollView(
+          
+          child: AlertDialog(
+            backgroundColor: ColorSys.background,
+            
+            title: Text("Profile's Description",
+                style: TextStyle(color: ColorSys.primary)),
+            content: SizedBox(
+              width: 300,
+              height: 300,
+              child: Column(
+                children: [
+                  const Text(
+                      "Enter a short description about yourself. This will be visible to other users.",
+                      style: TextStyle(color: Colors.white)),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  TextField(
+                    controller: descriptionController,
+                    maxLines: 7,
+                    decoration: textInputDecoration.copyWith(
+                      hintText: 'Description',
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: const Text("Cancel"),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: ColorSys.primary,
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorSys.primary,
+                ),
+                onPressed: () async {
+                  setState(() {
+                    profileData["description"] = descriptionController.text;
+                  });
+          
+                  await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+                      .updateUserDescription(descriptionController.text);
+                  Navigator.of(context).pop();
+                },
+                child: const Text("Save", style: TextStyle(color: Colors.white)),
+              ),
+            ],
           ),
-          onPressed: () async {
-            setState(() {
-              profileData["description"] = descriptionController.text;
-            });
-
-            await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-                .updateUserDescription(descriptionController.text);
-            Navigator.of(context).pop();
-          },
-          child: const Text("Save", style: TextStyle(color: Colors.white)),
         ),
-      ],
+      );
+      }
     );
   }
 }
