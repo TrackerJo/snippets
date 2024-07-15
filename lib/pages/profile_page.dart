@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:snippets/api/database.dart';
 import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/main.dart';
 import 'package:snippets/pages/welcome_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
@@ -45,6 +48,7 @@ class _ProfilePageState extends State<ProfilePage> {
   int numberOfMutualFriends = 0;
   Map<String, dynamic> profileData = {};
   List<Map<String, dynamic>> mutualFriends = [];
+  StreamSubscription userStreamSub = const Stream.empty().listen((event) {});
 
   TextEditingController descriptionController = TextEditingController();
 
@@ -52,6 +56,13 @@ class _ProfilePageState extends State<ProfilePage> {
     String userDisplayName = "";
     bool currentUser = false;
     if (widget.uid == "") {
+      userStreamSub = userStreamController.stream.listen((event) {
+        setState(() {
+          profileData = event;
+          numberOfFriends = profileData["friends"].length;
+          userDisplayName = profileData["fullname"];
+        });
+      });
       userDisplayName = (await HelperFunctions.getUserDisplayNameFromSF())!;
       currentUser = true;
       Map<String, dynamic> viewerData =
@@ -62,6 +73,13 @@ class _ProfilePageState extends State<ProfilePage> {
       });
     } else if (widget.uid == FirebaseAuth.instance.currentUser!.uid) {
       currentUser = true;
+      userStreamSub = userStreamController.stream.listen((event) {
+        setState(() {
+          profileData = event;
+          numberOfFriends = profileData["friends"].length;
+          userDisplayName = profileData["fullname"];
+        });
+      });
       Map<String, dynamic> viewerData =
           (await HelperFunctions.getUserDataFromSF());
       setState(() {
@@ -164,6 +182,13 @@ class _ProfilePageState extends State<ProfilePage> {
         },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    userStreamSub.cancel();
   }
 
   void showFriendsPopup() {

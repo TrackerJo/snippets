@@ -1,8 +1,11 @@
 
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/main.dart';
 import 'package:snippets/pages/friends_page.dart';
 import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/custom_nav_bar.dart';
@@ -24,8 +27,18 @@ class _HomePageState extends State<HomePage> {
   Map<String, dynamic>? userData;
   String friendsView = "friends";
   bool hasFriendRequests = false;
+  StreamSubscription userStreamSub = const Stream.empty().listen((event) {});
 
   getUserData() async {
+    userStreamSub = userStreamController.stream.listen((event) {
+      setState(() {
+        userData = event;
+        hasFriendRequests = userData!["friendRequests"].length > 0;
+      });
+    });
+      //Get document
+      
+
     userData = await HelperFunctions.getUserDataFromSF();
     //Check if user has friend requests
     if (userData!["friendRequests"].length > 0) {
@@ -68,6 +81,12 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     getCurrentSnippets();
     getUserData();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    userStreamSub.cancel();
   }
 
   String calculateTimeLeft(String endTime) {
