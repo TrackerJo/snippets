@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:snippets/api/database.dart';
 import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/main.dart';
+import 'package:snippets/pages/profile_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
 import 'package:snippets/widgets/friend_tile.dart';
@@ -22,18 +24,40 @@ class _FriendsPageState extends State<FriendsPage> {
   List<Map<String, dynamic>> outgoingRequests = [];
   int numberOfRequests = 0;
 
+  Stream? userDataStream;
+  StreamSubscription userStreamSub = const Stream.empty().listen((event) {});
+
   Future getData() async {
     // Get friends
+    print("Getting friends");
+    userStreamSub = userStreamController.stream.listen((event) {
+      //Get document
+      print("Got data");
+      print(event);
+      Map<String, dynamic> userData = event as Map<String, dynamic>;
+      print(userData);
+      List<Map<String, dynamic>> friends = dynamicToMap(userData["friends"]);
+      List<Map<String, dynamic>> friendRequests =
+          dynamicToMap(userData["friendRequests"]);
+      List<Map<String, dynamic>> outgoingRequests =
+          dynamicToMap(userData["outgoingRequests"]);
+      setState(() {
+        
+        this.friends = friends;
+        this.friendRequests = friendRequests;
+        this.outgoingRequests = outgoingRequests;
+        numberOfRequests = friendRequests.length;
+      });
+
+    });
     Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-    // print("userData");
-    List<Map<String, dynamic>> friends = dynamicToMap(userData["friends"]);
-    List<Map<String, dynamic>> friendRequests =
-        dynamicToMap(userData["friendRequests"]);
-    List<Map<String, dynamic>> outgoingRequests =
-        dynamicToMap(userData["outgoingRequests"]);
-    // Get friend requests
-    // Get outgoing requests
+      List<Map<String, dynamic>> friends = dynamicToMap(userData["friends"]);
+      List<Map<String, dynamic>> friendRequests =
+          dynamicToMap(userData["friendRequests"]);
+      List<Map<String, dynamic>> outgoingRequests =
+          dynamicToMap(userData["outgoingRequests"]);
     setState(() {
+      
       this.friends = friends;
       this.friendRequests = friendRequests;
       this.outgoingRequests = outgoingRequests;
@@ -54,6 +78,13 @@ class _FriendsPageState extends State<FriendsPage> {
     // TODO: implement initState
     super.initState();
     getData();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    userStreamSub.cancel();
   }
 
   @override
@@ -243,6 +274,7 @@ class _FriendsPageState extends State<FriendsPage> {
             displayName: friends[index]["displayName"],
             username: friends[index]["username"],
             uid: friends[index]["userId"],
+
           ),
         );
       },
@@ -268,16 +300,7 @@ class _FriendsPageState extends State<FriendsPage> {
                       friendRequests[index]["displayName"],
                       friendRequests[index]["username"],
                       friendRequests[index]["FCMToken"]);
-              setState(() {
-                friends.add({
-                  "displayName": friendRequests[index]["displayName"],
-                  "username": friendRequests[index]["username"],
-                  "userId": friendRequests[index]["userId"]
-                });
-                numberOfRequests--;
-                friendRequests.removeWhere((element) =>
-                    element["userId"] == friendRequests[index]["userId"]);
-              });
+             
               //Refresh friend requests
             },
             onXPressed: () async {
@@ -287,11 +310,7 @@ class _FriendsPageState extends State<FriendsPage> {
                       friendRequests[index]["FCMToken"],
                       friendRequests[index]["displayName"],
                       friendRequests[index]["username"]);
-              setState(() {
-                numberOfRequests--;
-                friendRequests.removeWhere((element) =>
-                    element["userId"] == friendRequests[index]["userId"]);
-              });
+              
               //Refresh friend requests
             },
           ),
@@ -317,7 +336,8 @@ class _FriendsPageState extends State<FriendsPage> {
                   .cancelFriendRequest(
                       outgoingRequests[index]["userId"],
                       outgoingRequests[index]["displayName"],
-                      outgoingRequests[index]["username"]);
+                      outgoingRequests[index]["username"],
+                      outgoingRequests[index]["FCMToken"]);
               setState(() {
                 outgoingRequests.removeWhere((element) =>
                     element["userId"] ==

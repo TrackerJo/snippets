@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:snippets/api/database.dart';
 import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
@@ -47,6 +48,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
       ),
       backgroundColor: const Color(0xFF232323),
       body: Stack(
+        
         children: [
           const BackgroundTile(),
           ListView(

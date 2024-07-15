@@ -75,11 +75,11 @@ class Auth {
     return user != null;
   }
 
-  void listenToAuthState() {
+  void listenToAuthState(StreamController streamController) {
     StreamSubscription stream = const Stream.empty().listen((event) {});
     if (FirebaseAuth.instance.currentUser != null) {
       stream = Database(uid: FirebaseAuth.instance.currentUser!.uid)
-          .userDataStream();
+          .userDataStream(streamController);
     }
 
     _auth.authStateChanges().listen((User? user) {
@@ -89,7 +89,7 @@ class Auth {
       } else {
         print("Starting");
         stream = Database(uid: FirebaseAuth.instance.currentUser!.uid)
-            .userDataStream();
+            .userDataStream(streamController);
       }
     });
   }

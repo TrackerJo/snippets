@@ -91,71 +91,72 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: CustomAppBar(
-            title: 'Snippets',
-            showFriendsButton: true,
-            onFriendsButtonPressed: () {
-              nextScreen(context, const FriendsPage());
-            },
-            hasFriendRequests: hasFriendRequests,
-          ),
-        ),
-        bottomNavigationBar: const PreferredSize(
-          preferredSize: Size.fromHeight(kToolbarHeight),
-          child: CustomNavBar(pageIndex: 1),
-        ),
-        backgroundColor: const Color(0xFF232323),
-        body: Stack(
-          children: [
-            const BackgroundTile(),
-            Column(
-              // mainAxisSize: MainAxisSize.max,
-              children: [
-                const SizedBox(height: 20),
-                // ElevatedButton(
-                //   onPressed: () async {
-                //     var url = Uri.https(
-                //         'us-central1-snippets2024.cloudfunctions.net',
-                //         '/sendDiscussionNotifications');
-                //     var snippetId = "NK7CwyZi0YlyGCX5VTdz";
-                //     var responseId = "r8mcsQblJVcvjTQsvzHUkJHW8MJ3";
-                //     var snippetQuestion = "Favorite Breakfast?";
-                //     var responseName = "Jake Nash";
-                //     var senderName = "Bill Kemme";
-                //     var message = "I love pancakes!";
-                //     var targetIds = [
-                //       "fJBU2wkmSpOq2ncRPqddqI:APA91bG6Br4xor46lU-1FyMh-HkGQmoBobYB_cSyh5_ByqVW9-n9ks3qLXrgj8mhafQ2eK7X5o9tEEpl_-cI0H4z85GiaIX_vmAvtz3PS07gp1z6-f73Ex_CDdFKEMsXugjCKaCxSKTl"
-                //     ];
-                //     try {
-                //       HttpsCallableResult result = await FirebaseFunctions
-                //           .instance
-                //           .httpsCallable('sendDiscussionNotificationsCall')
-                //           .call({
-                //         "snippetId": snippetId,
-                //         "responseId": responseId,
-                //         "snippetQuestion": snippetQuestion,
-                //         "responseName": responseName,
-                //         "senderName": senderName,
-                //         "message": message,
-                //         "targetIds": targetIds,
-                //         "response": "widget.responseTile.response",
-                //         "theme": "widget.theme",
-                //       });
-                //       print(result.data);
-                //     } catch (e) {
-                //       print(e);
-                //     }
-                //   },
-                //   child: Text("Send notification via API"),
-                // ),
-                snippetsList(),
-              ],
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
+            child: CustomAppBar(
+              title: 'Snippets',
+              showFriendsButton: true,
+              onFriendsButtonPressed: () {
+                nextScreen(context, const FriendsPage());
+              },
+              hasFriendRequests: hasFriendRequests,
             ),
-          ],
-        ));
+          ),
+          bottomNavigationBar: const PreferredSize(
+            preferredSize: Size.fromHeight(kToolbarHeight),
+            child: CustomNavBar(pageIndex: 1),
+          ),
+          backgroundColor: const Color(0xFF232323),
+          body:
+              Column(
+                // mainAxisSize: MainAxisSize.max,
+                children: [
+                  const SizedBox(height: 20),
+                  // ElevatedButton(
+                  //   onPressed: () async {
+                  //     var url = Uri.https(
+                  //         'us-central1-snippets2024.cloudfunctions.net',
+                  //         '/sendDiscussionNotifications');
+                  //     var snippetId = "NK7CwyZi0YlyGCX5VTdz";
+                  //     var responseId = "r8mcsQblJVcvjTQsvzHUkJHW8MJ3";
+                  //     var snippetQuestion = "Favorite Breakfast?";
+                  //     var responseName = "Jake Nash";
+                  //     var senderName = "Bill Kemme";
+                  //     var message = "I love pancakes!";
+                  //     var targetIds = [
+                  //       "fJBU2wkmSpOq2ncRPqddqI:APA91bG6Br4xor46lU-1FyMh-HkGQmoBobYB_cSyh5_ByqVW9-n9ks3qLXrgj8mhafQ2eK7X5o9tEEpl_-cI0H4z85GiaIX_vmAvtz3PS07gp1z6-f73Ex_CDdFKEMsXugjCKaCxSKTl"
+                  //     ];
+                  //     try {
+                  //       HttpsCallableResult result = await FirebaseFunctions
+                  //           .instance
+                  //           .httpsCallable('sendDiscussionNotificationsCall')
+                  //           .call({
+                  //         "snippetId": snippetId,
+                  //         "responseId": responseId,
+                  //         "snippetQuestion": snippetQuestion,
+                  //         "responseName": responseName,
+                  //         "senderName": senderName,
+                  //         "message": message,
+                  //         "targetIds": targetIds,
+                  //         "response": "widget.responseTile.response",
+                  //         "theme": "widget.theme",
+                  //       });
+                  //       print(result.data);
+                  //     } catch (e) {
+                  //       print(e);
+                  //     }
+                  //   },
+                  //   child: Text("Send notification via API"),
+                  // ),
+                  Expanded(child: snippetsList()),
+                ],
+              ),
+      
+          ),
+    );
   }
 
   StreamBuilder snippetsList() {
@@ -166,11 +167,10 @@ class _HomePageState extends State<HomePage> {
         if (snapshot.hasData) {
           if (snapshot.data!.docs.length != null) {
             if (snapshot.data.docs.length != 0) {
-              return SizedBox(
-                height: MediaQuery.of(context).size.height - 175,
-                child: ListView.builder(
+              return ListView.builder(
                     clipBehavior: Clip.none,
                     itemCount: snapshot.data.docs.length,
+                    shrinkWrap: true,
                     itemBuilder: (context, index) {
                       //int reverseIndex = snapshot.data.docs.length - index - 1;
                       // bool isWinner = false;
@@ -197,8 +197,8 @@ class _HomePageState extends State<HomePage> {
                               .contains(FirebaseAuth.instance.currentUser!.uid),
                         ),
                       );
-                    }),
-              );
+                    });
+              
             } else {
               return const Center();
             }

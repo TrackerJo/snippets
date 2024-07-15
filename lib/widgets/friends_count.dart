@@ -17,8 +17,8 @@ class FriendsCount extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 100,
-      child: Column(
+      width:isCurrentUser ? MediaQuery.of(context).size.width : MediaQuery.of(context).size.width * 0.8,
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -47,8 +47,8 @@ class FriendsCount extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Container(
-                height: 2,
-                width: 100,
+                height: 100,
+                width: 2,
                 color: Colors.white,
               ),
             ),

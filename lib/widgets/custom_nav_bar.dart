@@ -40,7 +40,7 @@ class CustomNavBar extends StatelessWidget {
                     iconSize: 35,
                     icon: Icon(pageIndex == 0
                         ? Icons.account_circle
-                        : Icons.account_circle_outlined),
+                        : Icons.account_circle_outlined, color: Colors.black),
                     onPressed: () {
                       if (pageIndex == 0) return;
                       Navigator.of(context).pushReplacement(
@@ -55,7 +55,7 @@ class CustomNavBar extends StatelessWidget {
                   IconButton(
                     iconSize: 35,
                     icon:
-                        Icon(pageIndex == 1 ? Icons.home : Icons.home_outlined),
+                        Icon(pageIndex == 1 ? Icons.home : Icons.home_outlined, color: Colors.black),
                     onPressed: () {
                       if (pageIndex == 1) return;
                       Navigator.of(context).pushReplacement(
@@ -71,7 +71,7 @@ class CustomNavBar extends StatelessWidget {
                     iconSize: 35,
                     icon: Icon(pageIndex == 3
                         ? Icons.chat_bubble
-                        : Icons.chat_bubble_outline),
+                        : Icons.chat_bubble_outline, color: Colors.black),
                     onPressed: () {
                       if (pageIndex == 3) return;
                       Navigator.of(context).pushReplacement(
@@ -87,7 +87,7 @@ class CustomNavBar extends StatelessWidget {
                     iconSize: 35,
                     icon: Icon(pageIndex == 2
                         ? Icons.person_search
-                        : Icons.person_search_outlined),
+                        : Icons.person_search_outlined, color: Colors.black),
                     onPressed: () {
                       if (pageIndex == 2) return;
                       Navigator.of(context).pushReplacement(

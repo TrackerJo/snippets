@@ -65,7 +65,7 @@ class Database {
     return snapshot;
   }
 
-  Future submitAnswer(String snippetId, String answer) async {
+  Future submitAnswer(String snippetId, String answer, String question, String theme) async {
     await currentSnippetsCollection
         .doc(snippetId)
         .collection("answers")
@@ -78,11 +78,30 @@ class Database {
         {"userId": uid, "FCMToken": await PushNotifications().getDeviceToken()}
       ],
     });
+
     //Add uid to snippet's answered list
 
     await currentSnippetsCollection.doc(snippetId).update({
       "answered": FieldValue.arrayUnion([uid]),
     });
+
+
+    //Send notification to user's friends
+    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    List<dynamic> friendsList = userData["friends"];
+    List<dynamic> friendsFCMTokens = friendsList.map((e) => e["FCMToken"]).toList();
+    await PushNotifications().sendNotification(
+          title: "${userData["fullname"]} just responded to a snippet!",
+          body: "Tap here to view response",
+          targetIds: [
+            ...friendsFCMTokens,
+          ],
+          data: {
+            "type": "snippetAnswered",
+            "snippetId": snippetId,
+            "question": question,
+            "theme": theme,
+          });
   }
 
   Future<List<String>> getFriendsList() async {
@@ -169,6 +188,7 @@ class Database {
           "userId": friendUid,
           "displayName": friendDisplayName,
           "username": friendUsername,
+          "FCMToken": friendFCMToken,
         }
       ]),
     });
@@ -197,23 +217,28 @@ class Database {
           "userId": friendUid,
           "displayName": friendDisplayName,
           "username": friendUsername,
+          "FCMToken": friendFCMToken,
         }
       ])
     });
+    String userFCMToken = await PushNotifications().getDeviceToken();
+    String username = (await HelperFunctions.getUserNameFromSF())!;
 
     await userCollection.doc(friendUid).update({
       "friends": FieldValue.arrayUnion([
         {
           "userId": uid,
           "displayName": displayName,
-          "username": await HelperFunctions.getUserNameFromSF(),
+          "username": username,
+          "FCMToken": userFCMToken,
         }
       ]),
       "outgoingRequests": FieldValue.arrayRemove([
         {
           "userId": uid,
           "displayName": displayName,
-          "username": await HelperFunctions.getUserNameFromSF(),
+          "username": username,
+          "FCMToken": userFCMToken,
         }
       ])
     });
@@ -237,9 +262,9 @@ class Database {
         ],
         data: {
           "type": "friendRequestAccepted",
-          "userId": friendUid,
-          "displayName": friendDisplayName,
-          "username": friendUsername,
+          "userId": uid,
+          "displayName": displayName,
+          "username": username,
         });
   }
 
@@ -261,6 +286,7 @@ class Database {
           "userId": uid,
           "displayName": await HelperFunctions.getUserDisplayNameFromSF(),
           "username": await HelperFunctions.getUserNameFromSF(),
+          "FCMToken": await PushNotifications().getDeviceToken(),
         }
       ]),
     });
@@ -277,13 +303,15 @@ class Database {
   }
 
   Future removeFriend(
-      String friendUid, String friendDisplayName, String friendUsername) async {
+      String friendUid, String friendDisplayName, String friendUsername, String friendFCMToken) async {
     await userCollection.doc(uid).update({
       "friends": FieldValue.arrayRemove([
         {
           "userId": friendUid,
           "displayName": friendDisplayName,
           "username": friendUsername,
+          "FCMToken": friendFCMToken,
+
         }
       ]),
     });
@@ -294,6 +322,7 @@ class Database {
           "userId": uid,
           "displayName": await HelperFunctions.getUserDisplayNameFromSF(),
           "username": await HelperFunctions.getUserNameFromSF(),
+          "FCMToken": await PushNotifications().getDeviceToken(),
         }
       ]),
     });
@@ -311,7 +340,7 @@ class Database {
   }
 
   Future cancelFriendRequest(
-      String friendUid, String friendDisplayName, String friendUsername) async {
+      String friendUid, String friendDisplayName, String friendUsername, String friendFCMToken) async {
     await userCollection.doc(friendUid).update({
       "friendRequests": FieldValue.arrayRemove([
         {
@@ -329,6 +358,7 @@ class Database {
           "userId": friendUid,
           "displayName": friendDisplayName,
           "username": friendUsername,
+          "FCMToken": friendFCMToken,
         }
       ]),
     });
@@ -467,12 +497,14 @@ class Database {
     return snapshot.docs[0].data() as Map<String, dynamic>;
   }
 
-  StreamSubscription userDataStream() {
+  StreamSubscription userDataStream(StreamController streamController) {
     Stream stream = userCollection.doc(uid).snapshots();
+   
     StreamSubscription streamListen = stream.listen((event) async {
       await HelperFunctions.saveUserDataSF(jsonEncode(event.data()));
       print("Changed");
       print(event.data());
+      streamController.add(event.data());
     }, onDone: () {
       print("No longer");
     });
@@ -484,5 +516,10 @@ class Database {
     await userCollection.doc(uid).update({
       "description": description,
     });
+  }
+
+  Stream getUserDataStream() {
+    Stream stream = userCollection.doc(uid).snapshots();
+    return stream;
   }
 }

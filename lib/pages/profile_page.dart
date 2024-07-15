@@ -19,11 +19,14 @@ class ProfilePage extends StatefulWidget {
   final String uid;
   final bool showNavBar;
   final bool showBackButton;
+
   const ProfilePage(
       {super.key,
       this.uid = "",
       this.showNavBar = true,
-      this.showBackButton = false});
+      this.showBackButton = false
+
+      });
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -31,7 +34,10 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   String displayName = "";
+
   bool isCurrentUser = false;
+  bool isLoading = false;
+  bool gotData = false;
   bool isFriends = false;
   bool sentFriendRequest = false;
   bool hasFriendRequest = false;
@@ -137,6 +143,7 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() {
         displayName = userDisplayName;
         isCurrentUser = currentUser;
+        gotData = true;
       });
     }
   }
@@ -249,7 +256,7 @@ class _ProfilePageState extends State<ProfilePage> {
         });
   }
 
-  void sendFriendRequest() async {
+  Future sendFriendRequest() async {
     await Database(uid: FirebaseAuth.instance.currentUser!.uid)
         .sendFriendRequest(widget.uid, displayName, profileData["username"],
             profileData["FCMToken"]);
@@ -259,23 +266,23 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
-  void removeFriend() async {
+  Future removeFriend() async {
     await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-        .removeFriend(widget.uid, displayName, profileData["username"]);
+        .removeFriend(widget.uid, displayName, profileData["username"], profileData["FCMToken"]);
     setState(() {
       isFriends = false;
     });
   }
 
-  void cancelFriendRequest() async {
+  Future cancelFriendRequest() async {
     await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-        .cancelFriendRequest(widget.uid, displayName, profileData["username"]);
+        .cancelFriendRequest(widget.uid, displayName, profileData["username"], profileData["FCMToken"]);
     setState(() {
       sentFriendRequest = false;
     });
   }
 
-  void acceptFriendRequest() async {
+  Future acceptFriendRequest() async {
     await Database(uid: FirebaseAuth.instance.currentUser!.uid)
         .acceptFriendRequest(widget.uid, displayName, profileData["username"],
             profileData["FCMToken"]);
@@ -295,6 +302,7 @@ class _ProfilePageState extends State<ProfilePage> {
           title: isCurrentUser ? "Your Profile" : "$displayName ",
           showBackButton: widget.showBackButton,
           onBackButtonPressed: () {
+            
             Navigator.of(context).pop();
           },
           showSettingsButton: isCurrentUser,
@@ -373,14 +381,15 @@ class _ProfilePageState extends State<ProfilePage> {
             )
           : null,
       backgroundColor: const Color(0xFF232323),
-      body: Stack(
+      body: gotData ? Stack(
         children: [
           const BackgroundTile(),
           Column(
             children: [
               const SizedBox(height: 20),
-              Row(
+              Column(
                 children: [
+                  if(profileData["description"] != null && profileData["description"] != "")
                   SizedBox(
                     width: MediaQuery.of(context).size.width - 100,
                     child: Padding(
@@ -395,6 +404,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                   ),
+                  if(profileData["description"] != null && profileData["description"] != "")
                   const SizedBox(height: 20),
                   FriendsCount(
                     isCurrentUser: isCurrentUser,
@@ -410,25 +420,38 @@ class _ProfilePageState extends State<ProfilePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(
+                    isLoading ?  const CircularProgressIndicator() 
+                    : SizedBox(
                       width: 250,
                       child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
+                            setState(() {
+                              isLoading = true;
+                            });
                             HapticFeedback.mediumImpact();
                             if (isFriends) {
-                              removeFriend();
+                              await removeFriend();
                             } else {
                               if (hasFriendRequest) {
-                                acceptFriendRequest();
+                                await acceptFriendRequest();
+                                setState(() {
+                                  isLoading = false;
+                                });
                                 return;
                               }
                               if (sentFriendRequest) {
-                                cancelFriendRequest();
+                                await cancelFriendRequest();
+                                setState(() {
+                                  isLoading = false;
+                                });
                                 return;
                               }
 
-                              sendFriendRequest();
+                              await sendFriendRequest();
                             }
+                            setState(() {
+                              isLoading = false;
+                            });
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: isFriends ||
@@ -456,7 +479,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           ),
         ],
-      ),
+      ) : const SizedBox(),
     );
   }
 

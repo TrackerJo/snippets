@@ -82,13 +82,16 @@ class _SnippetTileState extends State<SnippetTile> {
           },
           trailing: IconButton(
             icon: !widget.isAnswered
-                ? const Icon(Icons.send)
-                : const Icon(Icons.arrow_forward_ios),
+                ? const Icon(Icons.send, color: Colors.black)
+                : const Icon(Icons.arrow_forward_ios, color: Colors.black),
             onPressed: () async {
               // show options
               if (!widget.isAnswered) {
+                if(answerController.text.isEmpty){
+                  return;
+                }
                 await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-                    .submitAnswer(widget.snippetId, answerController.text);
+                    .submitAnswer(widget.snippetId, answerController.text, widget.question, widget.theme);
                 // Navigator.of(context).pop();
                 //Go to responses page
 

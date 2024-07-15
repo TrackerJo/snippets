@@ -35,13 +35,25 @@ class DiscussionTile extends StatelessWidget {
       padding: const EdgeInsets.all(10.0),
       child: Material(
           elevation: 10,
-          shadowColor: ColorSys.purpleBlueGradient.colors[1],
+          shadowColor: theme == "sunset"
+          ? ColorSys.sunset
+          : theme == "sunrise"
+              ? ColorSys.sunriseGradient.colors[1]
+              : theme == "blue"
+                  ? ColorSys.blueGreenGradient.colors[1]
+                  : ColorSys.purpleBlueGradient.colors[1],
           borderRadius: BorderRadius.circular(12),
           child: Container(
               width: 350,
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
               decoration: ShapeDecoration(
-                gradient: ColorSys.purpleBlueGradient,
+                gradient: theme == "sunset"
+              ? ColorSys.sunsetGradient
+              : theme == "sunrise"
+                  ? ColorSys.sunriseGradient
+                  : theme == "blue"
+                      ? ColorSys.blueGreenGradient
+                      : ColorSys.purpleBlueGradient,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

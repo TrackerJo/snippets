@@ -11,6 +11,7 @@ class FriendTile extends StatefulWidget {
   final bool showCheck;
   final Function()? onXPressed;
   final Function()? onCheckPressed;
+  final Function()? onTap;
 
   const FriendTile({
     super.key,
@@ -21,6 +22,7 @@ class FriendTile extends StatefulWidget {
     this.showCheck = false,
     this.onXPressed,
     this.onCheckPressed,
+    this.onTap,
   });
 
   @override
@@ -40,13 +42,18 @@ class _FriendTileState extends State<FriendTile> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          onTap: () {
-            nextScreen(
-                context,
-                ProfilePage(
-                  uid: widget.uid,
-                  showNavBar: false,
-                ));
+          onTap: () async {
+            if(widget.onTap != null) {
+              await widget.onTap!();
+            } else {
+              nextScreen(
+                  context,
+                  ProfilePage(
+                    uid: widget.uid,
+                    showNavBar: false,
+                  ));
+            }
+
           },
           title: Text(
             widget.displayName,

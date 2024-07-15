@@ -82,143 +82,154 @@ class _DiscussionPageState extends State<DiscussionPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        return !Navigator.of(context).userGestureInProgress;
-      },
-      child: Scaffold(
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: CustomAppBar(
-            title: "Discussion",
-            showBackButton: true,
-            theme: widget.theme,
-            onBackButtonPressed: () {
-              Navigator.pop(context, true);
-            },
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: WillPopScope(
+        onWillPop: () async {
+          return !Navigator.of(context).userGestureInProgress;
+        },
+        child: Scaffold(
+          resizeToAvoidBottomInset: true,
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
+            child: CustomAppBar(
+              title: "Discussion",
+              showBackButton: true,
+              theme: widget.theme,
+              onBackButtonPressed: () {
+                Navigator.pop(context, true);
+              },
+            ),
           ),
-        ),
-        bottomNavigationBar: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
-          width: MediaQuery.of(context).size.width,
-          decoration: BoxDecoration(
-            color: widget.theme == "sunset"
-                ? ColorSys.sunsetGradient.colors[1]
-                : widget.theme == "sunrise"
-                    ? ColorSys.sunriseBarGradient.colors[0]
-                    : widget.theme == "blue"
-                        ? ColorSys.blueGreenGradient.colors[0]
-                        : ColorSys.purpleBlueGradient.colors[0],
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Row(
+      
+          backgroundColor: ColorSys.background,
+          body: Stack(
             children: [
-              Expanded(
-                child: TextFormField(
-                  controller: messageController,
-                  style: const TextStyle(
-                    color: Colors.white,
-                  ),
-                  decoration: const InputDecoration(
-                    hintText: "Type a message",
-                    hintStyle: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
-                    //  Rounded Top corners
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: () {
-                  sendMessage();
-                },
-                child: Container(
-                  height: 50,
-                  width: 50,
-                  decoration: BoxDecoration(
-                    color: widget.theme == "sunset"
-                        ? ColorSys.sunsetBarGradient.colors[1]
-                        : widget.theme == "sunrise"
-                            ? ColorSys.sunriseBarGradient.colors[1]
-                            : widget.theme == "blue"
-                                ? ColorSys.blueGreenGradient.colors[0]
-                                : ColorSys.primary,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.send, color: Colors.white),
-                  ),
-                ),
-              )
-            ],
-          ),
-        ),
-        backgroundColor: ColorSys.background,
-        body: Stack(
-          children: [
-            const BackgroundTile(),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Container(
+              const BackgroundTile(),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
                           padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: widget.theme == "sunset"
-                                ? ColorSys.sunsetGradient.colors[1]
-                                : widget.theme == "sunrise"
-                                    ? ColorSys.sunriseGradient.colors[0]
-                                    : widget.theme == "blue"
-                                        ? ColorSys.blueGreenGradient.colors[0]
-                                        : ColorSys.purpleBlueGradient.colors[0],
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                displayTile.displayName,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: widget.theme == "sunset"
+                                  ? ColorSys.sunsetGradient.colors[1]
+                                  : widget.theme == "sunrise"
+                                      ? ColorSys.sunriseGradient.colors[0]
+                                      : widget.theme == "blue"
+                                          ? ColorSys.blueGreenGradient.colors[0]
+                                          : ColorSys.purpleBlueGradient.colors[0],
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  displayTile.displayName,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                "Q: ${displayTile.question}",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
+                                const SizedBox(height: 5),
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 300,
+                                  ),
+                                  child: Text(
+                                    "Q: ${displayTile.question}",
+                                  
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                "A: ${displayTile.response}",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
+                                const SizedBox(height: 5),
+                                Text(
+                                  "A: ${displayTile.response}",
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        )),
-                  ],
+                              ],
+                            ),
+                          )),
+                    ],
+                  ),
+                  Expanded(child: chatMessages()),
+                  Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+            width: MediaQuery.of(context).size.width,
+            decoration: BoxDecoration(
+              color: widget.theme == "sunset"
+                  ? ColorSys.sunsetGradient.colors[1]
+                  : widget.theme == "sunrise"
+                      ? ColorSys.sunriseBarGradient.colors[0]
+                      : widget.theme == "blue"
+                          ? ColorSys.blueGreenGradient.colors[0]
+                          : ColorSys.purpleBlueGradient.colors[0],
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: messageController,
+                    style: const TextStyle(
+                      color: Colors.white,
+                    ),
+                    decoration: const InputDecoration(
+                      hintText: "Type a message",
+                      hintStyle: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                      //  Rounded Top corners
+                      border: InputBorder.none,
+                    ),
+                  ),
                 ),
-                Expanded(child: chatMessages()),
-                //Chat Messages
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () {
+                    sendMessage();
+                  },
+                  child: Container(
+                    height: 50,
+                    width: 50,
+                    decoration: BoxDecoration(
+                      color: widget.theme == "sunset"
+                          ? ColorSys.sunsetBarGradient.colors[1]
+                          : widget.theme == "sunrise"
+                              ? ColorSys.sunriseBarGradient.colors[1]
+                              : widget.theme == "blue"
+                                  ? ColorSys.blueGreenGradient.colors[0]
+                                  : ColorSys.primary,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.send, color: Colors.white),
+                    ),
+                  ),
+                )
               ],
             ),
-          ],
+          )
+                  //Chat Messages
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -321,8 +332,8 @@ class _DiscussionPageState extends State<DiscussionPage> {
       await Database(uid: FirebaseAuth.instance.currentUser!.uid)
           .sendDiscussionMessage(widget.responseTile.snippetId,
               widget.responseTile.userId, chatMessageMap);
-      var url = Uri.https('us-central1-snippets2024.cloudfunctions.net',
-          '/sendDiscussionNotification');
+      // var url = Uri.https('us-central1-snippets2024.cloudfunctions.net',
+      //     '/sendDiscussionNotification');
       var snippetId = widget.responseTile.snippetId;
       var responseId = widget.responseTile.userId;
       var snippetQuestion = widget.responseTile.question;
@@ -332,6 +343,9 @@ class _DiscussionPageState extends State<DiscussionPage> {
       print(users);
       var targetIds = getDiscussionUsersFCMToken(users);
       print(targetIds);
+      setState(() {
+        messageController.clear();
+      });
       await PushNotifications().sendNotification(
           title: "$responseName - $snippetQuestion",
           body: "$senderName: $message",
@@ -349,9 +363,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
             "type": "discussion"
           });
 
-      setState(() {
-        messageController.clear();
-      });
+      
       //Scroll to the bottom of the list
       // _scrollController.animateTo(_scrollController.position.maxScrollExtent,
       //     duration: const Duration(milliseconds: 300), curve: Curves.easeOut);

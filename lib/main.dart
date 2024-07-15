@@ -1,4 +1,6 @@
 
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:snippets/api/auth.dart';
@@ -9,6 +11,7 @@ import 'package:snippets/pages/welcome_page.dart';
 import 'firebase_options.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
+final userStreamController = StreamController.broadcast();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,13 +32,15 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
+  
   bool isSignedIn = false;
   getUserLoggedInState() async {
     String deviceToken = await PushNotifications().getDeviceToken();
     print("######### DEVICE TOKEN #########");
     print(deviceToken);
     bool status = await Auth().isUserLoggedIn();
-    Auth().listenToAuthState();
+
+    Auth().listenToAuthState(userStreamController);
     setState(() {
       isSignedIn = status;
     });

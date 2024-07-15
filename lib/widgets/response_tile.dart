@@ -107,15 +107,13 @@ class _ResponseTileState extends State<ResponseTile> {
                       },
                       child: SizedBox(
                         width: MediaQuery.of(context).size.width - 175,
-                        child: Expanded(
-                          child: Text(
-                            widget.isDisplayOnly
-                                ? "${widget.displayName}'s Response"
-                                : widget.displayName,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        child: Text(
+                          widget.isDisplayOnly
+                              ? "${widget.displayName}'s Response"
+                              : widget.displayName,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -125,13 +123,14 @@ class _ResponseTileState extends State<ResponseTile> {
                         alignment: Alignment.topRight,
                         child: IconButton(
                             onPressed: () {},
-                            icon: const Icon(Icons.more_horiz)),
+                            icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black)),
                       )
                   ],
                 ),
               ),
               const Divider(
                 thickness: 2,
+                color: Colors.black,
               ),
               Text(
                 widget.response,
@@ -146,7 +145,7 @@ class _ResponseTileState extends State<ResponseTile> {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: widget.theme == "sunset"
-                            ? ColorSys.sunset
+                            ? Color.fromARGB(255, 255, 157, 29)
                             : widget.theme == "sunrise"
                                 ? ColorSys.sunriseGradient.colors[1]
                                 : widget.theme == "blue"
@@ -165,7 +164,13 @@ class _ResponseTileState extends State<ResponseTile> {
                               theme: widget.theme,
                             ));
                       },
-                      child: const Text("Open Discussion"),
+                      child:  Text("Open Discussion", style: TextStyle(color: widget.theme == "sunset"
+                            ? Colors.white
+                            : widget.theme == "sunrise"
+                                ? Colors.white
+                                : widget.theme == "blue"
+                                    ? Colors.blueAccent
+                                    : Colors.white)),
                     ),
 
                     // IconButton(

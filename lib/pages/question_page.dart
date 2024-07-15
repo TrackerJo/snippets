@@ -28,7 +28,7 @@ class _QuestionPageState extends State<QuestionPage> {
 
   void submitAnswer() async {
     await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-        .submitAnswer(widget.snippetId, answer);
+        .submitAnswer(widget.snippetId, answer, widget.question, widget.theme);
     // Navigator.of(context).pop();
     //Go to responses page
     Navigator.of(context).pop();
