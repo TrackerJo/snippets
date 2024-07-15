@@ -22,12 +22,14 @@ class ProfilePage extends StatefulWidget {
   final String uid;
   final bool showNavBar;
   final bool showBackButton;
+  final bool showAppBar;
 
   const ProfilePage(
       {super.key,
       this.uid = "",
       this.showNavBar = true,
-      this.showBackButton = false
+      this.showBackButton = false,
+      this.showAppBar = true
 
       });
 
@@ -318,19 +320,22 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        appBar: PreferredSize(
+        
+        appBar: widget.showAppBar ? PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
           child: CustomAppBar(
             title: isCurrentUser ? "Your Profile" : "$displayName ",
             showBackButton: widget.showBackButton,
             onBackButtonPressed: () {
-              
+              HapticFeedback.mediumImpact();
               Navigator.of(context).pop();
             },
             showSettingsButton: isCurrentUser,
@@ -396,13 +401,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   });
             },
           ),
-        ),
-        bottomNavigationBar: widget.showNavBar
-            ? const PreferredSize(
-                preferredSize: Size.fromHeight(kToolbarHeight),
-                child: CustomNavBar(pageIndex: 0),
-              )
-            : null,
+        ) : null,
+
         backgroundColor: const Color(0xFF232323),
         body: gotData ? Stack(
           children: [

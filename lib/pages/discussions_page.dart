@@ -39,14 +39,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
-        child: CustomAppBar(title: "Discussions"),
-      ),
-      bottomNavigationBar: const PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
-        child: CustomNavBar(pageIndex: 3),
-      ),
+      
       backgroundColor: const Color(0xFF232323),
       body: ListView(
         children: [

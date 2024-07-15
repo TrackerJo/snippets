@@ -1,7 +1,9 @@
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:snippets/api/auth.dart';
+import 'package:snippets/api/database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/pages/discussion_page.dart';
@@ -106,19 +108,32 @@ class PushNotifications {
           ),
         );
       } else if (message.data['type'] == "snippetAnswered") {
-        Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-        navigatorKey.currentState?.push(
-          CustomPageRoute(
-            builder: (BuildContext context) {
-              return ResponsesPage(
-                question: message.data['question'],
-                snippetId: message.data['snippetId'],
-                theme: message.data['theme'],
 
-              );
-            },
-          ),
-        );
+        //Check if user answered the snippet
+        bool hasResponded = await Database(uid: FirebaseAuth.instance.currentUser!.uid).didUserAnswerSnippet(message.data['snippetId']);
+        if(hasResponded)
+          navigatorKey.currentState?.push(
+            CustomPageRoute(
+              builder: (BuildContext context) {
+                return ResponsesPage(
+                  question: message.data['question'],
+                  snippetId: message.data['snippetId'],
+                  theme: message.data['theme'],
+
+                );
+              },
+            ),
+          );
+        } else {
+          navigatorKey.currentState?.push(
+            CustomPageRoute(
+              builder: (BuildContext context) {
+                return QuestionPage(question: message.data['question'],
+                  snippetId: message.data['snippetId'],
+                  theme: message.data['theme'],);
+              },
+            ),
+          );
       }
     }
   }

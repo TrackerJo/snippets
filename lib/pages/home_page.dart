@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
@@ -113,21 +114,22 @@ class _HomePageState extends State<HomePage> {
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
-          appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(kToolbarHeight),
-            child: CustomAppBar(
-              title: 'Snippets',
-              showFriendsButton: true,
-              onFriendsButtonPressed: () {
-                nextScreen(context, const FriendsPage());
-              },
-              hasFriendRequests: hasFriendRequests,
-            ),
-          ),
-          bottomNavigationBar: const PreferredSize(
-            preferredSize: Size.fromHeight(kToolbarHeight),
-            child: CustomNavBar(pageIndex: 1),
-          ),
+          // appBar: PreferredSize(
+          //   preferredSize: const Size.fromHeight(kToolbarHeight),
+          //   child: CustomAppBar(
+          //     title: 'Snippets',
+          //     showFriendsButton: true,
+          //     onFriendsButtonPressed: () {
+          //       HapticFeedback.mediumImpact();
+          //       nextScreen(context, const FriendsPage());
+          //     },
+          //     hasFriendRequests: hasFriendRequests,
+          //   ),
+          // ),
+          // bottomNavigationBar: const PreferredSize(
+          //   preferredSize: Size.fromHeight(kToolbarHeight),
+          //   child: CustomNavBar(pageIndex: 1),
+          // ),
           backgroundColor: const Color(0xFF232323),
           body:
               Column(

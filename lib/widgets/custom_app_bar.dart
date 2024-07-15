@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:snippets/templates/colorsSys.dart';
 
@@ -89,7 +90,13 @@ class CustomAppBar extends StatelessWidget {
                   splashColor: Colors.transparent,
                   splashRadius: 25,
                   icon: const Icon(Icons.arrow_back_ios_new),
-                  onPressed: onBackButtonPressed,
+                  onPressed:(){
+                    HapticFeedback.mediumImpact();
+
+                    if(onBackButtonPressed != null){
+                      onBackButtonPressed!();
+                    }
+                  } ,
                   color: Colors.black,
                 )
               : null,

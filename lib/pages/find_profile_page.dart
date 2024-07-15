@@ -25,14 +25,7 @@ class _FindProfilePageState extends State<FindProfilePage> {
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
-        appBar: const PreferredSize(
-          preferredSize: Size.fromHeight(kToolbarHeight),
-          child: CustomAppBar(title: "Search"),
-        ),
-        bottomNavigationBar: const PreferredSize(
-          preferredSize: Size.fromHeight(kToolbarHeight),
-          child: CustomNavBar(pageIndex: 2),
-        ),
+       
         backgroundColor: const Color(0xFF232323),
         body: Column(
           children: [

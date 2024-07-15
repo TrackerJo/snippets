@@ -8,7 +8,8 @@ import 'package:snippets/widgets/custom_page_route.dart';
 
 class CustomNavBar extends StatelessWidget {
   final int pageIndex;
-  const CustomNavBar({super.key, required this.pageIndex});
+  final PageController pageController;
+  const CustomNavBar({super.key, required this.pageIndex, required this.pageController});
 
   @override
   Widget build(BuildContext context) {
@@ -43,13 +44,7 @@ class CustomNavBar extends StatelessWidget {
                         : Icons.account_circle_outlined, color: Colors.black),
                     onPressed: () {
                       if (pageIndex == 0) return;
-                      Navigator.of(context).pushReplacement(
-                        CustomPageRoute(
-                          builder: (BuildContext context) {
-                            return const ProfilePage();
-                          },
-                        ),
-                      );
+                      pageController.jumpToPage(0);
                     },
                   ),
                   IconButton(
@@ -58,45 +53,27 @@ class CustomNavBar extends StatelessWidget {
                         Icon(pageIndex == 1 ? Icons.home : Icons.home_outlined, color: Colors.black),
                     onPressed: () {
                       if (pageIndex == 1) return;
-                      Navigator.of(context).pushReplacement(
-                        CustomPageRoute(
-                          builder: (BuildContext context) {
-                            return const HomePage();
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                  IconButton(
-                    iconSize: 35,
-                    icon: Icon(pageIndex == 3
-                        ? Icons.chat_bubble
-                        : Icons.chat_bubble_outline, color: Colors.black),
-                    onPressed: () {
-                      if (pageIndex == 3) return;
-                      Navigator.of(context).pushReplacement(
-                        CustomPageRoute(
-                          builder: (BuildContext context) {
-                            return const DiscussionsPage();
-                          },
-                        ),
-                      );
+                     pageController.jumpToPage(1);
                     },
                   ),
                   IconButton(
                     iconSize: 35,
                     icon: Icon(pageIndex == 2
+                        ? Icons.chat_bubble
+                        : Icons.chat_bubble_outline, color: Colors.black),
+                    onPressed: () {
+                      if (pageIndex == 2) return;
+                      pageController.jumpToPage(2);
+                    },
+                  ),
+                  IconButton(
+                    iconSize: 35,
+                    icon: Icon(pageIndex == 3
                         ? Icons.person_search
                         : Icons.person_search_outlined, color: Colors.black),
                     onPressed: () {
-                      if (pageIndex == 2) return;
-                      Navigator.of(context).pushReplacement(
-                        CustomPageRoute(
-                          builder: (BuildContext context) {
-                            return const FindProfilePage();
-                          },
-                        ),
-                      );
+                      if (pageIndex == 3) return;
+                      pageController.jumpToPage(3);
                     },
                   ),
                 ],

@@ -8,6 +8,7 @@ import 'package:flutter_app_badge_control/flutter_app_badge_control.dart';
 import 'package:snippets/api/auth.dart';
 import 'package:snippets/api/notifications.dart';
 import 'package:snippets/pages/home_page.dart';
+import 'package:snippets/pages/swipe_pages.dart';
 import 'package:snippets/pages/welcome_page.dart';
 
 import 'firebase_options.dart';
@@ -107,7 +108,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: isSignedIn ? const HomePage() : const WelcomePage(),
+      home: isSignedIn ? const SwipePages() : const WelcomePage(),
       navigatorKey: navigatorKey,
     );
   }

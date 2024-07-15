@@ -49,6 +49,16 @@ class Database {
     return snapshot.data() as Map<String, dynamic>;
   }
 
+  Future<bool> didUserAnswerSnippet(String snippetId) async {
+    DocumentSnapshot snapshot = await currentSnippetsCollection.doc(snippetId).get();
+    List<dynamic> answeredSnippets = snapshot["answered"];
+    if (answeredSnippets.contains(uid)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   Future<bool> checkUsername(String username) async {
     DocumentSnapshot snapshot = await publicCollection.doc("usernames").get();
     List<dynamic> usernames = snapshot["usernames"];
