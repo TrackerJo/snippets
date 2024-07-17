@@ -146,7 +146,7 @@ class _ResponseTileState extends State<ResponseTile> {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: widget.theme == "sunset"
-                            ? Color.fromARGB(255, 255, 157, 29)
+                            ? const Color.fromARGB(255, 255, 157, 29)
                             : widget.theme == "sunrise"
                                 ? ColorSys.sunriseGradient.colors[1]
                                 : widget.theme == "blue"

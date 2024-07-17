@@ -17,6 +17,10 @@ class Database {
       FirebaseFirestore.instance.collection("public");
   final CollectionReference currentSnippetsCollection =
       FirebaseFirestore.instance.collection("currentSnippets");
+  final CollectionReference snippetQuestionsCollection =
+      FirebaseFirestore.instance.collection("snippetQuestions");
+  final CollectionReference botwCollection =
+      FirebaseFirestore.instance.collection("blankOfTheWeek");
 
   Future savingUserData(String fullName, String email, String username,
       PhoneNumber? phoneNumber) async {
@@ -33,7 +37,14 @@ class Database {
       "answeredSnippets": [],
       "discussions": [],
       "FCMToken": await PushNotifications().getDeviceToken(),
-      "outgoingRequests": []
+      "outgoingRequests": [],
+      "botwStatus": {
+        "date": "",
+        "hasAnswered": false,
+        "hasSeenResults": false,
+      },
+      "votesLeft": 3,
+
     });
 
     DocumentSnapshot snapshot = await publicCollection.doc("usernames").get();
@@ -57,6 +68,11 @@ class Database {
     } else {
       return false;
     }
+  }
+
+  Future<Stream> getUserStream(String userId) async {
+    Stream snapshot = userCollection.doc(userId).snapshots();
+    return snapshot;
   }
 
   Future<bool> checkUsername(String username) async {
@@ -203,7 +219,7 @@ class Database {
       ]),
     });
 
-    await PushNotifications().sendNotification(
+    PushNotifications().sendNotification(
         title: "$displayName just sent you a friend request!",
         body: "Tap here to view request.",
         targetIds: [
@@ -531,5 +547,59 @@ class Database {
   Stream getUserDataStream() {
     Stream stream = userCollection.doc(uid).snapshots();
     return stream;
+  }
+
+ 
+
+  Future<Stream> getBlankOfTheWeek() async {
+    Stream snapshot = botwCollection.doc("currentBlank").snapshots();
+    return snapshot;
+  
+  }
+
+  Future<Map<String,dynamic>> getBlankOfTheWeekData() async {
+    DocumentSnapshot snapshot = await botwCollection.doc("currentBlank").get();
+    return snapshot as Map<String, dynamic>;
+  
+  }
+
+  Future updateUsersBOTWAnswer(Map<String, dynamic> answer) async {
+    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    DateTime now = DateTime.now();
+    DateTime monday = now.subtract(Duration(days: now.weekday - 1));
+    String mondayString = "${monday.month}-${monday.day}-${monday.year}";
+    if (userData["botwStatus"]["date"] != mondayString) {
+      await userCollection.doc(uid).update({
+        "botwStatus": {
+          "date": mondayString,
+          "hasAnswered": true,
+        },
+        "votesLeft": 3,
+      });
+    } 
+
+    await botwCollection.doc("currentBlank").set({
+      "answers": {
+        uid: answer,
+
+      },
+    }, SetOptions(merge: true));
+  }
+
+  Future updateBOTWAnswer(Map<String, dynamic> answer) async {
+    
+
+    await botwCollection.doc("currentBlank").set({
+      "answers": {
+        answer["userId"]: answer,
+
+      },
+    }, SetOptions(merge: true));
+  }
+
+  Future updateUserVotesLeft(int votesLeft) async {
+    await userCollection.doc(uid).update({
+      "votesLeft": votesLeft,
+    });
   }
 }

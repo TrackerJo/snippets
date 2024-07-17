@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:snippets/api/auth.dart';
 import 'package:snippets/api/database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/pages/discussions_page.dart';
 import 'package:snippets/pages/find_profile_page.dart';
+import 'package:snippets/pages/friends_page.dart';
 import 'package:snippets/pages/home_page.dart';
 import 'package:snippets/pages/profile_page.dart';
 import 'package:snippets/pages/welcome_page.dart';
@@ -19,7 +21,8 @@ import 'package:snippets/widgets/custom_nav_bar.dart';
 import 'package:snippets/widgets/custom_page_route.dart';
 
 class SwipePages extends StatefulWidget {
-  const SwipePages({super.key});
+  final int initialIndex;
+  const SwipePages({super.key, this.initialIndex = 1});
 
   @override
   State<SwipePages> createState() => _SwipePagesState();
@@ -30,22 +33,52 @@ class _SwipePagesState extends State<SwipePages> {
   TextEditingController descriptionController = TextEditingController();
   Map<String, dynamic> userData = {};
   int selectedIndex = 1;
-  List<String> pageTitles = ["Profile", "Snippets", "Discussions", "Find Profile"];
+  List<String> pageTitles = ["Profile", "Snippets", "Discussions", "Search"];
   StreamSubscription userStreamSub = const Stream.empty().listen((event) {});
+  bool hasFriendRequests = false;
+  bool hasAnsweredBOTW = false;
 
   void getData()async{
+    await HelperFunctions.saveOpenedPageSF("snippets");
     userStreamSub = userStreamController.stream.listen((event) {
+      DateTime now = DateTime.now();
+      DateTime monday = now.subtract(Duration(days: now.weekday - 1));
+      String mondayString = "${monday.month}-${monday.day}-${monday.year}";
+
       setState(() {
         userData = event;
+        hasFriendRequests = userData["friendRequests"].length > 0;
+        if(userData["botwStatus"]["hasAnswered"] && userData["botwStatus"]["date"] == mondayString){
+          hasAnsweredBOTW = true;
+        } else {
+          hasAnsweredBOTW = false;
+
+        }
 
       });
     });
     userData = await HelperFunctions.getUserDataFromSF();
+    DateTime now = DateTime.now();
+      DateTime monday = now.subtract(Duration(days: now.weekday - 1));
+      String mondayString = "${monday.month}-${monday.day}-${monday.year}";
+    setState(() {
+
+        hasFriendRequests = userData["friendRequests"].length > 0;
+        if(userData["botwStatus"]["hasAnswered"] && userData["botwStatus"]["date"] == mondayString){
+          hasAnsweredBOTW = true;
+        } else {
+          hasAnsweredBOTW = false;
+
+        }
+
+      });
+    
   }
 
   @override
   void initState() {
     getData();
+    pageController = PageController(initialPage: widget.initialIndex);
     super.initState();
   }
 
@@ -204,35 +237,63 @@ class _SwipePagesState extends State<SwipePages> {
     return Scaffold(
       backgroundColor: const Color(0xFF232323),
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
+        preferredSize: const Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(title: pageTitles[selectedIndex],
           showSettingsButton: selectedIndex == 0,
           onSettingsButtonPressed: onSettingsButtonPressed,
+          showFriendsButton: selectedIndex == 1,
+          hasFriendRequests: hasFriendRequests,
+          onFriendsButtonPressed: () {
+            HapticFeedback.mediumImpact();
+            Navigator.of(context).push(
+              CustomPageRoute(
+                builder: (BuildContext context) {
+                  return const FriendsPage();
+                },
+              ),
+            );
+
+          },
+          showShareButton: selectedIndex == 0,
+          onShareButtonPressed: () async{
+            HapticFeedback.mediumImpact();
+            await Share.share("https://snippets2024.web.app/home/friendLink?name=${userData["fullname"].replaceAll(" ", "%20")}&uid=${userData["uid"]}", subject: "Share your profile with friends");
+            
+          },
         
         ),
       ),
       bottomNavigationBar: PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
-        child: CustomNavBar(pageIndex: selectedIndex, pageController: pageController, ),
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: CustomNavBar(pageIndex: selectedIndex, pageController: pageController, hasAnsweredBOTW: hasAnsweredBOTW, ),
       ),
       body: PageView(
         controller: pageController,
         allowImplicitScrolling: true,
 
-        onPageChanged: (int index) {
+        onPageChanged: (int index) async{
+          if(index == 0){
+            await HelperFunctions.saveOpenedPageSF("profile");
+          } else if(index == 1){
+            await HelperFunctions.saveOpenedPageSF("snippets");
+          } else if(index == 2){
+            await HelperFunctions.saveOpenedPageSF("discussions");
+          } else if(index == 3){
+            await HelperFunctions.saveOpenedPageSF("search");
+          }
           setState(() {
             selectedIndex = index;
             print(selectedIndex);
           });
         },
-        children: <Widget>[
-          const ProfilePage(
+        children: const <Widget>[
+          ProfilePage(
             showNavBar: false,
             showAppBar: false,
           ),
-          const HomePage(),
-          const DiscussionsPage(),
-          const FindProfilePage(),
+          HomePage(),
+          DiscussionsPage(),
+          FindProfilePage(),
         ],
       ),
     );

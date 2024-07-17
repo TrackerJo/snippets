@@ -133,6 +133,9 @@ class _SnippetTileState extends State<SnippetTile> {
               ? Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextFormField(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                    },
                       controller: answerController,
                       decoration: textInputDecoration.copyWith(
                         hintText: "Enter answer here",

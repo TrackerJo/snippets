@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:snippets/api/database.dart';
+import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
 import 'package:snippets/widgets/custom_nav_bar.dart';
@@ -18,6 +19,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
   List<Map<String, dynamic>> discussions = [];
 
   void getDiscussions() async {
+
     // get discussions from database
     discussions = await Database(uid: FirebaseAuth.instance.currentUser!.uid)
         .getDiscussions(FirebaseAuth.instance.currentUser!.uid);
@@ -47,12 +49,12 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
           Center(
             child: Column(
               children: [
-                if(discussions == [] || discussions.isEmpty || discussions == null) 
-            Text("No discussions yet", style: TextStyle(color: Colors.white, fontSize: 20)),
-          if(discussions == [] || discussions.isEmpty || discussions == null)
-            SizedBox(height: 20),
-          if(discussions == [] || discussions.isEmpty || discussions == null)
-            Text("Join a discussion by sending a message in a discussion", style: TextStyle(color: Colors.white, fontSize: 20), textAlign: TextAlign.center, ),
+                if(discussions == [] || discussions.isEmpty) 
+            const Text("No discussions yet", style: TextStyle(color: Colors.white, fontSize: 20)),
+          if(discussions == [] || discussions.isEmpty)
+            const SizedBox(height: 20),
+          if(discussions == [] || discussions.isEmpty)
+            const Text("Join a discussion by sending a message in a discussion", style: TextStyle(color: Colors.white, fontSize: 20), textAlign: TextAlign.center, ),
            
               ],
             ),

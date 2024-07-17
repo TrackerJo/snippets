@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:phone_input/phone_input_package.dart';
 import 'package:snippets/api/auth.dart';
 import 'package:snippets/api/database.dart';
+import 'package:snippets/helper/helper_function.dart';
 
 import 'package:snippets/pages/onboarding_page.dart';
 import 'package:snippets/pages/welcome_page.dart';
@@ -69,6 +70,17 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         }
       });
     }
+  }
+
+  void savePage() async {
+    await HelperFunctions.saveOpenedPageSF("create_account");
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    savePage();
   }
 
   @override

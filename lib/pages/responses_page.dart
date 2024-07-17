@@ -34,6 +34,7 @@ class _ResponsesPageState extends State<ResponsesPage> {
   List<dynamic> discussionUsers = [];
 
   void getResponsesList() async {
+    await HelperFunctions.saveOpenedPageSF("responses-${widget.snippetId}");
     var responsesList =
         await Database(uid: FirebaseAuth.instance.currentUser!.uid)
             .getResponsesList(widget.snippetId);

@@ -61,7 +61,7 @@ class DiscussionTile extends StatelessWidget {
               child: ListTile(
                   title: Text("$answerUser - $question",
                       style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text("$lastMessageSender: $lastMessage"),
+                  subtitle: Text("$lastMessageSender: $lastMessage", style: const TextStyle(fontSize: 12, color: Colors.grey)),
                   onTap: () {
                     // navigate to discussion page
                     nextScreen(

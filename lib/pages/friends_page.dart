@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:snippets/api/database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
-import 'package:snippets/pages/profile_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
 import 'package:snippets/widgets/friend_tile.dart';
@@ -28,6 +27,7 @@ class _FriendsPageState extends State<FriendsPage> {
   StreamSubscription userStreamSub = const Stream.empty().listen((event) {});
 
   Future getData() async {
+    await HelperFunctions.saveOpenedPageSF("friends");
     // Get friends
     print("Getting friends");
     userStreamSub = userStreamController.stream.listen((event) {
@@ -300,6 +300,11 @@ class _FriendsPageState extends State<FriendsPage> {
                       friendRequests[index]["displayName"],
                       friendRequests[index]["username"],
                       friendRequests[index]["FCMToken"]);
+              setState(() {
+                friendRequests.removeWhere((element) =>
+                    element["userId"] ==
+                    friendRequests[index]["userId"]);
+              });
              
               //Refresh friend requests
             },
@@ -310,6 +315,11 @@ class _FriendsPageState extends State<FriendsPage> {
                       friendRequests[index]["FCMToken"],
                       friendRequests[index]["displayName"],
                       friendRequests[index]["username"]);
+              setState(() {
+                friendRequests.removeWhere((element) =>
+                    element["userId"] ==
+                    friendRequests[index]["userId"]);
+              });
               
               //Refresh friend requests
             },

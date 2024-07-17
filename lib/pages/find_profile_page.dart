@@ -2,13 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:snippets/api/database.dart';
-import 'package:snippets/templates/colorsSys.dart';
+import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/templates/input_decoration.dart';
-import 'package:snippets/widgets/background_tile.dart';
-import 'package:snippets/widgets/custom_nav_bar.dart';
 import 'package:snippets/widgets/profile_tile.dart';
 
-import '../widgets/custom_app_bar.dart';
 
 class FindProfilePage extends StatefulWidget {
   const FindProfilePage({super.key});
@@ -20,6 +17,18 @@ class FindProfilePage extends StatefulWidget {
 class _FindProfilePageState extends State<FindProfilePage> {
   String profileName = "";
   Stream? profileStream;
+
+  void savePage() async {
+
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    savePage();
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(

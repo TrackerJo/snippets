@@ -8,6 +8,7 @@ class HelperFunctions {
   static String userDisplayNameKey = "USERDISPLAYNAMEKEY";
   static String userEmailKey = "USEREMAILKEY";
   static String userDataKey = "USERDATAKEY";
+  static String openedPageKey = "OPENEDPAGEKEY";
 
   //Saving data to SF
   static Future<bool> saveUserDisplayNameSF(String userDisplayName) async {
@@ -28,6 +29,11 @@ class HelperFunctions {
   static Future<bool> saveUserDataSF(String userData) async {
     SharedPreferences sf = await SharedPreferences.getInstance();
     return await sf.setString(userDataKey, userData);
+  }
+
+  static Future<bool> saveOpenedPageSF(String openedPage) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setString(openedPageKey, openedPage);
   }
 
   //Getting data from SF
@@ -53,6 +59,10 @@ class HelperFunctions {
         Map<String, dynamic>.from(jsonDecode(userData)));
   }
 
+  static Future<String?> getOpenedPageFromSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getString(openedPageKey);
+  }
   
 
 }

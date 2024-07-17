@@ -43,6 +43,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
   String username = "";
 
   void getDiscussion() async {
+    await HelperFunctions.saveOpenedPageSF("discussion-${widget.responseTile.snippetId}-${widget.responseTile.userId}");
     Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
     print(userData);
     if (mounted) {
@@ -326,6 +327,19 @@ class _DiscussionPageState extends State<DiscussionPage> {
                 widget.responseTile.userId,
                 widget.responseTile.question,
                 widget.theme);
+      } else if (FirebaseAuth.instance.currentUser!.uid == widget.responseTile.userId) {
+       //Check if has discussion in data
+        List<dynamic> userDiscussions = userData['discussions'];
+        bool hasDiscussion = userDiscussions.any((element) => element['snippetId'] == widget.responseTile.snippetId && element['answerId'] == widget.responseTile.userId);
+        if(!hasDiscussion){
+          await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+            .addUserToDiscussion(
+                FirebaseAuth.instance.currentUser!.uid,
+                widget.responseTile.snippetId,
+                widget.responseTile.userId,
+                widget.responseTile.question,
+                widget.theme);
+        }
       }
 
       await Database(uid: FirebaseAuth.instance.currentUser!.uid)

@@ -2,8 +2,10 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:snippets/api/auth.dart';
+import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/pages/create_account_page.dart';
 import 'package:snippets/pages/home_page.dart';
+import 'package:snippets/pages/swipe_pages.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
 
@@ -33,7 +35,7 @@ class _WelcomePageState extends State<WelcomePage> {
           Navigator.of(context).pushAndRemoveUntil(
             CustomPageRoute(
               builder: (BuildContext context) {
-                return const HomePage();
+                return const SwipePages();
               },
             ),
             (Route<dynamic> route) => false,
@@ -66,6 +68,17 @@ class _WelcomePageState extends State<WelcomePage> {
         }
       });
     }
+  }
+
+  void savePage() async {
+    await HelperFunctions.saveOpenedPageSF("login");
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    savePage();
   }
 
   @override

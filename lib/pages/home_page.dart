@@ -3,18 +3,12 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
-import 'package:snippets/pages/friends_page.dart';
-import 'package:snippets/widgets/background_tile.dart';
-import 'package:snippets/widgets/custom_nav_bar.dart';
-import 'package:snippets/widgets/helper_functions.dart';
 import 'package:snippets/widgets/snippet_tile.dart';
 
 import '../api/database.dart';
-import '../widgets/custom_app_bar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -25,44 +19,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   Stream? currentSnippetsStream;
-  Map<String, dynamic>? userData;
-  String friendsView = "friends";
-  bool hasFriendRequests = false;
-  StreamSubscription userStreamSub = const Stream.empty().listen((event) {});
+  
 
-  getUserData() async {
-    userStreamSub = userStreamController.stream.listen((event) {
-      setState(() {
-        userData = event;
-        hasFriendRequests = userData!["friendRequests"].length > 0;
-      });
-    });
-      //Get document
-      
-
-    userData = await HelperFunctions.getUserDataFromSF();
-    //Check if user has friend requests
-    if (userData!["friendRequests"].length > 0) {
-      setState(() {
-        hasFriendRequests = true;
-      });
-    }
-    if (mounted) {
-      setState(() {
-        userData = userData;
-      });
-    }
-  }
-
-  Future<bool> checkIfUserAnswered(String snippetId) async {
-    List<dynamic> ans =
-        (await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-            .getUserData(
-                FirebaseAuth.instance.currentUser!.uid))["answeredSnippets"];
-    bool isAnswered = ans.contains(snippetId);
-    print(isAnswered);
-    return isAnswered;
-  }
 
   void getCurrentSnippets() async {
     var currentSnippets =
@@ -81,13 +39,13 @@ class _HomePageState extends State<HomePage> {
 
     super.initState();
     getCurrentSnippets();
-    getUserData();
+
   }
 
   @override
   void dispose() {
     super.dispose();
-    userStreamSub.cancel();
+
   }
 
   String calculateTimeLeft(String endTime) {

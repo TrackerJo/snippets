@@ -13,6 +13,10 @@ class CustomAppBar extends StatelessWidget {
   final void Function()? onSettingsButtonPressed;
   final void Function()? onFriendsButtonPressed;
   final bool hasFriendRequests;
+  final bool showHelpButton;
+  final void Function()? onHelpButtonPressed;
+  final bool showShareButton;
+  final void Function()? onShareButtonPressed;
   const CustomAppBar(
       {super.key,
       required this.title,
@@ -23,7 +27,11 @@ class CustomAppBar extends StatelessWidget {
       this.theme = "purple",
       this.showFriendsButton = false,
       this.onFriendsButtonPressed,
-      this.hasFriendRequests = false});
+      this.hasFriendRequests = false,
+      this.showHelpButton = false,
+      this.showShareButton = false,
+      this.onShareButtonPressed,
+      this.onHelpButtonPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -99,9 +107,32 @@ class CustomAppBar extends StatelessWidget {
                   } ,
                   color: Colors.black,
                 )
-              : null,
+              : showShareButton
+                  ? Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: IconButton(
+                        splashColor: ColorSys.primary,
+                        splashRadius: 25,
+                        icon: const Icon(Icons.ios_share_outlined),
+                        onPressed: onShareButtonPressed,
+                        color: const Color.fromARGB(255, 0, 0, 0),
+                      ),
+                  )
+                  : null,
           // actions: [],
           actions: [
+
+            if(showHelpButton)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: IconButton(
+                  splashColor: ColorSys.primary,
+                  splashRadius: 25,
+                  icon: const Icon(Icons.help_outline),
+                  onPressed: onHelpButtonPressed,
+                  color: const Color.fromARGB(255, 0, 0, 0),
+                ),
+              ),
             if (showSettingsButton)
               Padding(
                 padding: const EdgeInsets.all(8.0),

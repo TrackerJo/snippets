@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:snippets/api/database.dart';
+import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/pages/home_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
@@ -19,6 +20,10 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
   PageController _pageController = PageController();
   int currentIndex = 0;
   TextEditingController descriptionController = TextEditingController();
+
+  void savePage() async {
+    await HelperFunctions.saveOpenedPageSF("onBoarding");
+  }
 
   @override
   void initState() {

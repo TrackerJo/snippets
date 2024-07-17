@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/pages/responses_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
@@ -25,6 +26,17 @@ class QuestionPage extends StatefulWidget {
 
 class _QuestionPageState extends State<QuestionPage> {
   String answer = "";
+
+  void savePage() async {
+    await HelperFunctions.saveOpenedPageSF("question-${widget.snippetId}");
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    savePage();
+  }
 
   void submitAnswer() async {
     await Database(uid: FirebaseAuth.instance.currentUser!.uid)

@@ -3,17 +3,20 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:snippets/api/database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
+import 'package:snippets/pages/voting_page.dart';
 import 'package:snippets/pages/welcome_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
 import 'package:snippets/widgets/background_tile.dart';
-import 'package:snippets/widgets/custom_nav_bar.dart';
+import 'package:snippets/widgets/botw_tile.dart';
 import 'package:snippets/widgets/custom_page_route.dart';
 import 'package:snippets/widgets/friend_tile.dart';
 import 'package:snippets/widgets/friends_count.dart';
+import 'package:snippets/widgets/helper_functions.dart';
 
 import '../api/auth.dart';
 import '../widgets/custom_app_bar.dart';
@@ -49,12 +52,39 @@ class _ProfilePageState extends State<ProfilePage> {
   int numberOfFriends = 0;
   int numberOfMutualFriends = 0;
   Map<String, dynamic> profileData = {};
+  Map<String, dynamic> blankOfTheWeek = {};
   List<Map<String, dynamic>> mutualFriends = [];
   StreamSubscription userStreamSub = const Stream.empty().listen((event) {});
+  
 
   TextEditingController descriptionController = TextEditingController();
 
+  
+
+  void checkForBlankOfTheWeek(String uid) async {
+    Stream blankStream = await Database(uid: FirebaseAuth.instance.currentUser!.uid).getBlankOfTheWeek();
+    blankStream.listen((event) {
+      Map<String, dynamic> data = event.data() as Map<String, dynamic>;
+      Map<String, dynamic> answers = data["answers"];
+      if (!answers.containsKey(uid)) {
+        data["answers"][uid] = {
+          "answer": "",
+          "displayName": displayName,
+          "userId": uid,
+          "votes": 0,
+          "voters": [],
+          "FCMToken": profileData["FCMToken"]
+          
+          };
+        }
+        setState(() {
+          blankOfTheWeek = data;
+        });
+    });
+  }
+
   void getProfileData() async {
+
     String userDisplayName = "";
     bool currentUser = false;
     if (widget.uid == "") {
@@ -73,6 +103,7 @@ class _ProfilePageState extends State<ProfilePage> {
         profileData = viewerData;
         numberOfFriends = viewerData["friends"].length;
       });
+
     } else if (widget.uid == FirebaseAuth.instance.currentUser!.uid) {
       currentUser = true;
       userStreamSub = userStreamController.stream.listen((event) {
@@ -88,7 +119,85 @@ class _ProfilePageState extends State<ProfilePage> {
         profileData = viewerData;
         numberOfFriends = viewerData["friends"].length;
       });
+
     } else {
+      Stream viewerDataStream = await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+          .getUserStream(widget.uid);
+      userStreamSub = viewerDataStream.listen((event) async {
+        Map<String, dynamic> viewerData = event.data() as Map<String, dynamic>;
+        setState(() {
+          profileData = viewerData;
+          numberOfFriends = profileData["friends"].length;
+          userDisplayName = profileData["fullname"];
+        });
+        setState(() {
+        profileData = viewerData;
+        numberOfFriends = viewerData["friends"].length;
+      });
+      Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+      List<dynamic> friendsList = userData["friends"];
+      int mutualFriends = 0;
+      List<Map<String, dynamic>> mutualFriendsList = [];
+      for (dynamic friend in friendsList) {
+        for (dynamic friend2 in viewerData["friends"]) {
+          if (friend["userId"] == friend2["userId"]) {
+            mutualFriends++;
+            mutualFriendsList.add(friend);
+          }
+        }
+      }
+      setState(() {
+        numberOfMutualFriends = mutualFriends;
+        this.mutualFriends = mutualFriendsList;
+      });
+      userDisplayName = viewerData["fullname"];
+
+      bool areFriends = false;
+      for (dynamic friend in friendsList) {
+        String friendId = friend["userId"];
+        print("friend: $friendId , widget.uid: ${widget.uid}");
+        print(FirebaseAuth.instance.currentUser!.uid);
+        if (friend["userId"] == widget.uid) {
+          print("are friends");
+          areFriends = true;
+          break;
+        }
+      }
+      if (areFriends) {
+        setState(() {
+          isFriends = true;
+        });
+      } else {
+        List<dynamic> outgoingFriendRequests = userData["outgoingRequests"];
+        bool friendRequest = false;
+        for (dynamic request in outgoingFriendRequests) {
+          if (request["userId"] == widget.uid) {
+            friendRequest = true;
+            break;
+          }
+        }
+        if (friendRequest) {
+          setState(() {
+            sentFriendRequest = true;
+          });
+        }
+
+        List<dynamic> friendRequests = userData["friendRequests"];
+        bool hasRequest = false;
+        for (dynamic request in friendRequests) {
+          if (request["userId"] == widget.uid) {
+            hasRequest = true;
+            break;
+          }
+        }
+        if (hasRequest) {
+          setState(() {
+            hasFriendRequest = true;
+          });
+        }
+      }
+      });
+      
       Map<String, dynamic> viewerData =
           (await Database(uid: FirebaseAuth.instance.currentUser!.uid)
               .getUserData(widget.uid));
@@ -166,7 +275,12 @@ class _ProfilePageState extends State<ProfilePage> {
         gotData = true;
       });
     }
+    checkForBlankOfTheWeek(profileData["uid"]);
   }
+
+
+
+
 
   @override
   void initState() {
@@ -498,7 +612,20 @@ class _ProfilePageState extends State<ProfilePage> {
                       )
                     ],
                   ),
-                const SizedBox(height: 20),
+                if(!isCurrentUser)
+                  const SizedBox(height: 20),
+
+                if(blankOfTheWeek.isNotEmpty)
+                  BOTWTile(blank: blankOfTheWeek["blank"], answer:blankOfTheWeek["answers"][profileData["uid"]] , isCurrentUser: isCurrentUser, status: blankOfTheWeek["status"],),
+                if(blankOfTheWeek.isNotEmpty && blankOfTheWeek["status"] == "voting" && isCurrentUser)
+                  const SizedBox(height: 20),
+                if(blankOfTheWeek.isNotEmpty && blankOfTheWeek["status"] == "voting" && isCurrentUser)
+                  ElevatedButton(onPressed: () {
+                    nextScreen(context, VotingPage(blank: blankOfTheWeek,));
+                  },style: elevatedButtonDecoration ,child: Text(
+                    "Vote",
+                    style: TextStyle(color: Colors.black, fontSize: 16),
+                  ))
               ],
             ),
           ],

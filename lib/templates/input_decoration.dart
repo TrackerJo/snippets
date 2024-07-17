@@ -9,3 +9,13 @@ var textInputDecoration = InputDecoration(
     filled: true,
     fillColor: ColorSys.secondary,
     floatingLabelBehavior: FloatingLabelBehavior.never);
+
+var elevatedButtonDecoration =  ElevatedButton.styleFrom(
+                        elevation: 10,
+                        shadowColor: ColorSys.primary,
+                        minimumSize: const Size(100, 50),
+                        backgroundColor: ColorSys.primarySolid,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20.0),
+                        )
+                      );
