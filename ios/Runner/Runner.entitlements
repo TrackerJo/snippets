@@ -6,7 +6,7 @@
 	<string>development</string>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
-		<string>applinks:snippets2024.web.app?mode=developer</string>
+		<string>applinks:snippets2024.web.app</string>
 	</array>
 </dict>
 </plist>

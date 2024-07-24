@@ -14,9 +14,9 @@ class ResponseTile extends StatefulWidget {
   final String userId;
   final String snippetId;
   final bool isDisplayOnly;
-  final void Function()? goToComments;
+
   final String theme;
-  final List<dynamic> discussionUsers;
+
   const ResponseTile(
       {super.key,
       required this.displayName,
@@ -26,8 +26,8 @@ class ResponseTile extends StatefulWidget {
       required this.question,
       required this.theme,
       this.isDisplayOnly = false,
-      required this.discussionUsers,
-      this.goToComments});
+
+});
 
   @override
   State<ResponseTile> createState() => _ResponseTileState();
@@ -150,8 +150,8 @@ class _ResponseTileState extends State<ResponseTile> {
                             : widget.theme == "sunrise"
                                 ? ColorSys.sunriseGradient.colors[1]
                                 : widget.theme == "blue"
-                                    ? ColorSys.secondarySolid
-                                    : ColorSys.primary,
+                                    ? const Color.fromARGB(255, 60, 196, 255)
+                                    : ColorSys.primaryDark,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(32.0),
                         ),
@@ -171,7 +171,7 @@ class _ResponseTileState extends State<ResponseTile> {
                             : widget.theme == "sunrise"
                                 ? Colors.white
                                 : widget.theme == "blue"
-                                    ? Colors.blueAccent
+                                    ? Colors.white
                                     : Colors.white)),
                     ),
 

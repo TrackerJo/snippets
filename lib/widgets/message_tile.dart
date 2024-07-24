@@ -111,7 +111,9 @@ class _MessageTileState extends State<MessageTile> {
                   child: Text(
                     widget.message,
                     softWrap: true,
-                    textAlign: TextAlign.center,
+                    textAlign: widget.sentByMe
+                        ? TextAlign.right
+                        : TextAlign.left,
                     style: const TextStyle(
                       fontSize: 16,
                       color: Colors.white,

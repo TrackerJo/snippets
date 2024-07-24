@@ -34,11 +34,11 @@ class _FriendTileState extends State<FriendTile> {
   Widget build(BuildContext context) {
     return Material(
         elevation: 10,
-        shadowColor: ColorSys.primary,
+        shadowColor: ColorSys.primaryDark,
         borderRadius: BorderRadius.circular(12),
         // color: ColorSys.primary,
         child: ListTile(
-          tileColor: ColorSys.primary,
+          tileColor: ColorSys.primarySolid,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class ColorSys {
   static Color primary = const Color(0xB5D1AEFF);
   static Color primarySolid = const Color.fromARGB(255, 209, 174, 255);
+  static Color primaryDark = Color.fromARGB(255, 174, 111, 255);
   static Color secondary = const Color.fromARGB(224, 151, 224, 255);
   static Color secondarySolid = const Color.fromARGB(255, 151, 224, 255);
   static Color background = const Color(0xFF232323);
   static Color green = const Color(0xD185FFBD);
-  static Color sunset = const Color.fromARGB(255, 243, 153, 18);
+  static Color sunset = const Color.fromARGB(255, 249, 156, 22);
+  static Color purpleBtn = Color.fromARGB(255, 186, 127, 255);
   static LinearGradient blueGreenGradient = LinearGradient(
     begin: const Alignment(0.00, -1.00),
     end: const Alignment(0, 1),
@@ -16,20 +18,21 @@ class ColorSys {
   static LinearGradient purpleBlueGradient = LinearGradient(
     begin: const Alignment(0.00, -1.00),
     end: const Alignment(0, 1),
-    colors: [primary, secondary],
+    colors: [Color.fromARGB(181, 163, 93, 255), Color.fromARGB(223, 119, 214, 255)],
   );
   static LinearGradient purpleBarGradient = LinearGradient(
     begin: const Alignment(0.00, -1.00),
     end: const Alignment(0, 1),
-    colors: [primary, const Color.fromARGB(255, 199, 156, 247)],
+    colors: [primarySolid, Color.fromARGB(255, 178, 110, 255)],
   );
   static LinearGradient sunriseGradient = const LinearGradient(
     begin: Alignment(0.00, -1.00),
     end: Alignment(0, 1),
     colors: [
       //Sunrise gradient
-      Color.fromARGB(255, 247, 205, 93),
-      Color.fromARGB(255, 253, 128, 70)
+      Color.fromARGB(255, 253, 214, 0),
+      Color.fromARGB(255,249, 120, 0)
+      
     ],
   );
   static LinearGradient sunriseBarGradient = const LinearGradient(
@@ -37,8 +40,8 @@ class ColorSys {
     end: Alignment(0, 1),
     colors: [
       //Sunrise gradient
-      Color.fromARGB(255, 247, 173, 93),
-      Color.fromARGB(255, 253, 128, 70)
+      Color.fromARGB(255, 253, 214, 0),
+      Color.fromARGB(255,249, 120, 0)
     ],
   );
   static LinearGradient sunsetGradient = LinearGradient(
@@ -47,7 +50,7 @@ class ColorSys {
     colors: [
       //Sunrise gradient
       sunset,
-      const Color.fromARGB(255, 255, 46, 30),
+      const Color.fromARGB(255, 253, 53, 0),
     ],
   );
   static LinearGradient sunsetBarGradient = LinearGradient(

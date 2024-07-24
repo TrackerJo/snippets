@@ -1,16 +1,23 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:snippets/api/database.dart';
+import 'package:snippets/api/notifications.dart';
 import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/main.dart';
 import 'package:snippets/pages/home_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
+import 'package:snippets/pages/swipe_pages.dart';
 
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_page_route.dart';
 
 class OnBoardingPage extends StatefulWidget {
-  const OnBoardingPage({super.key});
+  final bool? toProfile;
+  final String? uid;
+  final bool? alreadyOnboarded;
+  const OnBoardingPage({super.key, this.toProfile, this.uid, this.alreadyOnboarded});
 
   @override
   State<OnBoardingPage> createState() => _OnBoardingPageState();
@@ -19,7 +26,7 @@ class OnBoardingPage extends StatefulWidget {
 class _OnBoardingPageState extends State<OnBoardingPage> {
   PageController _pageController = PageController();
   int currentIndex = 0;
-  TextEditingController descriptionController = TextEditingController();
+  String editDescription = "";
 
   void savePage() async {
     await HelperFunctions.saveOpenedPageSF("onBoarding");
@@ -42,6 +49,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: const PreferredSize(
         preferredSize: Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(title: 'Welcome to Snippets'),
@@ -62,15 +70,18 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                   image: 'assets/slide_1.png',
                   title: 'Real conversations with real people',
                   content: 'No filters, only conversations'),
-              makePage(
-                  image: 'assets/slide_2.png',
-                  title: 'Connecting with people around the world',
-                  content: 'New conversations every day'),
+              
               makePage(
                   image: 'assets/slide_3.png',
-                  title: '3 new prompts every day, 1 new person every week',
+                  title: '3 prompts every day, 1 new person every week',
                   content:
-                      'Every week you will be randomly matched with a new person'),
+                      'Answer each prompt, view your friends responses plus one random response. Every week, you will be matched with a new person to have a conversation with.',
+                  smallText: true),
+                  
+              makePage(
+                  image: 'assets/slide_2.png',
+                  title: 'One public snippet of the week',
+                  content: 'Every week one question will be asked to all users. Responses will be public and can be viewed by all users. On the weekend, vote for your favorite response.'),
               makePage(
                   image: 'assets/slide_4.png',
                   title: 'Stay in touch with new and old friends',
@@ -91,7 +102,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
     );
   }
 
-  Widget makePage({image, title, content, lastPage = false}) {
+  Widget makePage({image, title, content, lastPage = false, smallText = false}) {
     return Container(
       padding: const EdgeInsets.only(left: 50, right: 50, bottom: 60),
       child: Column(
@@ -115,8 +126,8 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
             ),
             Text(content,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 20,
+                style: TextStyle(
+                    fontSize: smallText ? 15 : 20,
                     color: Colors.grey,
                     fontWeight: FontWeight.w400)),
             if (lastPage)
@@ -126,6 +137,12 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
             if (lastPage)
               ElevatedButton(
                 onPressed: () {
+                  print("Already Onboarded: ${widget.alreadyOnboarded}");
+                  if(widget.alreadyOnboarded == true){
+                    // router.pushReplacement("/home");
+                    Navigator.of(context).pop();
+                    return;
+                  }
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
@@ -134,13 +151,14 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorSys.primary,
+                  backgroundColor: ColorSys.primarySolid,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                 ),
-                child: const Text(
+                child: Text(
+                  widget.alreadyOnboarded == true ? 'Back to Home' :
                   'Get Started',
                   style: TextStyle(color: Colors.white, fontSize: 15),
                 ),
@@ -182,7 +200,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
               style: TextStyle(color: ColorSys.primary)),
           content: SizedBox(
             width: 300,
-            height: 300,
+            height: 375,
             child: Column(
               children: [
                 const Text(
@@ -191,50 +209,63 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                 const SizedBox(
                   height: 20,
                 ),
-                TextField(
-                  controller: descriptionController,
-                  maxLines: 7,
-                  decoration: textInputDecoration.copyWith(
-                    hintText: 'Description',
+                TextFormField(
+                    initialValue: editDescription,
+                    maxLines: 7,
+                    decoration: textInputDecoration.copyWith(
+                      hintText: 'Description',
+                      counterStyle: TextStyle(color: Colors.white),
+
+                    ),
+                    onChanged: (value) => editDescription = value,
+                    maxLength: 125,
+                    maxLengthEnforcement: MaxLengthEnforcement.enforced,
                   ),
+                const SizedBox(
+                  height: 20,
                 ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        await PushNotifications().initNotifications();
+                        if(widget.toProfile == true){
+
+                          router.pushReplacement("/home");
+                          router.push("/home/profile/${widget.uid}");
+                        } else {
+                        router.pushReplacement("/home");
+                        }
+                      },
+                      child: const Text("Skip"),
+                    ),
+                    TextButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorSys.primary,
+                      ),
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        await PushNotifications().initNotifications();
+                        await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+                            .updateUserDescription(editDescription);
+                
+                        if(widget.toProfile == true){
+                          router.pushReplacement("/home");
+                          router.push("/home/profile/${widget.uid}");
+                        } else {
+                        router.pushReplacement("/home");
+                        }
+                      },
+                      child: const Text("Save", style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                )
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pushReplacement(
-                  CustomPageRoute(
-                    builder: (BuildContext context) {
-                      return const HomePage();
-                    },
-                  ),
-                );
-              },
-              child: const Text("Skip"),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ColorSys.primary,
-              ),
-              onPressed: () async {
-                Navigator.of(context).pop();
-                await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-                    .updateUserDescription(descriptionController.text);
-        
-                Navigator.of(context).pushReplacement(
-                  CustomPageRoute(
-                    builder: (BuildContext context) {
-                      return const HomePage();
-                    },
-                  ),
-                );
-              },
-              child: const Text("Save", style: TextStyle(color: Colors.white)),
-            ),
-          ],
+         
         ),
       ),
     );

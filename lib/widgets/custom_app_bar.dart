@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -17,6 +18,10 @@ class CustomAppBar extends StatelessWidget {
   final void Function()? onHelpButtonPressed;
   final bool showShareButton;
   final void Function()? onShareButtonPressed;
+  final bool showPreviewButton;
+  final void Function()? onPreviewButtonPressed;
+  final int? index;
+  final bool fixRight;
   const CustomAppBar(
       {super.key,
       required this.title,
@@ -31,7 +36,11 @@ class CustomAppBar extends StatelessWidget {
       this.showHelpButton = false,
       this.showShareButton = false,
       this.onShareButtonPressed,
-      this.onHelpButtonPressed});
+      this.onHelpButtonPressed,
+      this.showPreviewButton = false,
+      this.onPreviewButtonPressed,
+      this.index,
+      this.fixRight = false});
 
   @override
   Widget build(BuildContext context) {
@@ -74,12 +83,13 @@ class CustomAppBar extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
           toolbarHeight: 100,
-          title: FittedBox(
-            fit: BoxFit.fitWidth,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                Text(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Expanded(
+                child: AutoSizeText(
+                  maxLines: 1,
                   title,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
@@ -90,8 +100,8 @@ class CustomAppBar extends StatelessWidget {
                     height: 0,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           leading: showBackButton
               ? IconButton(
@@ -118,9 +128,25 @@ class CustomAppBar extends StatelessWidget {
                         color: const Color.fromARGB(255, 0, 0, 0),
                       ),
                   )
-                  : null,
+                  : showFriendsButton? const SizedBox( width: 15, height: 0,) : null,
           // actions: [],
           actions: [
+            if(fixRight)
+              const SizedBox(width: 25, height: 0,),
+            if(title == "Responses")
+              
+              const SizedBox(width: 45, height: 0,),
+            if(showPreviewButton)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: IconButton(
+                  splashColor: ColorSys.primary,
+                  splashRadius: 25,
+                  icon: const Icon(Icons.preview),
+                  onPressed: onPreviewButtonPressed,
+                  color: const Color.fromARGB(255, 0, 0, 0),
+                ),
+              ),
 
             if(showHelpButton)
               Padding(

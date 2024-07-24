@@ -7,6 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:snippets/api/database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
+import 'package:snippets/pages/botw_results_page.dart';
+import 'package:snippets/pages/swipe_pages.dart';
 import 'package:snippets/pages/voting_page.dart';
 import 'package:snippets/pages/welcome_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
@@ -26,13 +28,15 @@ class ProfilePage extends StatefulWidget {
   final bool showNavBar;
   final bool showBackButton;
   final bool showAppBar;
+  final bool isFriendLink;
 
   const ProfilePage(
       {super.key,
       this.uid = "",
       this.showNavBar = true,
       this.showBackButton = false,
-      this.showAppBar = true
+      this.showAppBar = true,
+      this.isFriendLink = false
 
       });
 
@@ -55,15 +59,20 @@ class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic> blankOfTheWeek = {};
   List<Map<String, dynamic>> mutualFriends = [];
   StreamSubscription userStreamSub = const Stream.empty().listen((event) {});
+  StreamSubscription blankStreamSub = const Stream.empty().listen((event) {});
+  StreamSubscription userStreamSub2 = const Stream.empty().listen((event) {});
+
   
 
-  TextEditingController descriptionController = TextEditingController();
+  String editDescription = "";
 
   
 
   void checkForBlankOfTheWeek(String uid) async {
+    
+
     Stream blankStream = await Database(uid: FirebaseAuth.instance.currentUser!.uid).getBlankOfTheWeek();
-    blankStream.listen((event) {
+    blankStreamSub = blankStream.listen((event) {
       Map<String, dynamic> data = event.data() as Map<String, dynamic>;
       Map<String, dynamic> answers = data["answers"];
       if (!answers.containsKey(uid)) {
@@ -84,11 +93,20 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void getProfileData() async {
+    bool status = await Auth().isUserLoggedIn();
+    if (!status && widget.uid != "") {
+      router.go('/welcome/${widget.uid}/true');
+    } else if (!status) {
+      router.go('/login');
+    }
 
     String userDisplayName = "";
     bool currentUser = false;
     if (widget.uid == "") {
       userStreamSub = userStreamController.stream.listen((event) {
+        if (event == null) {
+          return;
+        }
         setState(() {
           profileData = event;
           numberOfFriends = profileData["friends"].length;
@@ -107,6 +125,9 @@ class _ProfilePageState extends State<ProfilePage> {
     } else if (widget.uid == FirebaseAuth.instance.currentUser!.uid) {
       currentUser = true;
       userStreamSub = userStreamController.stream.listen((event) {
+        if (event == null) {
+          return;
+        }
         setState(() {
           profileData = event;
           numberOfFriends = profileData["friends"].length;
@@ -124,79 +145,102 @@ class _ProfilePageState extends State<ProfilePage> {
       Stream viewerDataStream = await Database(uid: FirebaseAuth.instance.currentUser!.uid)
           .getUserStream(widget.uid);
       userStreamSub = viewerDataStream.listen((event) async {
+        print("Viewer Data Changed");
         Map<String, dynamic> viewerData = event.data() as Map<String, dynamic>;
         setState(() {
           profileData = viewerData;
-          numberOfFriends = profileData["friends"].length;
+          numberOfFriends = viewerData["friends"].length;
+          userDisplayName = viewerData["fullname"];
+        });
+        setState(() {
+          profileData = viewerData;
+          numberOfFriends = viewerData["friends"].length;
+        });
+        
+      });
+      userStreamSub2 = userStreamController.stream.listen((event) {
+        if (event == null) {
+          return;
+        }
+          print("User Data Changed");
+          Map<String, dynamic> userData = event as Map<String, dynamic>;
+          List<dynamic> friendsList = userData["friends"];
+          int mutualFriends = 0;
+          List<Map<String, dynamic>> mutualFriendsList = [];
+          for (dynamic friend in friendsList) {
+            for (dynamic friend2 in profileData["friends"]) {
+              if (friend["userId"] == friend2["userId"]) {
+                mutualFriends++;
+                mutualFriendsList.add(friend);
+              }
+            }
+          }
+          setState(() {
+            numberOfMutualFriends = mutualFriends;
+            this.mutualFriends = mutualFriendsList;
+          });
           userDisplayName = profileData["fullname"];
-        });
-        setState(() {
-        profileData = viewerData;
-        numberOfFriends = viewerData["friends"].length;
-      });
-      Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-      List<dynamic> friendsList = userData["friends"];
-      int mutualFriends = 0;
-      List<Map<String, dynamic>> mutualFriendsList = [];
-      for (dynamic friend in friendsList) {
-        for (dynamic friend2 in viewerData["friends"]) {
-          if (friend["userId"] == friend2["userId"]) {
-            mutualFriends++;
-            mutualFriendsList.add(friend);
-          }
-        }
-      }
-      setState(() {
-        numberOfMutualFriends = mutualFriends;
-        this.mutualFriends = mutualFriendsList;
-      });
-      userDisplayName = viewerData["fullname"];
 
-      bool areFriends = false;
-      for (dynamic friend in friendsList) {
-        String friendId = friend["userId"];
-        print("friend: $friendId , widget.uid: ${widget.uid}");
-        print(FirebaseAuth.instance.currentUser!.uid);
-        if (friend["userId"] == widget.uid) {
-          print("are friends");
-          areFriends = true;
-          break;
-        }
-      }
-      if (areFriends) {
-        setState(() {
-          isFriends = true;
-        });
-      } else {
-        List<dynamic> outgoingFriendRequests = userData["outgoingRequests"];
-        bool friendRequest = false;
-        for (dynamic request in outgoingFriendRequests) {
-          if (request["userId"] == widget.uid) {
-            friendRequest = true;
-            break;
+          bool areFriends = false;
+          for (dynamic friend in friendsList) {
+            String friendId = friend["userId"];
+            print("friend: $friendId , widget.uid: ${widget.uid}");
+            print(FirebaseAuth.instance.currentUser!.uid);
+            if (friend["userId"] == widget.uid) {
+              print("are friends");
+              areFriends = true;
+              break;
+            }
           }
-        }
-        if (friendRequest) {
-          setState(() {
-            sentFriendRequest = true;
-          });
-        }
+          if (areFriends) {
+            setState(() {
+              isFriends = true;
+            });
+          } else {
+            setState(() {
+              isFriends = false;
+            });
+            List<dynamic> outgoingFriendRequests = userData["outgoingRequests"];
+            print("Outgoing Requests");
+            print(outgoingFriendRequests);
+            bool friendRequest = false;
+            for (dynamic request in outgoingFriendRequests) {
+              if (request["userId"] == widget.uid) {
+                friendRequest = true;
+                break;
+              }
+            }
+            if (friendRequest) {
+              setState(() {
+                sentFriendRequest = true;
+              });
+            } else {
+              setState(() {
+                sentFriendRequest = false;
+              });
+            }
 
-        List<dynamic> friendRequests = userData["friendRequests"];
-        bool hasRequest = false;
-        for (dynamic request in friendRequests) {
-          if (request["userId"] == widget.uid) {
-            hasRequest = true;
-            break;
+            List<dynamic> friendRequests = userData["friendRequests"];
+            print("Friend Requests");
+            print(friendRequests);
+            bool hasRequest = false;
+            for (dynamic request in friendRequests) {
+              if (request["userId"] == widget.uid) {
+                hasRequest = true;
+                break;
+              }
+            }
+            if (hasRequest) {
+              setState(() {
+                hasFriendRequest = true;
+              });
+            } else {
+              setState(() {
+                hasFriendRequest = false;
+              });
+            }
           }
-        }
-        if (hasRequest) {
-          setState(() {
-            hasFriendRequest = true;
-          });
-        }
-      }
-      });
+        });
       
       Map<String, dynamic> viewerData =
           (await Database(uid: FirebaseAuth.instance.currentUser!.uid)
@@ -239,6 +283,9 @@ class _ProfilePageState extends State<ProfilePage> {
           isFriends = true;
         });
       } else {
+        setState(() {
+          isFriends = false;
+        });
         List<dynamic> outgoingFriendRequests = userData["outgoingRequests"];
         bool friendRequest = false;
         for (dynamic request in outgoingFriendRequests) {
@@ -250,6 +297,10 @@ class _ProfilePageState extends State<ProfilePage> {
         if (friendRequest) {
           setState(() {
             sentFriendRequest = true;
+          });
+        } else {
+          setState(() {
+            sentFriendRequest = false;
           });
         }
 
@@ -264,6 +315,10 @@ class _ProfilePageState extends State<ProfilePage> {
         if (hasRequest) {
           setState(() {
             hasFriendRequest = true;
+          });
+        } else {
+          setState(() {
+            hasFriendRequest = false;
           });
         }
       }
@@ -290,14 +345,14 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void logout() async {
-    await Auth().signOut();
-    Navigator.of(context).pushReplacement(
-      CustomPageRoute(
-        builder: (BuildContext context) {
-          return const WelcomePage();
-        },
-      ),
-    );
+    router.pushReplacement('/login');
+    print("Logging out");
+    //Stop listening to the user stream
+    userStreamSub.cancel();
+    blankStreamSub.cancel();
+    userStreamSub2.cancel();
+    
+    
   }
 
   @override
@@ -305,6 +360,8 @@ class _ProfilePageState extends State<ProfilePage> {
     // TODO: implement dispose
     super.dispose();
     userStreamSub.cancel();
+    blankStreamSub.cancel();
+    userStreamSub2.cancel();
   }
 
   void showFriendsPopup() {
@@ -446,11 +503,18 @@ class _ProfilePageState extends State<ProfilePage> {
         appBar: widget.showAppBar ? PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
           child: CustomAppBar(
-            title: isCurrentUser ? "Your Profile" : "$displayName ",
-            showBackButton: widget.showBackButton,
+            fixRight: true,
+            title: isCurrentUser ? "Your Profile" : "$displayName",
+            showBackButton: widget.showBackButton || widget.isFriendLink,
             onBackButtonPressed: () {
               HapticFeedback.mediumImpact();
-              Navigator.of(context).pop();
+              if (widget.isFriendLink) {
+                // Navigator.of(context).pop();
+                router.go('/home');
+                
+              } else {
+                Navigator.of(context).pop();
+              }
             },
             showSettingsButton: isCurrentUser,
             onSettingsButtonPressed: () {
@@ -495,7 +559,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   child: ElevatedButton(
                                       onPressed: () {
                                         HapticFeedback.mediumImpact();
-                                        descriptionController.text =
+                                        editDescription =
                                             profileData["description"];
                                         showDiscriptionPopup(context);
                                       },
@@ -521,112 +585,124 @@ class _ProfilePageState extends State<ProfilePage> {
         body: gotData ? Stack(
           children: [
             const BackgroundTile(),
-            Column(
-              children: [
-                const SizedBox(height: 20),
-                Column(
-                  children: [
-                    if(profileData["description"] != null && profileData["description"] != "")
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width - 100,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          //Write three sentences of filler text here
-                          profileData["description"] ?? "",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
+            SingleChildScrollView(
+              child: Column(
+                // shrinkWrap: true,
+                children: [
+                  const SizedBox(height: 20),
+                  Column(
+                    children: [
+                      if(profileData["description"] != null && profileData["description"] != "")
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width - 50,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            //Write three sentences of filler text here
+                            profileData["description"] ?? "",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ),
-                    ),
-                    if(profileData["description"] != null && profileData["description"] != "")
-                    const SizedBox(height: 20),
-                    FriendsCount(
-                      isCurrentUser: isCurrentUser,
-                      friends: numberOfFriends,
-                      mutualFriends: numberOfMutualFriends,
-                      onFriendsButtonPressed: showFriendsPopup,
-                      onMutualFriendsButtonPressed: showMutualFriendsPopup,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                if (!isCurrentUser)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      isLoading ?  const CircularProgressIndicator() 
-                      : SizedBox(
-                        width: 250,
-                        child: ElevatedButton(
-                            onPressed: () async {
-                              setState(() {
-                                isLoading = true;
-                              });
-                              HapticFeedback.mediumImpact();
-                              if (isFriends) {
-                                await removeFriend();
-                              } else {
-                                if (hasFriendRequest) {
-                                  await acceptFriendRequest();
-                                  setState(() {
-                                    isLoading = false;
-                                  });
-                                  return;
-                                }
-                                if (sentFriendRequest) {
-                                  await cancelFriendRequest();
-                                  setState(() {
-                                    isLoading = false;
-                                  });
-                                  return;
-                                }
-      
-                                await sendFriendRequest();
-                              }
-                              setState(() {
-                                isLoading = false;
-                              });
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: isFriends ||
-                                      sentFriendRequest ||
-                                      hasFriendRequest
-                                  ? Colors.transparent
-                                  : ColorSys.primary,
-                              elevation: 10,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                  side: BorderSide(
-                                      color: ColorSys.primarySolid, width: 2)),
-                            ),
-                            child: Text(isFriends
-                                ? "Unfriend"
-                                : hasFriendRequest
-                                    ? "Accept Friend Request"
-                                    : sentFriendRequest
-                                        ? "Friend Request Sent"
-                                        : "Add Friend")),
-                      )
+                      FriendsCount(
+                        isCurrentUser: isCurrentUser,
+                        friends: numberOfFriends,
+                        mutualFriends: numberOfMutualFriends,
+                        onFriendsButtonPressed: showFriendsPopup,
+                        onMutualFriendsButtonPressed: showMutualFriendsPopup,
+                      ),
                     ],
                   ),
-                if(!isCurrentUser)
                   const SizedBox(height: 20),
-
-                if(blankOfTheWeek.isNotEmpty)
-                  BOTWTile(blank: blankOfTheWeek["blank"], answer:blankOfTheWeek["answers"][profileData["uid"]] , isCurrentUser: isCurrentUser, status: blankOfTheWeek["status"],),
-                if(blankOfTheWeek.isNotEmpty && blankOfTheWeek["status"] == "voting" && isCurrentUser)
-                  const SizedBox(height: 20),
-                if(blankOfTheWeek.isNotEmpty && blankOfTheWeek["status"] == "voting" && isCurrentUser)
-                  ElevatedButton(onPressed: () {
-                    nextScreen(context, VotingPage(blank: blankOfTheWeek,));
-                  },style: elevatedButtonDecoration ,child: Text(
-                    "Vote",
-                    style: TextStyle(color: Colors.black, fontSize: 16),
-                  ))
-              ],
+                  if (!isCurrentUser)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        isLoading ?  CircularProgressIndicator( color: ColorSys.primary,) 
+                        : SizedBox(
+                          width: 250,
+                          child: ElevatedButton(
+                              onPressed: () async {
+                                setState(() {
+                                  isLoading = true;
+                                });
+                                HapticFeedback.mediumImpact();
+                                if (isFriends) {
+                                  await removeFriend();
+                                } else {
+                                  if (hasFriendRequest) {
+                                    await acceptFriendRequest();
+                                    setState(() {
+                                      isLoading = false;
+                                    });
+                                    return;
+                                  }
+                                  if (sentFriendRequest) {
+                                    await cancelFriendRequest();
+                                    setState(() {
+                                      isLoading = false;
+                                    });
+                                    return;
+                                  }
+                    
+                                  await sendFriendRequest();
+                                }
+                                setState(() {
+                                  isLoading = false;
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isFriends ||
+                                        sentFriendRequest ||
+                                        hasFriendRequest
+                                    ? Colors.transparent
+                                    : ColorSys.primaryDark,
+                                elevation: 10,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                    side: BorderSide(
+                                        color: ColorSys.primaryDark, width: 3)),
+                              ),
+                              child: Text(isFriends
+                                  ? "Unfriend"
+                                  : hasFriendRequest
+                                      ? "Accept Friend Request"
+                                      : sentFriendRequest
+                                          ? "Friend Request Sent"
+                                          : "Add Friend", style: TextStyle(color: isFriends || sentFriendRequest || hasFriendRequest ? Colors.white : Colors.white))),
+                        )
+                      ],
+                    ),
+                  if(!isCurrentUser)
+                    const SizedBox(height: 20),
+              
+                  if(blankOfTheWeek.isNotEmpty)
+                    BOTWTile(blank: blankOfTheWeek["blank"], answer:blankOfTheWeek["answers"][profileData["uid"]] , isCurrentUser: isCurrentUser, status: blankOfTheWeek["status"],),
+                 if(blankOfTheWeek.isNotEmpty && blankOfTheWeek["status"] == "voting" && isCurrentUser)
+                    const SizedBox(height: 20),
+                  if(blankOfTheWeek.isNotEmpty && blankOfTheWeek["status"] == "voting" && isCurrentUser)
+                    ElevatedButton(onPressed: () {
+                      nextScreen(context, VotingPage(blank: blankOfTheWeek,));
+                    },style: elevatedButtonDecoration ,child: Text(
+                      "Vote",
+                      style: TextStyle(color: Colors.black, fontSize: 16),
+                    )),
+               
+                  if(blankOfTheWeek.isNotEmpty && blankOfTheWeek["status"] == "done" && isCurrentUser)
+                    const SizedBox(height: 20),
+                  if(blankOfTheWeek.isNotEmpty && blankOfTheWeek["status"] == "done" && isCurrentUser)
+                    ElevatedButton(onPressed: () {
+                      nextScreen(context, BotwResultsPage(answers: blankOfTheWeek["answers"]));
+                    },style: elevatedButtonDecoration ,child: Text(
+                      "View Results",
+                      style: TextStyle(color: Colors.black, fontSize: 16),
+                    )),
+                ],
+              ),
             ),
           ],
         ) : const SizedBox(),
@@ -661,12 +737,17 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(
                     height: 20,
                   ),
-                  TextField(
-                    controller: descriptionController,
+                  TextFormField(
+                    initialValue: editDescription,
                     maxLines: 7,
                     decoration: textInputDecoration.copyWith(
                       hintText: 'Description',
+                      counterStyle: TextStyle(color: Colors.white),
+
                     ),
+                    onChanged: (value) => editDescription = value,
+                    maxLength: 125,
+                    maxLengthEnforcement: MaxLengthEnforcement.enforced,
                   ),
                 ],
               ),
@@ -684,11 +765,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 onPressed: () async {
                   setState(() {
-                    profileData["description"] = descriptionController.text;
+                    profileData["description"] = editDescription;
                   });
           
                   await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-                      .updateUserDescription(descriptionController.text);
+                      .updateUserDescription(editDescription);
                   Navigator.of(context).pop();
                 },
                 child: const Text("Save", style: TextStyle(color: Colors.white)),

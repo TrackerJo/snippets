@@ -14,7 +14,7 @@ class DiscussionTile extends StatelessWidget {
   final bool hasBeenRead;
   final String answerResponse;
   final String theme;
-  final List<dynamic> discussionUsers;
+
 
   const DiscussionTile(
       {super.key,
@@ -26,7 +26,7 @@ class DiscussionTile extends StatelessWidget {
       required this.lastMessageSender,
       required this.lastMessage,
       required this.hasBeenRead,
-      required this.discussionUsers,
+
       required this.theme});
 
   @override
@@ -61,7 +61,7 @@ class DiscussionTile extends StatelessWidget {
               child: ListTile(
                   title: Text("$answerUser - $question",
                       style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text("$lastMessageSender: $lastMessage", style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  subtitle: Text("${lastMessageSender == "" ? "" : "$lastMessageSender: "}$lastMessage", style: const TextStyle(fontSize: 12, color: Colors.black)),
                   onTap: () {
                     // navigate to discussion page
                     nextScreen(
@@ -74,15 +74,16 @@ class DiscussionTile extends StatelessWidget {
                             snippetId: snippetId,
                             question: question,
                             theme: theme,
-                            discussionUsers: discussionUsers,
+                            
                             isDisplayOnly: true,
                           ),
+
                           theme: theme,
                         ));
                   },
-                  trailing: const Icon(Icons.arrow_forward_ios),
+                  trailing: const Icon(Icons.arrow_forward_ios, color: Colors.black),
                   leading: //Make a blue dot
-                      !hasBeenRead
+                      !hasBeenRead && lastMessageSender != ""
                           ? Container(
                               height: 10,
                               width: 10,

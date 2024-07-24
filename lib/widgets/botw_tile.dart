@@ -111,15 +111,7 @@ class _BOTWTileState extends State<BOTWTile> {
 
                        
                       },
-                      style: ElevatedButton.styleFrom(
-                        elevation: 10,
-                        shadowColor: ColorSys.primary,
-                        minimumSize: const Size(100, 50),
-                        backgroundColor: ColorSys.primarySolid,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20.0),
-                        ),
-                      ),
+                      style: elevatedButtonDecoration,
                       child: Text(isEditting ? "Save" : "Submit",
                           style: TextStyle(fontSize: 16, color: Colors.black)),
                     ),
@@ -129,7 +121,7 @@ class _BOTWTileState extends State<BOTWTile> {
                 children: [
                   ConstrainedBox(
                     constraints: const BoxConstraints(
-                      maxHeight: 200,
+                      maxHeight: 100,
                     ),
                     child: SingleChildScrollView(
                       child: Padding(

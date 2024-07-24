@@ -4,6 +4,8 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:snippets/api/auth.dart';
+import 'package:snippets/api/local_database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/widgets/snippet_tile.dart';
@@ -19,18 +21,59 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   Stream? currentSnippetsStream;
+
+  StreamController snippetsStreamController = StreamController();
+  StreamController localController = StreamController();
+  StreamController firebaseController = StreamController();
   
 
 
   void getCurrentSnippets() async {
-    var currentSnippets =
-        await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-            .getCurrentSnippets();
-    if (mounted) {
-      setState(() {
-        currentSnippetsStream = currentSnippets;
-      });
-    }
+    
+    await HelperFunctions.saveOpenedPageSF("snippets");
+    Snippet? latestSnippet = await LocalDatabase().getMostRecentSnippet();
+    DateTime? latestSnippetDate = latestSnippet?.lastRecieved;
+    print(latestSnippetDate);
+    await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+            .getCurrentSnippets(latestSnippetDate, firebaseController);
+
+    
+    await LocalDatabase().getSnippets(localController);
+    localController.stream.listen((event) {
+      print("Local Chats");
+      
+      snippetsStreamController.add(event);
+    });
+    firebaseController.stream.listen((event) {
+      print("Firebase Chats");
+      
+      if(event.docs.isNotEmpty){
+        
+
+        //Go through each chat and add to local database
+        for (var i = 0; i < event.docs.length; i++) {
+          Map<String, dynamic> data = event.docs[i].data() as Map<String, dynamic>;
+          
+          print("Adding snippet to local database ${data['question']}");
+          Map<String, dynamic> snippetMap = {
+            "snippetId": event.docs[i].id,
+            "lastRecieved":  data["lastRecieved"].toDate(),
+            "question": data["question"],
+            "answered":  false,
+            "theme":  data["theme"],
+            "index":  data["index"],
+             
+          };
+          LocalDatabase().addSnippet(snippetMap);
+          
+        }
+        
+
+      }
+
+    });
+  
+   
   }
 
   @override
@@ -45,27 +88,13 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     super.dispose();
+    snippetsStreamController.close();
+    firebaseController.close();
+    localController.close();
 
   }
 
-  String calculateTimeLeft(String endTime) {
-    DateFormat inputFormat = DateFormat('EEE MMM dd yyyy HH:mm:ss zzz');
-    DateTime endDateTime = inputFormat.parse(endTime);
-    DateTime now = DateTime.now();
-    Duration difference = endDateTime.difference(now);
-    if (difference.inDays > 0) {
-      return difference.inDays == 1 ? "1 day" : "${difference.inDays} days";
-    } else if (difference.inHours > 0) {
-      return difference.inHours == 1 ? "1 hour" : "${difference.inHours} hours";
-    } else if (difference.inMinutes > 0) {
-      return difference.inMinutes == 1
-          ? "1 minute"
-          : "${difference.inMinutes} minutes";
-    } else if (difference.inSeconds > 0) {
-      return "${difference.inSeconds} seconds";
-    }
-    return "None";
-  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -140,15 +169,15 @@ class _HomePageState extends State<HomePage> {
 
   StreamBuilder snippetsList() {
     return StreamBuilder(
-      stream: currentSnippetsStream,
+      stream: snippetsStreamController.stream,
       builder: (context, AsyncSnapshot snapshot) {
         //Make checks
         if (snapshot.hasData) {
-          if (snapshot.data!.docs.length != null) {
-            if (snapshot.data.docs.length != 0) {
+          if (snapshot.data!.length != null) {
+            if (snapshot.data.length != 0) {
               return ListView.builder(
                     clipBehavior: Clip.none,
-                    itemCount: snapshot.data.docs.length,
+                    itemCount: snapshot.data.length,
                     shrinkWrap: true,
                     itemBuilder: (context, index) {
                       //int reverseIndex = snapshot.data.docs.length - index - 1;
@@ -166,14 +195,12 @@ class _HomePageState extends State<HomePage> {
                       return Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: SnippetTile(
-                          questionType: "stranger",
-                          question: snapshot.data.docs[index]["question"],
-                          theme: snapshot.data.docs[index]["theme"],
-                          timeLeft: calculateTimeLeft(
-                              snapshot.data.docs[index]["endTime"]),
-                          snippetId: snapshot.data.docs[index].reference.id,
-                          isAnswered: snapshot.data.docs[index]["answered"]
-                              .contains(FirebaseAuth.instance.currentUser!.uid),
+
+                          question: snapshot.data[index].question,
+                          theme: snapshot.data[index].theme,
+                          
+                          snippetId: snapshot.data[index].snippetId,
+                          isAnswered: snapshot.data[index].answered
                         ),
                       );
                     });

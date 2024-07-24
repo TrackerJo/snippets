@@ -8,11 +8,13 @@ class ProfileTile extends StatefulWidget {
   final String displayName;
   final String uid;
   final String username;
+  final int? mutualFriends;
   const ProfileTile(
       {super.key,
       required this.displayName,
       required this.uid,
-      required this.username});
+      required this.username,
+      this.mutualFriends});
 
   @override
   State<ProfileTile> createState() => _ProfileTileState();
@@ -27,7 +29,8 @@ class _ProfileTileState extends State<ProfileTile> {
         borderRadius: BorderRadius.circular(12),
         // color: ColorSys.primary,
         child: ListTile(
-          tileColor: ColorSys.primary,
+          tileColor: ColorSys.primarySolid,
+          splashColor: ColorSys.primaryDark,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -49,7 +52,7 @@ class _ProfileTileState extends State<ProfileTile> {
             ),
           ),
           subtitle: Text(
-            '@${widget.username}',
+            '@${widget.username} ${widget.mutualFriends != null ? "- ${widget.mutualFriends} mutual ${widget.mutualFriends == 1 ? "friend" : "friends"}" : ""}',
             style: const TextStyle(
               color: Colors.black,
               fontSize: 15,

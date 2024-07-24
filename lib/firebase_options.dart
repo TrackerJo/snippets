@@ -70,6 +70,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '245390768336',
     projectId: 'snippets2024',
     storageBucket: 'snippets2024.appspot.com',
-    iosBundleId: 'com.trackerjo.snippets',
+    iosBundleId: 'com.kazoom.snippets',
   );
 }

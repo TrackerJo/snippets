@@ -10,17 +10,17 @@ import 'helper_functions.dart';
 
 class SnippetTile extends StatefulWidget {
   // final bool isAnswered;
-  final String questionType;
+
   final String question;
-  final String timeLeft;
+
   final String snippetId;
   final bool isAnswered;
   final String theme;
   const SnippetTile({
     super.key,
-    required this.questionType,
+
     required this.question,
-    required this.timeLeft,
+
     required this.snippetId,
     required this.isAnswered,
     required this.theme,

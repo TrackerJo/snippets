@@ -131,18 +131,8 @@ class PushNotifications {
         router.push("/home/question/${message.data['snippetId']}/${message.data['theme']}/${message.data['question']}");
       } else if (message.data['type'] == "discussion") {
         print("Discussion");
-        List<Map<String, dynamic>> discussionUsers = createDiscussionUsersList(message.data['discussionUsers']);
-        Map<String, dynamic> responseTile = {
-          "displayName": message.data['responseName'],
-          "response": message.data['response'],
-          "userId": message.data["responseId"],
-          "snippetId": message.data['snippetId'],
-          "question": message.data['snippetQuestion'],
-          "theme": message.data['theme'],
-          "discussionUsers": discussionUsers,
-          "isDisplayOnly": true
-        };
-        String responseTileString = jsonEncode(responseTile);
+
+      
         // navigatorKey.currentState?.push(
         //   CustomPageRoute(
         //     builder: (BuildContext context) {
@@ -161,7 +151,8 @@ class PushNotifications {
         //     },
         //   ),
         // );
-        router.push("/home/discussion/$responseTileString");
+        router.push("/home/discussion?displayName=${message.data['responseName']}&response=${message.data['response']}&userId=${message.data['responseId']}&snippetId=${message.data['snippetId']}&snippetQuestion=${message.data['snippetQuestion']}&theme=${message.data['theme']}&discussionUsers=${message.data['discussionUsers']}&isDisplayOnly=true");
+
       } else if (message.data['type'] == "friendRequest" ||
           message.data['type'] == "friendRequestAccepted") {
           
@@ -206,7 +197,7 @@ class PushNotifications {
           //   ),
           //   (Route<dynamic> route) => false,
           // );
-          router.push("/home/swipe/0");
+          router.pushReplacement("/home/0");
         }
         else if(message.data['type'] == "reminderToVoteBOTW" || message.data['type'] == "botw voting"){
           // navigatorKey.currentState?.pushAndRemoveUntil(
@@ -218,6 +209,10 @@ class PushNotifications {
           //   (Route<dynamic> route) => false,
           // );
           router.push("/home/voting");
+        } else if(message.data['type'] == "endVotingBOTW"){
+          router.push("/home/results");
+        } else if(message.data['type'] == "viewUserProfile"){
+          router.push("/home/profile/${message.data['userId']}");
         }
         else {
           // navigatorKey.currentState?.push(
@@ -229,7 +224,7 @@ class PushNotifications {
           //     },
           //   ),
           // );
-          router.push( "/home/question/${message.data['snippetId']}/${message.data['theme']}/${message.data['question']}");
+          router.push( "/home/1");
       }
     }
   }
@@ -249,19 +244,19 @@ class PushNotifications {
     });
   }
 
-  void subscribeToTopic(String topic) {
-    _firebaseMessaging.subscribeToTopic(topic);
+  Future subscribeToTopic(String topic) async {
+    await _firebaseMessaging.subscribeToTopic(topic);
     print("Subscribed to $topic");
   }
 
-  void unsubscribeFromTopic(String topic) {
-    _firebaseMessaging.unsubscribeFromTopic(topic);
+  Future unsubscribeFromTopic(String topic) async {
+    await _firebaseMessaging.unsubscribeFromTopic(topic);
   }
 
   String createDiscussionUsersString(List<dynamic> discussionUsers) {
     String users = "";
     for (var value in discussionUsers) {
-      users += "|${value["userId"]}/${value["FCMToken"]}";
+      users += "|${value["userId"]}^${value["FCMToken"]}";
     }
     return users;
    
@@ -271,7 +266,7 @@ class PushNotifications {
     List<Map<String, dynamic>> users = [];
     List<String> userStrings = discussionUsers.split("|");
     for (var user in userStrings) {
-      List<String> userParts = user.split("/");
+      List<String> userParts = user.split("^");
       if(userParts.length == 2) {
         
         
@@ -291,6 +286,7 @@ class PushNotifications {
       required Map<String, dynamic> data}) async {
         print("Sending notification");
         print(data);
+        print(targetIds);
         if(data["type"] == "discussion") {
           data["discussionUsers"] = createDiscussionUsersString(data["discussionUsers"]);
         }

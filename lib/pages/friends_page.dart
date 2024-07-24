@@ -31,6 +31,9 @@ class _FriendsPageState extends State<FriendsPage> {
     // Get friends
     print("Getting friends");
     userStreamSub = userStreamController.stream.listen((event) {
+      if (event == null) {
+          return;
+        }
       //Get document
       print("Got data");
       print(event);
@@ -300,7 +303,9 @@ class _FriendsPageState extends State<FriendsPage> {
                       friendRequests[index]["displayName"],
                       friendRequests[index]["username"],
                       friendRequests[index]["FCMToken"]);
+              if(!mounted) return;
               setState(() {
+                
                 friendRequests.removeWhere((element) =>
                     element["userId"] ==
                     friendRequests[index]["userId"]);

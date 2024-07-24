@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:phone_input/phone_input_package.dart';
 import 'package:snippets/api/notifications.dart';
+import 'package:snippets/main.dart';
 
 import '../helper/helper_function.dart';
 import 'database.dart';
@@ -22,6 +23,8 @@ class Auth {
       await HelperFunctions.saveUserDisplayNameSF(userInfoMap["fullname"]);
       await HelperFunctions.saveUserEmailSF(userInfoMap["email"]);
       await HelperFunctions.saveUserDataSF(jsonEncode(userInfoMap));
+      await PushNotifications().initNotifications();
+      await PushNotifications().subscribeToTopic("all");
 
       return true;
     } on FirebaseAuthException catch (e) {
@@ -52,7 +55,8 @@ class Auth {
       await HelperFunctions.saveUserNameSF(username);
       await HelperFunctions.saveUserDisplayNameSF(fullName);
       await HelperFunctions.saveUserEmailSF(email);
-      PushNotifications().subscribeToTopic("all");
+      
+      await PushNotifications().subscribeToTopic("all");
       return true;
     } on FirebaseAuthException catch (e) {
       return e.message;
@@ -62,8 +66,12 @@ class Auth {
   //Signout
   Future signOut() async {
     try {
+      // router.pushReplacement("/login");
       await HelperFunctions.saveUserDisplayNameSF("");
       await HelperFunctions.saveUserEmailSF("");
+      await HelperFunctions.saveUserNameSF("");
+      await HelperFunctions.saveUserDataSF("");
+      await PushNotifications().unsubscribeFromTopic("all");
       await _auth.signOut();
     } catch (e) {
       return null;
@@ -85,6 +93,7 @@ class Auth {
     _auth.authStateChanges().listen((User? user) {
       if (user == null) {
         print("Cancelling");
+        // router.pushReplacement("/login");
         stream.cancel();
       } else {
         print("Starting");

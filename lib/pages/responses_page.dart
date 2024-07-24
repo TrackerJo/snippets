@@ -1,6 +1,10 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:snippets/api/database.dart';
+import 'package:snippets/api/local_database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/pages/discussion_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
@@ -32,12 +36,92 @@ class _ResponsesPageState extends State<ResponsesPage> {
   String userDisplayName = "";
   String userResponse = "";
   List<dynamic> discussionUsers = [];
+  StreamController responsesStream = StreamController();
+
+  List<String> toStringList(List<dynamic> oldList) {
+    List<String> newList = [];
+    for (var item in oldList) {
+      newList.add(item["userId"]);
+    }
+    return newList;
+  }
+
+  bool compareLists(List<String> list1, List<String> list2) {
+    if (list1.length != list2.length) {
+      return false;
+    }
+    for (var item in list1) {
+      if (!list2.contains(item)) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   void getResponsesList() async {
     await HelperFunctions.saveOpenedPageSF("responses-${widget.snippetId}");
-    var responsesList =
+    SnipResponse? latestResponse = await LocalDatabase().getLatestResponse(widget.snippetId);
+    DateTime? latestResDate = latestResponse?.date;
+    print("Latest response date: $latestResDate");
+    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    List<String> friends = toStringList(userData["friends"]);
+    List<String> savedFriends = await LocalDatabase().getCachedFriends(widget.snippetId);
+    print("Friends: $friends");
+    print("Saved friends: $savedFriends");
+    List<String> newFriends = [];
+    List<String> removedFriends = [];
+    if(!compareLists(friends, savedFriends)){
+      for (var item in friends) {
+        if (!savedFriends.contains(item)) {
+          newFriends.add(item);
+        }
+      }
+      for (var item in savedFriends) {
+        if (!friends.contains(item)) {
+          removedFriends.add(item);
+        }
+      }
+      for (var friend in removedFriends) {
+        LocalDatabase().removeResponse(widget.snippetId, friend);
+  
+        
+      }
+     await LocalDatabase().saveFriends(friends, widget.snippetId);
+    }
+     var responsesList =
         await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-            .getResponsesList(widget.snippetId);
+            .getResponsesList(widget.snippetId, latestResDate, newFriends.isNotEmpty, newFriends);
+    var localResponses = await LocalDatabase().getResponses(widget.snippetId, friends);
+
+    localResponses.listen((event) {
+      responsesStream.add(event);
+    });
+    responsesList.listen((event) {
+      print("Firebase response");
+
+        if(event.docs.isNotEmpty){
+
+
+          //Go through each chat and add to local database
+          for (var i = 0; i < event.docs.length; i++) {
+            Map<String, dynamic> data = event.docs[i].data() as Map<String, dynamic>;
+           
+            print("Adding chat to local database ${data['answer']}");
+            Map<String, dynamic> responseMap = {
+              "snippetId": widget.snippetId,
+              "uid": data["uid"],
+              "displayName": data["displayName"],
+              "answer": data["answer"],
+              "date": data["date"].toDate(),
+              
+            };
+            LocalDatabase().addResponse(responseMap);
+            
+          }
+         
+
+        }
+    });
     if (mounted) {
       setState(() {
         responsesListStream = responsesList;
@@ -123,34 +207,20 @@ class _ResponsesPageState extends State<ResponsesPage> {
 
   responsesList() {
     return StreamBuilder(
-      stream: responsesListStream,
+      stream: responsesStream.stream,
       builder: (context, AsyncSnapshot snapshot) {
         //Make checks
         if (snapshot.hasData) {
-          if (snapshot.data == "EMPTY") {
-            return Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ResponseTile(
-                question: widget.question,
-                response: userResponse,
-                displayName: userDisplayName,
-                snippetId: widget.snippetId,
-                userId: FirebaseAuth.instance.currentUser!.uid,
-                isDisplayOnly: false,
-                theme: widget.theme,
-                discussionUsers: discussionUsers,
-              ),
-            );
-          }
-          if (snapshot.data!.docs.length != null) {
-            if (snapshot.data.docs.length + 1 != 0) {
+          if (snapshot.data!.length != null) {
+            if (snapshot.data.length + 1 != 0) {
               return SizedBox(
                   height: MediaQuery.of(context).size.height - 100,
                   child: ListView.builder(
                       shrinkWrap: true,
                       clipBehavior: Clip.none,
-                      itemCount: snapshot.data.docs.length + 1,
+                      itemCount: snapshot.data.length + 1,
                       itemBuilder: (context, index) {
+                        print("INDEX $index");
                         if (index == 0) {
                           // return the header
                           return Padding(
@@ -163,53 +233,27 @@ class _ResponsesPageState extends State<ResponsesPage> {
                               userId: FirebaseAuth.instance.currentUser!.uid,
                               isDisplayOnly: false,
                               theme: widget.theme,
-                              discussionUsers: discussionUsers,
+
                             ),
                           );
                         }
                         index -= 1;
-                        if (snapshot.data.docs[0] == "EMPTY") {
-                          return const Center(
-                            child: Text("No responses yet"),
-                          );
-                        }
+                        // if (snapshot.data.docs[0] == "EMPTY") {
+                        //   return const Center(
+                        //     child: Text("No responses yet"),
+                        //   );
+                        // }
                         return Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: ResponseTile(
                               question: widget.question,
-                              response: snapshot.data.docs[index]["answer"],
-                              displayName: snapshot.data.docs[index]
-                                  ["displayName"],
+                              response: snapshot.data[index].answer,
+                              displayName: snapshot.data[index].displayName,
                               snippetId: widget.snippetId,
                               theme: widget.theme,
-                              userId: snapshot.data.docs[index]["uid"],
-                              discussionUsers: snapshot.data.docs[index]
-                                  ["discussionUsers"],
-                              goToComments: () async {
-                                bool refresh = await Navigator.of(context).push(
-                                    CustomPageRoute(
-                                        builder: (BuildContext context) {
-                                  return DiscussionPage(
-                                    theme: widget.theme,
-                                    responseTile: ResponseTile(
-                                      response: snapshot.data.docs[index]
-                                          ["answer"],
-                                      displayName: snapshot.data.docs[index]
-                                          ["displayName"],
-                                      snippetId: widget.snippetId,
-                                      userId: snapshot.data.docs[index]["uid"],
-                                      question: widget.question,
-                                      isDisplayOnly: true,
-                                      theme: widget.theme,
-                                      discussionUsers: snapshot.data.docs[index]
-                                          ["discussionUsers"],
-                                    ),
-                                  );
-                                }));
-                                if (refresh) {
-                                  getResponsesList();
-                                }
-                              }),
+                              userId: snapshot.data[index].uid,
+                              
+                              ),
                         );
                       }));
             } else {

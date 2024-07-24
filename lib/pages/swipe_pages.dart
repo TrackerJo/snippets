@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,9 @@ import 'package:snippets/widgets/custom_app_bar.dart';
 import 'package:snippets/widgets/custom_nav_bar.dart';
 import 'package:snippets/widgets/custom_page_route.dart';
 
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+
 class SwipePages extends StatefulWidget {
   final int initialIndex;
   const SwipePages({super.key, this.initialIndex = 1});
@@ -37,20 +41,73 @@ class _SwipePagesState extends State<SwipePages> {
   StreamSubscription userStreamSub = const Stream.empty().listen((event) {});
   bool hasFriendRequests = false;
   bool hasAnsweredBOTW = false;
+  String editDescription = "";
+  bool loggedIn = false;
 
   void getData()async{
+
+    bool status = await Auth().isUserLoggedIn();
+    print(status);
+    if(!status){
+      router.pushReplacement("/login");
+      return;
+    }
+    setState(() {
+      loggedIn = status;
+    });
     await HelperFunctions.saveOpenedPageSF("snippets");
+
+
     userStreamSub = userStreamController.stream.listen((event) {
+      if (event == null) {
+          return;
+        }
       DateTime now = DateTime.now();
       DateTime monday = now.subtract(Duration(days: now.weekday - 1));
       String mondayString = "${monday.month}-${monday.day}-${monday.year}";
+      //Get time in EST
+      tz.initializeTimeZones();
+      // Set the EST time zone using the 'America/New_York' IANA time zone identifier
+      var estLocation = tz.getLocation('America/New_York');
+      // Get the current time in EST
+      var nowInEst = tz.TZDateTime.now(estLocation);
+
+      
+
 
       setState(() {
         userData = event;
         hasFriendRequests = userData["friendRequests"].length > 0;
-        if(userData["botwStatus"]["hasAnswered"] && userData["botwStatus"]["date"] == mondayString){
+        print("${mondayString == userData["botwStatus"]["date"]}" );
+        if(userData["botwStatus"]["hasAnswered"] && userData["botwStatus"]["date"] == mondayString && now.weekday < 6){
+          //Check if date is sat or sun
           hasAnsweredBOTW = true;
+        } else if(userData["botwStatus"]["hasAnswered"] && userData["botwStatus"]["date"] == mondayString) {
+          if(now.weekday == 6 && nowInEst.hour >= 9){
+            if(userData["votesLeft"] != 0){
+              hasAnsweredBOTW = false;
+            } else {
+              hasAnsweredBOTW = true;
+            }
+          } else if(now.weekday == 6 && nowInEst.hour < 9){
+            hasAnsweredBOTW = true;
+          }else if(now.weekday == 7){
+              if(nowInEst.hour < 15){
+                if(userData["votesLeft"] != 0){
+                hasAnsweredBOTW = false;
+              } else {
+                hasAnsweredBOTW = true;
+              }
+            } else {
+              if(userData["botwStatus"]["hasSeenResults"]){
+                hasAnsweredBOTW = true;
+              } else {
+                hasAnsweredBOTW = false;
+              }
+            }
+          } 
         } else {
+          
           hasAnsweredBOTW = false;
 
         }
@@ -61,16 +118,47 @@ class _SwipePagesState extends State<SwipePages> {
     DateTime now = DateTime.now();
       DateTime monday = now.subtract(Duration(days: now.weekday - 1));
       String mondayString = "${monday.month}-${monday.day}-${monday.year}";
+      //Get time in EST
+      tz.initializeTimeZones();
+      // Set the EST time zone using the 'America/New_York' IANA time zone identifier
+      var estLocation = tz.getLocation('America/New_York');
+      // Get the current time in EST
+      var nowInEst = tz.TZDateTime.now(estLocation);
     setState(() {
 
         hasFriendRequests = userData["friendRequests"].length > 0;
-        if(userData["botwStatus"]["hasAnswered"] && userData["botwStatus"]["date"] == mondayString){
+       if(userData["botwStatus"]["hasAnswered"] && userData["botwStatus"]["date"] == mondayString && now.weekday < 6){
+          //Check if date is sat or sun
           hasAnsweredBOTW = true;
+        } else if(userData["botwStatus"]["hasAnswered"] && userData["botwStatus"]["date"] == mondayString) {
+          if(now.weekday == 6 && nowInEst.hour >= 9){
+            if(userData["votesLeft"] != 0){
+              hasAnsweredBOTW = false;
+            } else {
+              hasAnsweredBOTW = true;
+            }
+          } else if(now.weekday == 6 && nowInEst.hour < 9){
+            hasAnsweredBOTW = true;
+          }else if(now.weekday == 7){
+              if(nowInEst.hour < 15){
+                if(userData["votesLeft"] != 0){
+                hasAnsweredBOTW = false;
+              } else {
+                hasAnsweredBOTW = true;
+              }
+            } else {
+              if(userData["botwStatus"]["hasSeenResults"]){
+                hasAnsweredBOTW = true;
+              } else {
+                hasAnsweredBOTW = false;
+              }
+            }
+          } 
         } else {
+          
           hasAnsweredBOTW = false;
 
         }
-
       });
     
   }
@@ -79,6 +167,9 @@ class _SwipePagesState extends State<SwipePages> {
   void initState() {
     getData();
     pageController = PageController(initialPage: widget.initialIndex);
+    setState(() {
+      selectedIndex = widget.initialIndex;
+    });
     super.initState();
   }
 
@@ -89,14 +180,9 @@ class _SwipePagesState extends State<SwipePages> {
   }
 
    Future logout() async {
+    router.pushReplacement("/login");
     await Auth().signOut();
-    Navigator.of(context).pushReplacement(
-      CustomPageRoute(
-        builder: (BuildContext context) {
-          return const WelcomePage();
-        },
-      ),
-    );
+    
   }
 
   showDiscriptionPopup(BuildContext context) {
@@ -126,13 +212,23 @@ class _SwipePagesState extends State<SwipePages> {
                   const SizedBox(
                     height: 20,
                   ),
-                  TextField(
+                  TextFormField(
                     onTap: () => HapticFeedback.selectionClick(),
-                    controller: descriptionController,
+                    initialValue: editDescription,
                     maxLines: 7,
                     decoration: textInputDecoration.copyWith(
                       hintText: 'Description',
+                      counterStyle: TextStyle(color: Colors.white),
+                      // counter: Text("Characters: ${editDescription.length}/125", style: TextStyle(color: Colors.white, fontSize: 11)),
                     ),
+                    onChanged: (value) {
+                      setState(() {
+                        print(value);
+                        editDescription = value;
+                      });
+                    },
+                    maxLength: 125,
+                    maxLengthEnforcement: MaxLengthEnforcement.enforced,
                   ),
                 ],
               ),
@@ -150,11 +246,11 @@ class _SwipePagesState extends State<SwipePages> {
                 ),
                 onPressed: () async {
                   setState(() {
-                    userData["description"] = descriptionController.text;
+                    userData["description"] = editDescription;
                   });
           
                   await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-                      .updateUserDescription(descriptionController.text);
+                      .updateUserDescription(editDescription);
                   Navigator.of(context).pop();
                 },
                 child: const Text("Save", style: TextStyle(color: Colors.white)),
@@ -179,7 +275,7 @@ class _SwipePagesState extends State<SwipePages> {
                   ),
                   builder: (BuildContext context) {
                     return SizedBox(
-                        height: 200,
+                        height: 300,
                         child: Padding(
                             padding: const EdgeInsets.all(32.0),
                             child: Column(
@@ -193,12 +289,12 @@ class _SwipePagesState extends State<SwipePages> {
                                         logout();
                                       },
                                       style: ElevatedButton.styleFrom(
-                                          backgroundColor: ColorSys.primarySolid,
+                                          backgroundColor: ColorSys.purpleBtn,
                                           elevation: 10,
                                           shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(12)),
-                                          shadowColor: ColorSys.primary),
+                                          shadowColor: ColorSys.primaryDark),
                                       child: const Text("Log Out",
                                           style: TextStyle(
                                               color: Colors.white, fontSize: 15))),
@@ -209,18 +305,37 @@ class _SwipePagesState extends State<SwipePages> {
                                   child: ElevatedButton(
                                       onPressed: () {
                                         HapticFeedback.mediumImpact();
-                                        descriptionController.text =
+                                        editDescription =
                                             userData["description"];
                                         showDiscriptionPopup(context);
                                       },
                                       style: ElevatedButton.styleFrom(
-                                          backgroundColor: ColorSys.primarySolid,
+                                          backgroundColor: ColorSys.purpleBtn,
                                           elevation: 10,
                                           shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(12)),
-                                          shadowColor: ColorSys.primary),
+                                          shadowColor: ColorSys.primaryDark),
                                       child: const Text("Edit Description",
+                                          style: TextStyle(
+                                              color: Colors.white, fontSize: 15))),
+                                ),
+                                 const SizedBox(height: 20),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                      onPressed: () {
+                                        HapticFeedback.mediumImpact();
+                                        router.push("/onboarding/true");
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: ColorSys.purpleBtn,
+                                          elevation: 10,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12)),
+                                          shadowColor: ColorSys.primaryDark),
+                                      child: const Text("View Onboarding",
                                           style: TextStyle(
                                               color: Colors.white, fontSize: 15))),
                                 ),
@@ -254,10 +369,11 @@ class _SwipePagesState extends State<SwipePages> {
             );
 
           },
+          index: selectedIndex,
           showShareButton: selectedIndex == 0,
           onShareButtonPressed: () async{
             HapticFeedback.mediumImpact();
-            await Share.share("https://snippets2024.web.app/home/friendLink?name=${userData["fullname"].replaceAll(" ", "%20")}&uid=${userData["uid"]}", subject: "Share your profile with friends");
+            await Share.share("https://snippets2024.web.app/friendLink?name=${userData["fullname"].replaceAll(" ", "%20")}&uid=${userData["uid"]}", subject: "Share your profile with friends");
             
           },
         
@@ -265,9 +381,10 @@ class _SwipePagesState extends State<SwipePages> {
       ),
       bottomNavigationBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: CustomNavBar(pageIndex: selectedIndex, pageController: pageController, hasAnsweredBOTW: hasAnsweredBOTW, ),
+        child: CustomNavBar(pageIndex: selectedIndex, pageController: pageController, hasAnsweredBOTW: hasAnsweredBOTW),
       ),
-      body: PageView(
+      body: !loggedIn ? Center(child: CircularProgressIndicator(),) :
+      PageView(
         controller: pageController,
         allowImplicitScrolling: true,
 
@@ -286,14 +403,16 @@ class _SwipePagesState extends State<SwipePages> {
             print(selectedIndex);
           });
         },
-        children: const <Widget>[
+        children: <Widget>[
           ProfilePage(
             showNavBar: false,
             showAppBar: false,
           ),
           HomePage(),
-          DiscussionsPage(),
-          FindProfilePage(),
+          DiscussionsPage(
+            index: selectedIndex,
+          ),
+          FindProfilePage(index: selectedIndex,),
         ],
       ),
     );
