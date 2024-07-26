@@ -115,7 +115,7 @@ class Database {
     getCurrentSnippets(DateTime? latestSnippetDate, StreamController controller) async {
     if(latestSnippetDate != null){
       latestSnippetDate = latestSnippetDate.add(Duration(seconds: 10));
-      currentSnippetsCollection.where("latestRecieved", isGreaterThan: latestSnippetDate).snapshots().listen((event) {
+      currentSnippetsCollection.where("lastRecieved", isGreaterThan: latestSnippetDate).snapshots().listen((event) {
         controller.add(event);
       });
       return;

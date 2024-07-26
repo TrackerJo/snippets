@@ -71,8 +71,8 @@ LazyDatabase _openConnection() {
 
     final file = File(p.join(dbFolder.path, 'db.sqlite'));
     if (true) {
-
-      print("Deleted old database");
+      // await file.delete();
+      // print("Deleted old database");
       // await LocalDatabase().deleteOldResponse();
       // print("Deleted old responses");
     }
@@ -114,6 +114,7 @@ class LocalDatabase {
     if(snippetIndex.isNotEmpty){
       await (localDb.delete(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippet["snippetId"]))).go();
       await (localDb.delete(localDb.chats)..where((tbl) => tbl.snippetId.equals(snippet["snippetId"]))).go();
+      await (localDb.delete(localDb.snippets)..where((tbl) => tbl.index.equals(snippet["index"]))).go();
 
       
     }

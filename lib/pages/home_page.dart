@@ -29,10 +29,11 @@ class _HomePageState extends State<HomePage> {
 
 
   void getCurrentSnippets() async {
-    
+    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
     await HelperFunctions.saveOpenedPageSF("snippets");
     Snippet? latestSnippet = await LocalDatabase().getMostRecentSnippet();
     DateTime? latestSnippetDate = latestSnippet?.lastRecieved;
+    
     print(latestSnippetDate);
     await Database(uid: FirebaseAuth.instance.currentUser!.uid)
             .getCurrentSnippets(latestSnippetDate, firebaseController);
@@ -59,7 +60,7 @@ class _HomePageState extends State<HomePage> {
             "snippetId": event.docs[i].id,
             "lastRecieved":  data["lastRecieved"].toDate(),
             "question": data["question"],
-            "answered":  false,
+            "answered":  data["answered"].contains(userData["uid"]),
             "theme":  data["theme"],
             "index":  data["index"],
              
