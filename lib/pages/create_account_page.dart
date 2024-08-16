@@ -124,6 +124,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       controller: fullNameController,
                       decoration: textInputDecoration.copyWith(
                           labelText: "Full Name",
+                          fillColor: ColorSys.primaryDark,
                           prefixIcon: Icon(
                             Icons.person,
                             color: Theme.of(context).primaryColor,
@@ -142,6 +143,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       controller: usernameController,
                       decoration: textInputDecoration.copyWith(
                           labelText: "Username",
+                          fillColor: ColorSys.primaryDark,
                           prefixIcon: Icon(
                             Icons.person,
                             color: Theme.of(context).primaryColor,
@@ -160,6 +162,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       controller: emailController,
                       decoration: textInputDecoration.copyWith(
                           labelText: "Email",
+                          fillColor: ColorSys.primaryDark,
                           prefixIcon: Icon(
                             Icons.email,
                             color: Theme.of(context).primaryColor,
@@ -194,6 +197,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       obscureText: true,
                       controller: passwordController,
                       decoration: textInputDecoration.copyWith(
+                        fillColor: ColorSys.primaryDark,
                           labelText: "Password",
                           prefixIcon: Icon(
                             Icons.lock,
@@ -216,8 +220,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                             width: double.infinity,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                  backgroundColor: ColorSys.purpleBtn,
+                                  backgroundColor: ColorSys.primaryDark,
                                   elevation: 0,
+                                  
                                   shape: RoundedRectangleBorder(
                                       borderRadius:
                                           BorderRadius.circular(30))),

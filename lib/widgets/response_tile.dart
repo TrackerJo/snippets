@@ -14,6 +14,7 @@ class ResponseTile extends StatefulWidget {
   final String userId;
   final String snippetId;
   final bool isDisplayOnly;
+  final bool isAnonymous;
 
   final String theme;
 
@@ -26,6 +27,7 @@ class ResponseTile extends StatefulWidget {
       required this.question,
       required this.theme,
       this.isDisplayOnly = false,
+      required this.isAnonymous
 
 });
 
@@ -58,25 +60,15 @@ class _ResponseTileState extends State<ResponseTile> {
   Widget build(BuildContext context) {
     return Material(
       elevation: 10,
-      shadowColor: widget.theme == "sunset"
-          ? ColorSys.sunset
-          : widget.theme == "sunrise"
-              ? ColorSys.sunriseGradient.colors[0]
-              : widget.theme == "blue"
-                  ? ColorSys.blueGreenGradient.colors[0]
-                  : ColorSys.primary,
+      shadowColor: ColorSys.blueGreenGradient.colors[0],
+
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: 350,
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
         decoration: ShapeDecoration(
-          gradient: widget.theme == "sunset"
-              ? ColorSys.sunsetGradient
-              : widget.theme == "sunrise"
-                  ? ColorSys.sunriseGradient
-                  : widget.theme == "blue"
-                      ? ColorSys.blueGreenGradient
-                      : ColorSys.purpleBlueGradient,
+          gradient: ColorSys.blueGreenGradient,
+
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -145,13 +137,8 @@ class _ResponseTileState extends State<ResponseTile> {
                   children: [
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: widget.theme == "sunset"
-                            ? const Color.fromARGB(255, 255, 157, 29)
-                            : widget.theme == "sunrise"
-                                ? ColorSys.sunriseGradient.colors[1]
-                                : widget.theme == "blue"
-                                    ? const Color.fromARGB(255, 60, 196, 255)
-                                    : ColorSys.primaryDark,
+                        backgroundColor:Color.fromARGB(255, 180, 133, 242),
+
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(32.0),
                         ),
@@ -166,13 +153,7 @@ class _ResponseTileState extends State<ResponseTile> {
                               theme: widget.theme,
                             ));
                       },
-                      child:  Text("Open Discussion", style: TextStyle(color: widget.theme == "sunset"
-                            ? Colors.white
-                            : widget.theme == "sunrise"
-                                ? Colors.white
-                                : widget.theme == "blue"
-                                    ? Colors.white
-                                    : Colors.white)),
+                      child:  Text("Open Discussion", style: TextStyle(color: Colors.white)),
                     ),
 
                     // IconButton(

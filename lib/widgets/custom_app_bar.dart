@@ -48,13 +48,9 @@ class CustomAppBar extends StatelessWidget {
       children: [
         Material(
           elevation: 10,
-          shadowColor: theme == "sunset"
-              ? ColorSys.sunsetGradient.colors[1]
-              : theme == "sunrise"
-                  ? ColorSys.sunriseGradient.colors[0]
-                  : theme == "blue"
+          shadowColor: theme == "blue"
                       ? ColorSys.blueGreenGradient.colors[0]
-                      : ColorSys.purpleBlueGradient.colors[0],
+                      : ColorSys.purpleBlueGradient.colors[1],
           borderRadius: const BorderRadius.only(
             bottomLeft: Radius.circular(23),
             bottomRight: Radius.circular(23),
@@ -63,11 +59,7 @@ class CustomAppBar extends StatelessWidget {
             width: MediaQuery.of(context).size.width,
             height: 400,
             decoration: ShapeDecoration(
-              gradient: theme == "sunset"
-                  ? ColorSys.sunsetBarGradient
-                  : theme == "sunrise"
-                      ? ColorSys.sunriseBarGradient
-                      : theme == "blue"
+              gradient: theme == "blue"
                           ? ColorSys.blueGreenGradient
                           : ColorSys.purpleBarGradient,
               shape: const RoundedRectangleBorder(
@@ -133,9 +125,9 @@ class CustomAppBar extends StatelessWidget {
           actions: [
             if(fixRight)
               const SizedBox(width: 25, height: 0,),
-            if(title == "Responses")
+            if(title == "Responses" || title == "Friends")
               
-              const SizedBox(width: 45, height: 0,),
+              const SizedBox(width: 50, height: 0,),
             if(showPreviewButton)
               Padding(
                 padding: const EdgeInsets.all(8.0),

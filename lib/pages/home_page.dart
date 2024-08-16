@@ -36,16 +36,31 @@ class _HomePageState extends State<HomePage> {
     
     print(latestSnippetDate);
     await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-            .getCurrentSnippets(latestSnippetDate, firebaseController);
+            .getCurrentSnippets(latestSnippetDate, firebaseController, snippetsStreamController);
 
     
-    await LocalDatabase().getSnippets(localController);
+    await LocalDatabase().getSnippets(localController, snippetsStreamController);
     localController.stream.listen((event) {
+      if(snippetsStreamController.isClosed) return;
       print("Local Chats");
+      //Check for duplicates
+      List<Snippet> localSnippets = event as List<Snippet>;
+      List<String> read = [];
+      for (var element in localSnippets) {
+        if(read.contains(element.snippetId)){
+          print("Duplicate found");
+          LocalDatabase().deleteSnippetById(element.snippetId);
+          localSnippets.remove(element);
+        } else {
+          read.add(element.snippetId);
+        }
+
+      }
       
-      snippetsStreamController.add(event);
+      snippetsStreamController.add(localSnippets);
     });
-    firebaseController.stream.listen((event) {
+    firebaseController.stream.listen((event) async {
+      if(snippetsStreamController.isClosed) return;
       print("Firebase Chats");
       
       if(event.docs.isNotEmpty){
@@ -54,15 +69,21 @@ class _HomePageState extends State<HomePage> {
         //Go through each chat and add to local database
         for (var i = 0; i < event.docs.length; i++) {
           Map<String, dynamic> data = event.docs[i].data() as Map<String, dynamic>;
+          String id = userData["uid"];
+          if(data["type"] == "anonymous"){
+            id = await HelperFunctions.getAnonymousIDFromSF() ?? "";
+            print(id);
+          }
           
           print("Adding snippet to local database ${data['question']}");
           Map<String, dynamic> snippetMap = {
             "snippetId": event.docs[i].id,
             "lastRecieved":  data["lastRecieved"].toDate(),
             "question": data["question"],
-            "answered":  data["answered"].contains(userData["uid"]),
+            "answered": data["answered"].contains(id),
             "theme":  data["theme"],
             "index":  data["index"],
+            "type": data["type"]
              
           };
           LocalDatabase().addSnippet(snippetMap);
@@ -199,6 +220,7 @@ class _HomePageState extends State<HomePage> {
 
                           question: snapshot.data[index].question,
                           theme: snapshot.data[index].theme,
+                          type: snapshot.data[index].type,
                           
                           snippetId: snapshot.data[index].snippetId,
                           isAnswered: snapshot.data[index].answered

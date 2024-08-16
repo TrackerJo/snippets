@@ -41,6 +41,11 @@ class PushNotifications {
     if (message == null) {
       return;
     }
+    //Check if user is logged in
+    bool isSignedIn = await Auth().isUserLoggedIn();
+    if (!isSignedIn) {
+      return;
+    }
     String currentPage = (await HelperFunctions.getOpenedPageFromSF())!;
     print("Current Page: $currentPage");
 
@@ -128,7 +133,7 @@ class PushNotifications {
         //     },
         //   ),
         // );
-        router.push("/home/question/${message.data['snippetId']}/${message.data['theme']}/${message.data['question']}");
+        router.push("/home/question/${message.data['snippetId']}/${message.data['theme']}/${message.data['question']}/${message.data['snippetType']}");
       } else if (message.data['type'] == "discussion") {
         print("Discussion");
 
@@ -151,7 +156,7 @@ class PushNotifications {
         //     },
         //   ),
         // );
-        router.push("/home/discussion?displayName=${message.data['responseName']}&response=${message.data['response']}&userId=${message.data['responseId']}&snippetId=${message.data['snippetId']}&snippetQuestion=${message.data['snippetQuestion']}&theme=${message.data['theme']}&discussionUsers=${message.data['discussionUsers']}&isDisplayOnly=true");
+        router.push("/home/discussion?displayName=${message.data['responseName']}&response=${message.data['response']}&userId=${message.data['responseId']}&snippetId=${message.data['snippetId']}&snippetQuestion=${message.data['snippetQuestion']}&theme=${message.data['theme']}&discussionUsers=${message.data['discussionUsers']}&snippetType=${message.data['snippetType']}&isDisplayOnly=true");
 
       } else if (message.data['type'] == "friendRequest" ||
           message.data['type'] == "friendRequestAccepted") {
@@ -184,7 +189,7 @@ class PushNotifications {
           //     },
           //   ),
           // );
-          router.push("/home/responses/${message.data['snippetId']}/${message.data['theme']}/${message.data['question']}");
+          router.push("/home/responses/${message.data['snippetId']}/${message.data['theme']}/${message.data['question']}/${message.data['snippetType']}");
         }
         } else if(message.data['type'] == "botw") {
           // navigatorKey.currentState?.pushAndRemoveUntil(
@@ -197,7 +202,8 @@ class PushNotifications {
           //   ),
           //   (Route<dynamic> route) => false,
           // );
-          router.pushReplacement("/home/0");
+          router.pushReplacement("/home/index/0");
+          
         }
         else if(message.data['type'] == "reminderToVoteBOTW" || message.data['type'] == "botw voting"){
           // navigatorKey.currentState?.pushAndRemoveUntil(

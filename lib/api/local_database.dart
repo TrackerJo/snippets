@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:snippets/main.dart';
@@ -32,13 +34,6 @@ class SnipResponses extends Table {
   DateTimeColumn get date => dateTime()();
 }
 
-class SavedFriends extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get snippetId => text()();
-  TextColumn get friends => text()();
-  
-}
-
 
 class Snippets extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -48,13 +43,16 @@ class Snippets extends Table {
   TextColumn get theme => text()();
   IntColumn get index => integer()();
   BoolColumn get answered => boolean()();
+  TextColumn get uid => text()();
+  TextColumn get type => text()();
+
 
 }
 
 
 
 
-@DriftDatabase(tables: [Chats, SnipResponses, SavedFriends, Snippets])
+@DriftDatabase(tables: [Chats, SnipResponses, Snippets])
 class AppDb extends _$AppDb {
   AppDb() : super(_openConnection());
 
@@ -85,27 +83,18 @@ LazyDatabase _openConnection() {
 
 class LocalDatabase {
 
-  
-
-  Future<List<String>> getCachedFriends(String snippetId) async {
-    //CHeck if saved friends exists
-
-    var cachedFriends = await (localDb.select(localDb.savedFriends)..where((tbl) => tbl.snippetId.equals(snippetId))).get();
-    if(cachedFriends.isNotEmpty) {
-      return cachedFriends.first.friends.split(",");
+  Future<List<String>> getCachedResponsesIDs(String snippetId) async {
+    var responses = await (localDb.select(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippetId))..orderBy([(u) => OrderingTerm.desc(u.date)])).get();
+    List<String> ids = [];
+    for (var item in responses) {
+      ids.add(item.uid);
     }
-    return [];
-  }
-
-  Future<void> saveFriends(List<String> friends, String snippetId) async {
-   
-    //Set first row to friends
-    (await localDb.update(localDb.savedFriends)..where((tbl) => tbl.snippetId.equals(snippetId))..write(SavedFriendsCompanion(friends: Value(friends.join(",")))));
-    // return 5;
+    return ids;
   }
 
   Future<void> answerSnippet(String snippetId) async {
-     (localDb.update(localDb.snippets)..where((tbl) => tbl.snippetId.equals(snippetId))..write(const SnippetsCompanion(answered: Value(true))));
+    String uid = FirebaseAuth.instance.currentUser!.uid;
+     (localDb.update(localDb.snippets)..where((tbl) => tbl.snippetId.equals(snippetId))..where((tbl) => tbl.uid.equals(uid))..write(const SnippetsCompanion(answered: Value(true))));
   }
 
   Future<void> addSnippet(Map<String, dynamic> snippet) async{
@@ -118,6 +107,7 @@ class LocalDatabase {
 
       
     }
+    String uid = FirebaseAuth.instance.currentUser!.uid;
 
     await localDb.into(localDb.snippets).insert(SnippetsCompanion(
       snippetId: Value(snippet["snippetId"]),
@@ -126,16 +116,26 @@ class LocalDatabase {
       answered:  Value(snippet["answered"]),
       theme:  Value(snippet["theme"]),
       index:  Value(snippet["index"]),
+      type: Value(snippet["type"]),
+      uid: Value(uid)
+
     ));
 
   }
 
-  Future<Snippet?> getMostRecentSnippet() async {
-     return (localDb.select(localDb.snippets)..orderBy([(u) => OrderingTerm.desc(u.lastRecieved)])).get().then((value) => value.isNotEmpty ? value.first : null);
+  Future<void> deleteSnippetById(String snippetId) async {
+    await (localDb.delete(localDb.snippets)..where((tbl) => tbl.snippetId.equals(snippetId))).go();
   }
 
-  getSnippets(StreamController controller) async {
-      (localDb.select(localDb.snippets)..orderBy([(u) => OrderingTerm.desc(u.index)])).watch().listen((event) {
+  Future<Snippet?> getMostRecentSnippet() async {
+    String uid = FirebaseAuth.instance.currentUser!.uid;
+     return (localDb.select(localDb.snippets)..where((tbl) => tbl.uid.equals(uid))..orderBy([(u) => OrderingTerm.desc(u.lastRecieved)])).get().then((value) => value.isNotEmpty ? value.first : null);
+  }
+
+  getSnippets(StreamController controller, StreamController mainController) async {
+    String uid = FirebaseAuth.instance.currentUser!.uid;
+      (localDb.select(localDb.snippets)..where((tbl) => tbl.uid.equals(uid))..orderBy([(u) => OrderingTerm.desc(u.index)])).watch().listen((event) {
+        if(mainController.isClosed) return;
         controller.add(event);
       });
  
@@ -158,7 +158,9 @@ class LocalDatabase {
     var existingResponse = await (localDb.select(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(response['snippetId']))..where((tbl) => tbl.uid.equals(response['uid']))).get();
     if(existingResponse.isNotEmpty) {
       print("Response already exists");
-      return;
+      //Delete existing response
+      await (localDb.delete(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(response['snippetId']))..where((tbl) => tbl.uid.equals(response['uid']))).go();
+
     }
 
     await localDb.into(localDb.snipResponses).insert(SnipResponsesCompanion(
@@ -170,9 +172,15 @@ class LocalDatabase {
     ));
   }
 
-  Future<Stream> getResponses(String snippetId, List<String> friendsList) async {
+  Future<Stream> getResponses(String snippetId, List<String> friendsList, bool isAnonymous) async {
     print("Friends list: $friendsList");
-    return (localDb.select(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippetId))..where((tbl) => tbl.uid.isIn(friendsList))..orderBy([(u) => OrderingTerm.desc(u.date)])).watch();
+    if(isAnonymous){
+      return (localDb.select(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippetId))..orderBy([(u) => OrderingTerm.desc(u.date)])).watch();
+
+    } else {
+      return (localDb.select(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippetId))..where((tbl) => tbl.uid.isIn(friendsList))..orderBy([(u) => OrderingTerm.desc(u.date)])).watch();
+
+    }
   }
 
   Future<SnipResponse?> getLatestResponse(String snippetId) async {

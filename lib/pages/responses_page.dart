@@ -18,6 +18,7 @@ class ResponsesPage extends StatefulWidget {
   final String userResponse;
   final String question;
   final String theme;
+  final bool isAnonymous;
   final List<String> userDiscussionUsers;
   const ResponsesPage(
       {super.key,
@@ -25,7 +26,8 @@ class ResponsesPage extends StatefulWidget {
       this.userResponse = "~~~",
       this.userDiscussionUsers = const ["SSSS"],
       required this.question,
-      required this.theme});
+      required this.theme,
+      required this.isAnonymous});
 
   @override
   State<ResponsesPage> createState() => _ResponsesPageState();
@@ -63,40 +65,45 @@ class _ResponsesPageState extends State<ResponsesPage> {
     SnipResponse? latestResponse = await LocalDatabase().getLatestResponse(widget.snippetId);
     DateTime? latestResDate = latestResponse?.date;
     print("Latest response date: $latestResDate");
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-    List<String> friends = toStringList(userData["friends"]);
-    List<String> savedFriends = await LocalDatabase().getCachedFriends(widget.snippetId);
-    print("Friends: $friends");
-    print("Saved friends: $savedFriends");
     List<String> newFriends = [];
     List<String> removedFriends = [];
-    if(!compareLists(friends, savedFriends)){
-      for (var item in friends) {
-        if (!savedFriends.contains(item)) {
-          newFriends.add(item);
-        }
-      }
-      for (var item in savedFriends) {
-        if (!friends.contains(item)) {
-          removedFriends.add(item);
-        }
-      }
-      for (var friend in removedFriends) {
-        LocalDatabase().removeResponse(widget.snippetId, friend);
+    List<String> friends = [];
+    if(!widget.isAnonymous) {
+      Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+      friends = toStringList(userData["friends"]);
+      List<String> responsesIDs = await LocalDatabase().getCachedResponsesIDs(widget.snippetId);
+      
   
-        
+      if(!compareLists(friends, responsesIDs)){
+        for (var item in friends) {
+          if (!responsesIDs.contains(item)) {
+            newFriends.add(item);
+          }
+        }
+        for (var item in responsesIDs) {
+          if (!friends.contains(item)) {
+            removedFriends.add(item);
+          }
+        }
+        for (var friend in removedFriends) {
+          LocalDatabase().removeResponse(widget.snippetId, friend);
+    
+          
+        }
+
       }
-     await LocalDatabase().saveFriends(friends, widget.snippetId);
     }
      var responsesList =
         await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-            .getResponsesList(widget.snippetId, latestResDate, newFriends.isNotEmpty, newFriends);
-    var localResponses = await LocalDatabase().getResponses(widget.snippetId, friends);
+            .getResponsesList(widget.snippetId, latestResDate, newFriends.isNotEmpty, newFriends, widget.isAnonymous);
+    var localResponses = await LocalDatabase().getResponses(widget.snippetId, friends, widget.isAnonymous);
 
     localResponses.listen((event) {
+      if(responsesStream.isClosed) return;
       responsesStream.add(event);
     });
     responsesList.listen((event) {
+      if(responsesStream.isClosed) return;
       print("Firebase response");
 
         if(event.docs.isNotEmpty){
@@ -113,6 +120,7 @@ class _ResponsesPageState extends State<ResponsesPage> {
               "displayName": data["displayName"],
               "answer": data["answer"],
               "date": data["date"].toDate(),
+              
               
             };
             LocalDatabase().addResponse(responseMap);
@@ -143,6 +151,9 @@ class _ResponsesPageState extends State<ResponsesPage> {
         discussionUsers = widget.userDiscussionUsers;
       });
     } else {
+      if(widget.isAnonymous) {
+        return;
+      }
       Map<String, dynamic> response =
           (await Database(uid: FirebaseAuth.instance.currentUser!.uid)
               .getUserResponse(widget.snippetId));
@@ -169,6 +180,13 @@ class _ResponsesPageState extends State<ResponsesPage> {
     super.initState();
     getResponsesList();
     getUserDisplayName();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    responsesStream.close();
   }
 
   @override
@@ -221,7 +239,10 @@ class _ResponsesPageState extends State<ResponsesPage> {
                       itemCount: snapshot.data.length + 1,
                       itemBuilder: (context, index) {
                         print("INDEX $index");
-                        if (index == 0) {
+                        if (index == 0 ) {
+                          if(widget.isAnonymous){
+                            return SizedBox();
+                          }
                           // return the header
                           return Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -233,7 +254,7 @@ class _ResponsesPageState extends State<ResponsesPage> {
                               userId: FirebaseAuth.instance.currentUser!.uid,
                               isDisplayOnly: false,
                               theme: widget.theme,
-
+                              isAnonymous: widget.isAnonymous,
                             ),
                           );
                         }
@@ -252,6 +273,7 @@ class _ResponsesPageState extends State<ResponsesPage> {
                               snippetId: widget.snippetId,
                               theme: widget.theme,
                               userId: snapshot.data[index].uid,
+                              isAnonymous: widget.isAnonymous,
                               
                               ),
                         );

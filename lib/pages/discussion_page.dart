@@ -37,6 +37,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
     userId: "",
     question: "",
     theme: "",
+    isAnonymous: false,
   );
 
   bool showResponseTile = false;
@@ -50,11 +51,15 @@ class _DiscussionPageState extends State<DiscussionPage> {
   String email = "";
   String username = "";
   bool canSend = true;
+  String anonymousId = "";
 
   //Generate messageId of 9 random digits
   
 
   void getDiscussion() async {
+    if(widget.responseTile.isAnonymous){
+      anonymousId = await HelperFunctions.getAnonymousIDFromSF() ?? "";
+    }
     await HelperFunctions.saveOpenedPageSF("discussion-${widget.responseTile.snippetId}-${widget.responseTile.userId}");
     Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
     print(userData);
@@ -83,11 +88,13 @@ class _DiscussionPageState extends State<DiscussionPage> {
     
       var localChats = await LocalDatabase().getChats("${widget.responseTile.snippetId}-${widget.responseTile.userId}");
       localChats.listen((event) {
+        if(combinedChats.isClosed) return;
         print("Local Chats");
         
         combinedChats.add(event);
       });
       discussion.listen((event) {
+        if(combinedChats.isClosed) return;
         print("Firebase Chats");
         
         if(event.docs.isNotEmpty){
@@ -140,8 +147,16 @@ class _DiscussionPageState extends State<DiscussionPage> {
         isDisplayOnly: true,
         question: widget.responseTile.question,
         theme: widget.responseTile.theme,
+        isAnonymous: widget.responseTile.isAnonymous,
       );
     });
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    combinedChats.close();
   }
 
   @override
@@ -186,13 +201,8 @@ class _DiscussionPageState extends State<DiscussionPage> {
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: widget.theme == "sunset"
-                                ? ColorSys.sunsetGradient.colors[1]
-                                : widget.theme == "sunrise"
-                                    ? ColorSys.sunriseGradient.colors[0]
-                                    : widget.theme == "blue"
-                                        ? ColorSys.blueGreenGradient.colors[0]
-                                        : ColorSys.purpleBlueGradient.colors[0],
+                            color: ColorSys.blueGreenGradient.colors[0],
+
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Column(
@@ -200,7 +210,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                displayTile.displayName,
+                                displayTile.isAnonymous ? "Anonymous" : displayTile.displayName,
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
@@ -244,13 +254,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
           width: MediaQuery.of(context).size.width,
           decoration: BoxDecoration(
-            color: widget.theme == "sunset"
-                ? ColorSys.sunsetGradient.colors[1]
-                : widget.theme == "sunrise"
-                    ? ColorSys.sunriseBarGradient.colors[0]
-                    : widget.theme == "blue"
-                        ? ColorSys.blueGreenGradient.colors[0]
-                        : ColorSys.purpleBlueGradient.colors[0],
+            color: ColorSys.blueGreenGradient.colors[0],
             borderRadius: BorderRadius.circular(30),
           ),
           child: Row(
@@ -284,13 +288,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
                   height: 50,
                   width: 50,
                   decoration: BoxDecoration(
-                    color: widget.theme == "sunset"
-                        ? ColorSys.sunsetBarGradient.colors[1]
-                        : widget.theme == "sunrise"
-                            ? ColorSys.sunriseBarGradient.colors[1]
-                            : widget.theme == "blue"
-                                ? ColorSys.blueGreenGradient.colors[0]
-                                : ColorSys.primaryDark,
+                    color:ColorSys.blueGreenGradient.colors[0],
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: const Center(
@@ -327,13 +325,13 @@ class _DiscussionPageState extends State<DiscussionPage> {
                             .data[snapshot.data.length - index - 1].message);
 
                    if (snapshot.data[snapshot.data.length - index - 1].senderUsername != username && index == 0) {
-                      if (!snapshot.data.docs[snapshot.data.length - index - 1].readBy.split(',').contains(FirebaseAuth.instance.currentUser!.uid)) {
-                        snapshot.data.docs[snapshot.data.length - index - 1].readBy.split(',').add(FirebaseAuth.instance.currentUser!.uid);
+                      if (!snapshot.data[snapshot.data.length - index - 1].readBy.split(',').contains(FirebaseAuth.instance.currentUser!.uid)) {
+                        snapshot.data[snapshot.data.length - index - 1].readBy.split(',').add(FirebaseAuth.instance.currentUser!.uid);
                         Database(uid: FirebaseAuth.instance.currentUser!.uid)
                             .updateReadBy(
                                 widget.responseTile.snippetId,
                                 widget.responseTile.userId,
-                                snapshot.data[snapshot.data.length - index - 1].id);
+                                snapshot.data[snapshot.data.length - index - 1].messageId, anonymousId);
                       }
                     }
 
@@ -342,7 +340,9 @@ class _DiscussionPageState extends State<DiscussionPage> {
                                 [snapshot.data.length - index - 1].message,
                         sender: snapshot.data
                                 [snapshot.data.length - index - 1].senderDisplayName,
-                        sentByMe: username ==
+                        sentByMe: displayTile.isAnonymous ? anonymousId ==
+                            snapshot.data
+                                    [snapshot.data.length - index - 1].senderId: username ==
                             snapshot.data
                                     [snapshot.data.length - index - 1].senderUsername,
                         theme: widget.theme,
@@ -364,18 +364,18 @@ class _DiscussionPageState extends State<DiscussionPage> {
       });
       Map<String, dynamic> chatMessageMap = {
         "message": messageController.text,
-        "senderUsername": username,
-        "senderId": FirebaseAuth.instance.currentUser!.uid,
-        "senderDisplayName": displayName,
+        "senderUsername": displayTile.isAnonymous? "anonymous" :username,
+        "senderId": displayTile.isAnonymous ? anonymousId : FirebaseAuth.instance.currentUser!.uid,
+        "senderDisplayName":displayTile.isAnonymous ? "Anonymous" : displayName,
         "date": DateTime.now(),
-        "readBy": [FirebaseAuth.instance.currentUser!.uid],
+        "readBy": [displayTile.isAnonymous ? anonymousId : FirebaseAuth.instance.currentUser!.uid],
         "snippetId": widget.responseTile.snippetId
       };
 
       print(discussionUsers);
       Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
       Map<String, dynamic> userMap = {
-        "userId": FirebaseAuth.instance.currentUser!.uid,
+        "userId": displayTile.isAnonymous ? anonymousId : FirebaseAuth.instance.currentUser!.uid,
         "FCMToken": userData['FCMToken'],
       };
       print(userMap);
@@ -393,7 +393,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
                 widget.responseTile.snippetId,
                 widget.responseTile.userId,
                 widget.responseTile.question,
-                widget.theme);
+                widget.theme, displayTile.isAnonymous);
        
       } else if (FirebaseAuth.instance.currentUser!.uid == widget.responseTile.userId) {
        //Check if has discussion in data
@@ -406,7 +406,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
                 widget.responseTile.snippetId,
                 widget.responseTile.userId,
                 widget.responseTile.question,
-                widget.theme);
+                widget.theme, displayTile.isAnonymous);
           
         }
       }
@@ -423,8 +423,8 @@ class _DiscussionPageState extends State<DiscussionPage> {
       var snippetId = widget.responseTile.snippetId;
       var responseId = widget.responseTile.userId;
       var snippetQuestion = widget.responseTile.question;
-      var responseName = widget.responseTile.displayName;
-      var senderName = displayName;
+      var responseName = displayTile.isAnonymous ? "Anonymous" : widget.responseTile.displayName;
+      var senderName = displayTile.isAnonymous ? "Anonymous" : displayName;
       var message = messageController.text;
       print(users);
       var targetIds = getDiscussionUsersFCMToken(users);

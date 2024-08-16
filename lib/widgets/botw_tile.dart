@@ -84,14 +84,9 @@ class _BOTWTileState extends State<BOTWTile> {
                           controller: answerController,
                           decoration: textInputDecoration.copyWith(
                             hintText: "Enter submission here",
+                            fillColor: ColorSys.primaryInput
                             //Border color: color: ColorSys.primarySolid,
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20.0),
-                                borderSide: BorderSide(color: ColorSys.primary)),
-                            enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20.0),
-                                borderSide: BorderSide(color: ColorSys.secondary)),
-                            //   borderRadius: BorderRadius.circular(20.0),
+
                             //   borderSide: BorderSide(
                             //     color: ColorSys.primarySolid,
                             //     width: 20,
@@ -111,7 +106,7 @@ class _BOTWTileState extends State<BOTWTile> {
 
                        
                       },
-                      style: elevatedButtonDecoration,
+                      style: elevatedButtonDecorationBlue,
                       child: Text(isEditting ? "Save" : "Submit",
                           style: TextStyle(fontSize: 16, color: Colors.black)),
                     ),

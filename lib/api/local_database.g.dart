@@ -839,223 +839,6 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
   }
 }
 
-class $SavedFriendsTable extends SavedFriends
-    with TableInfo<$SavedFriendsTable, SavedFriend> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $SavedFriendsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-      'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
-  static const VerificationMeta _snippetIdMeta =
-      const VerificationMeta('snippetId');
-  @override
-  late final GeneratedColumn<String> snippetId = GeneratedColumn<String>(
-      'snippet_id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _friendsMeta =
-      const VerificationMeta('friends');
-  @override
-  late final GeneratedColumn<String> friends = GeneratedColumn<String>(
-      'friends', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  @override
-  List<GeneratedColumn> get $columns => [id, snippetId, friends];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'saved_friends';
-  @override
-  VerificationContext validateIntegrity(Insertable<SavedFriend> instance,
-      {bool isInserting = false}) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('snippet_id')) {
-      context.handle(_snippetIdMeta,
-          snippetId.isAcceptableOrUnknown(data['snippet_id']!, _snippetIdMeta));
-    } else if (isInserting) {
-      context.missing(_snippetIdMeta);
-    }
-    if (data.containsKey('friends')) {
-      context.handle(_friendsMeta,
-          friends.isAcceptableOrUnknown(data['friends']!, _friendsMeta));
-    } else if (isInserting) {
-      context.missing(_friendsMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  SavedFriend map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return SavedFriend(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      snippetId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}snippet_id'])!,
-      friends: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}friends'])!,
-    );
-  }
-
-  @override
-  $SavedFriendsTable createAlias(String alias) {
-    return $SavedFriendsTable(attachedDatabase, alias);
-  }
-}
-
-class SavedFriend extends DataClass implements Insertable<SavedFriend> {
-  final int id;
-  final String snippetId;
-  final String friends;
-  const SavedFriend(
-      {required this.id, required this.snippetId, required this.friends});
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['snippet_id'] = Variable<String>(snippetId);
-    map['friends'] = Variable<String>(friends);
-    return map;
-  }
-
-  SavedFriendsCompanion toCompanion(bool nullToAbsent) {
-    return SavedFriendsCompanion(
-      id: Value(id),
-      snippetId: Value(snippetId),
-      friends: Value(friends),
-    );
-  }
-
-  factory SavedFriend.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return SavedFriend(
-      id: serializer.fromJson<int>(json['id']),
-      snippetId: serializer.fromJson<String>(json['snippetId']),
-      friends: serializer.fromJson<String>(json['friends']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'snippetId': serializer.toJson<String>(snippetId),
-      'friends': serializer.toJson<String>(friends),
-    };
-  }
-
-  SavedFriend copyWith({int? id, String? snippetId, String? friends}) =>
-      SavedFriend(
-        id: id ?? this.id,
-        snippetId: snippetId ?? this.snippetId,
-        friends: friends ?? this.friends,
-      );
-  SavedFriend copyWithCompanion(SavedFriendsCompanion data) {
-    return SavedFriend(
-      id: data.id.present ? data.id.value : this.id,
-      snippetId: data.snippetId.present ? data.snippetId.value : this.snippetId,
-      friends: data.friends.present ? data.friends.value : this.friends,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('SavedFriend(')
-          ..write('id: $id, ')
-          ..write('snippetId: $snippetId, ')
-          ..write('friends: $friends')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(id, snippetId, friends);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is SavedFriend &&
-          other.id == this.id &&
-          other.snippetId == this.snippetId &&
-          other.friends == this.friends);
-}
-
-class SavedFriendsCompanion extends UpdateCompanion<SavedFriend> {
-  final Value<int> id;
-  final Value<String> snippetId;
-  final Value<String> friends;
-  const SavedFriendsCompanion({
-    this.id = const Value.absent(),
-    this.snippetId = const Value.absent(),
-    this.friends = const Value.absent(),
-  });
-  SavedFriendsCompanion.insert({
-    this.id = const Value.absent(),
-    required String snippetId,
-    required String friends,
-  })  : snippetId = Value(snippetId),
-        friends = Value(friends);
-  static Insertable<SavedFriend> custom({
-    Expression<int>? id,
-    Expression<String>? snippetId,
-    Expression<String>? friends,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (snippetId != null) 'snippet_id': snippetId,
-      if (friends != null) 'friends': friends,
-    });
-  }
-
-  SavedFriendsCompanion copyWith(
-      {Value<int>? id, Value<String>? snippetId, Value<String>? friends}) {
-    return SavedFriendsCompanion(
-      id: id ?? this.id,
-      snippetId: snippetId ?? this.snippetId,
-      friends: friends ?? this.friends,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (snippetId.present) {
-      map['snippet_id'] = Variable<String>(snippetId.value);
-    }
-    if (friends.present) {
-      map['friends'] = Variable<String>(friends.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('SavedFriendsCompanion(')
-          ..write('id: $id, ')
-          ..write('snippetId: $snippetId, ')
-          ..write('friends: $friends')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -1107,9 +890,28 @@ class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
       requiredDuringInsert: true,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("answered" IN (0, 1))'));
+  static const VerificationMeta _uidMeta = const VerificationMeta('uid');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, lastRecieved, snippetId, question, theme, index, answered];
+  late final GeneratedColumn<String> uid = GeneratedColumn<String>(
+      'uid', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+      'type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        lastRecieved,
+        snippetId,
+        question,
+        theme,
+        index,
+        answered,
+        uid,
+        type
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1161,6 +963,18 @@ class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
     } else if (isInserting) {
       context.missing(_answeredMeta);
     }
+    if (data.containsKey('uid')) {
+      context.handle(
+          _uidMeta, uid.isAcceptableOrUnknown(data['uid']!, _uidMeta));
+    } else if (isInserting) {
+      context.missing(_uidMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+          _typeMeta, type.isAcceptableOrUnknown(data['type']!, _typeMeta));
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
     return context;
   }
 
@@ -1184,6 +998,10 @@ class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
           .read(DriftSqlType.int, data['${effectivePrefix}index'])!,
       answered: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}answered'])!,
+      uid: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}uid'])!,
+      type: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}type'])!,
     );
   }
 
@@ -1201,6 +1019,8 @@ class Snippet extends DataClass implements Insertable<Snippet> {
   final String theme;
   final int index;
   final bool answered;
+  final String uid;
+  final String type;
   const Snippet(
       {required this.id,
       required this.lastRecieved,
@@ -1208,7 +1028,9 @@ class Snippet extends DataClass implements Insertable<Snippet> {
       required this.question,
       required this.theme,
       required this.index,
-      required this.answered});
+      required this.answered,
+      required this.uid,
+      required this.type});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1219,6 +1041,8 @@ class Snippet extends DataClass implements Insertable<Snippet> {
     map['theme'] = Variable<String>(theme);
     map['index'] = Variable<int>(index);
     map['answered'] = Variable<bool>(answered);
+    map['uid'] = Variable<String>(uid);
+    map['type'] = Variable<String>(type);
     return map;
   }
 
@@ -1231,6 +1055,8 @@ class Snippet extends DataClass implements Insertable<Snippet> {
       theme: Value(theme),
       index: Value(index),
       answered: Value(answered),
+      uid: Value(uid),
+      type: Value(type),
     );
   }
 
@@ -1245,6 +1071,8 @@ class Snippet extends DataClass implements Insertable<Snippet> {
       theme: serializer.fromJson<String>(json['theme']),
       index: serializer.fromJson<int>(json['index']),
       answered: serializer.fromJson<bool>(json['answered']),
+      uid: serializer.fromJson<String>(json['uid']),
+      type: serializer.fromJson<String>(json['type']),
     );
   }
   @override
@@ -1258,6 +1086,8 @@ class Snippet extends DataClass implements Insertable<Snippet> {
       'theme': serializer.toJson<String>(theme),
       'index': serializer.toJson<int>(index),
       'answered': serializer.toJson<bool>(answered),
+      'uid': serializer.toJson<String>(uid),
+      'type': serializer.toJson<String>(type),
     };
   }
 
@@ -1268,7 +1098,9 @@ class Snippet extends DataClass implements Insertable<Snippet> {
           String? question,
           String? theme,
           int? index,
-          bool? answered}) =>
+          bool? answered,
+          String? uid,
+          String? type}) =>
       Snippet(
         id: id ?? this.id,
         lastRecieved: lastRecieved ?? this.lastRecieved,
@@ -1277,6 +1109,8 @@ class Snippet extends DataClass implements Insertable<Snippet> {
         theme: theme ?? this.theme,
         index: index ?? this.index,
         answered: answered ?? this.answered,
+        uid: uid ?? this.uid,
+        type: type ?? this.type,
       );
   Snippet copyWithCompanion(SnippetsCompanion data) {
     return Snippet(
@@ -1289,6 +1123,8 @@ class Snippet extends DataClass implements Insertable<Snippet> {
       theme: data.theme.present ? data.theme.value : this.theme,
       index: data.index.present ? data.index.value : this.index,
       answered: data.answered.present ? data.answered.value : this.answered,
+      uid: data.uid.present ? data.uid.value : this.uid,
+      type: data.type.present ? data.type.value : this.type,
     );
   }
 
@@ -1301,14 +1137,16 @@ class Snippet extends DataClass implements Insertable<Snippet> {
           ..write('question: $question, ')
           ..write('theme: $theme, ')
           ..write('index: $index, ')
-          ..write('answered: $answered')
+          ..write('answered: $answered, ')
+          ..write('uid: $uid, ')
+          ..write('type: $type')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(
-      id, lastRecieved, snippetId, question, theme, index, answered);
+      id, lastRecieved, snippetId, question, theme, index, answered, uid, type);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1319,7 +1157,9 @@ class Snippet extends DataClass implements Insertable<Snippet> {
           other.question == this.question &&
           other.theme == this.theme &&
           other.index == this.index &&
-          other.answered == this.answered);
+          other.answered == this.answered &&
+          other.uid == this.uid &&
+          other.type == this.type);
 }
 
 class SnippetsCompanion extends UpdateCompanion<Snippet> {
@@ -1330,6 +1170,8 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
   final Value<String> theme;
   final Value<int> index;
   final Value<bool> answered;
+  final Value<String> uid;
+  final Value<String> type;
   const SnippetsCompanion({
     this.id = const Value.absent(),
     this.lastRecieved = const Value.absent(),
@@ -1338,6 +1180,8 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
     this.theme = const Value.absent(),
     this.index = const Value.absent(),
     this.answered = const Value.absent(),
+    this.uid = const Value.absent(),
+    this.type = const Value.absent(),
   });
   SnippetsCompanion.insert({
     this.id = const Value.absent(),
@@ -1347,12 +1191,16 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
     required String theme,
     required int index,
     required bool answered,
+    required String uid,
+    required String type,
   })  : lastRecieved = Value(lastRecieved),
         snippetId = Value(snippetId),
         question = Value(question),
         theme = Value(theme),
         index = Value(index),
-        answered = Value(answered);
+        answered = Value(answered),
+        uid = Value(uid),
+        type = Value(type);
   static Insertable<Snippet> custom({
     Expression<int>? id,
     Expression<DateTime>? lastRecieved,
@@ -1361,6 +1209,8 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
     Expression<String>? theme,
     Expression<int>? index,
     Expression<bool>? answered,
+    Expression<String>? uid,
+    Expression<String>? type,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1370,6 +1220,8 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
       if (theme != null) 'theme': theme,
       if (index != null) 'index': index,
       if (answered != null) 'answered': answered,
+      if (uid != null) 'uid': uid,
+      if (type != null) 'type': type,
     });
   }
 
@@ -1380,7 +1232,9 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
       Value<String>? question,
       Value<String>? theme,
       Value<int>? index,
-      Value<bool>? answered}) {
+      Value<bool>? answered,
+      Value<String>? uid,
+      Value<String>? type}) {
     return SnippetsCompanion(
       id: id ?? this.id,
       lastRecieved: lastRecieved ?? this.lastRecieved,
@@ -1389,6 +1243,8 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
       theme: theme ?? this.theme,
       index: index ?? this.index,
       answered: answered ?? this.answered,
+      uid: uid ?? this.uid,
+      type: type ?? this.type,
     );
   }
 
@@ -1416,6 +1272,12 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
     if (answered.present) {
       map['answered'] = Variable<bool>(answered.value);
     }
+    if (uid.present) {
+      map['uid'] = Variable<String>(uid.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
     return map;
   }
 
@@ -1428,7 +1290,9 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
           ..write('question: $question, ')
           ..write('theme: $theme, ')
           ..write('index: $index, ')
-          ..write('answered: $answered')
+          ..write('answered: $answered, ')
+          ..write('uid: $uid, ')
+          ..write('type: $type')
           ..write(')'))
         .toString();
   }
@@ -1439,14 +1303,13 @@ abstract class _$AppDb extends GeneratedDatabase {
   $AppDbManager get managers => $AppDbManager(this);
   late final $ChatsTable chats = $ChatsTable(this);
   late final $SnipResponsesTable snipResponses = $SnipResponsesTable(this);
-  late final $SavedFriendsTable savedFriends = $SavedFriendsTable(this);
   late final $SnippetsTable snippets = $SnippetsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [chats, snipResponses, savedFriends, snippets];
+      [chats, snipResponses, snippets];
 }
 
 typedef $$ChatsTableCreateCompanionBuilder = ChatsCompanion Function({
@@ -1786,96 +1649,6 @@ class $$SnipResponsesTableOrderingComposer
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }
 
-typedef $$SavedFriendsTableCreateCompanionBuilder = SavedFriendsCompanion
-    Function({
-  Value<int> id,
-  required String snippetId,
-  required String friends,
-});
-typedef $$SavedFriendsTableUpdateCompanionBuilder = SavedFriendsCompanion
-    Function({
-  Value<int> id,
-  Value<String> snippetId,
-  Value<String> friends,
-});
-
-class $$SavedFriendsTableTableManager extends RootTableManager<
-    _$AppDb,
-    $SavedFriendsTable,
-    SavedFriend,
-    $$SavedFriendsTableFilterComposer,
-    $$SavedFriendsTableOrderingComposer,
-    $$SavedFriendsTableCreateCompanionBuilder,
-    $$SavedFriendsTableUpdateCompanionBuilder> {
-  $$SavedFriendsTableTableManager(_$AppDb db, $SavedFriendsTable table)
-      : super(TableManagerState(
-          db: db,
-          table: table,
-          filteringComposer:
-              $$SavedFriendsTableFilterComposer(ComposerState(db, table)),
-          orderingComposer:
-              $$SavedFriendsTableOrderingComposer(ComposerState(db, table)),
-          updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<String> snippetId = const Value.absent(),
-            Value<String> friends = const Value.absent(),
-          }) =>
-              SavedFriendsCompanion(
-            id: id,
-            snippetId: snippetId,
-            friends: friends,
-          ),
-          createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            required String snippetId,
-            required String friends,
-          }) =>
-              SavedFriendsCompanion.insert(
-            id: id,
-            snippetId: snippetId,
-            friends: friends,
-          ),
-        ));
-}
-
-class $$SavedFriendsTableFilterComposer
-    extends FilterComposer<_$AppDb, $SavedFriendsTable> {
-  $$SavedFriendsTableFilterComposer(super.$state);
-  ColumnFilters<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get snippetId => $state.composableBuilder(
-      column: $state.table.snippetId,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<String> get friends => $state.composableBuilder(
-      column: $state.table.friends,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-}
-
-class $$SavedFriendsTableOrderingComposer
-    extends OrderingComposer<_$AppDb, $SavedFriendsTable> {
-  $$SavedFriendsTableOrderingComposer(super.$state);
-  ColumnOrderings<int> get id => $state.composableBuilder(
-      column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get snippetId => $state.composableBuilder(
-      column: $state.table.snippetId,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<String> get friends => $state.composableBuilder(
-      column: $state.table.friends,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-}
-
 typedef $$SnippetsTableCreateCompanionBuilder = SnippetsCompanion Function({
   Value<int> id,
   required DateTime lastRecieved,
@@ -1884,6 +1657,8 @@ typedef $$SnippetsTableCreateCompanionBuilder = SnippetsCompanion Function({
   required String theme,
   required int index,
   required bool answered,
+  required String uid,
+  required String type,
 });
 typedef $$SnippetsTableUpdateCompanionBuilder = SnippetsCompanion Function({
   Value<int> id,
@@ -1893,6 +1668,8 @@ typedef $$SnippetsTableUpdateCompanionBuilder = SnippetsCompanion Function({
   Value<String> theme,
   Value<int> index,
   Value<bool> answered,
+  Value<String> uid,
+  Value<String> type,
 });
 
 class $$SnippetsTableTableManager extends RootTableManager<
@@ -1919,6 +1696,8 @@ class $$SnippetsTableTableManager extends RootTableManager<
             Value<String> theme = const Value.absent(),
             Value<int> index = const Value.absent(),
             Value<bool> answered = const Value.absent(),
+            Value<String> uid = const Value.absent(),
+            Value<String> type = const Value.absent(),
           }) =>
               SnippetsCompanion(
             id: id,
@@ -1928,6 +1707,8 @@ class $$SnippetsTableTableManager extends RootTableManager<
             theme: theme,
             index: index,
             answered: answered,
+            uid: uid,
+            type: type,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -1937,6 +1718,8 @@ class $$SnippetsTableTableManager extends RootTableManager<
             required String theme,
             required int index,
             required bool answered,
+            required String uid,
+            required String type,
           }) =>
               SnippetsCompanion.insert(
             id: id,
@@ -1946,6 +1729,8 @@ class $$SnippetsTableTableManager extends RootTableManager<
             theme: theme,
             index: index,
             answered: answered,
+            uid: uid,
+            type: type,
           ),
         ));
 }
@@ -1987,6 +1772,16 @@ class $$SnippetsTableFilterComposer
       column: $state.table.answered,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get uid => $state.composableBuilder(
+      column: $state.table.uid,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get type => $state.composableBuilder(
+      column: $state.table.type,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
 }
 
 class $$SnippetsTableOrderingComposer
@@ -2026,6 +1821,16 @@ class $$SnippetsTableOrderingComposer
       column: $state.table.answered,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get uid => $state.composableBuilder(
+      column: $state.table.uid,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get type => $state.composableBuilder(
+      column: $state.table.type,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
 }
 
 class $AppDbManager {
@@ -2035,8 +1840,6 @@ class $AppDbManager {
       $$ChatsTableTableManager(_db, _db.chats);
   $$SnipResponsesTableTableManager get snipResponses =>
       $$SnipResponsesTableTableManager(_db, _db.snipResponses);
-  $$SavedFriendsTableTableManager get savedFriends =>
-      $$SavedFriendsTableTableManager(_db, _db.savedFriends);
   $$SnippetsTableTableManager get snippets =>
       $$SnippetsTableTableManager(_db, _db.snippets);
 }

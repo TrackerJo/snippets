@@ -127,12 +127,13 @@ final router = GoRouter(
                     theme: state.uri.queryParameters['theme']!,
 
                     isDisplayOnly: state.uri.queryParameters['isDisplayOnly'] == 'true',
+                    isAnonymous:state.uri.queryParameters['snippetType'] == 'anonymous' ,
 
                   ), theme: state.uri.queryParameters['theme']!);
 
             } ),
       GoRoute(
-            path: '/home/:index',
+            path: '/home/index/:index',
             builder: (context, state) => SwipePages(
               initialIndex: int.parse(state.pathParameters['index']!),
             ),
@@ -152,11 +153,12 @@ final router = GoRouter(
             ),
           ),
           GoRoute(
-            path: 'question/:id/:theme/:question',
+            path: 'question/:id/:theme/:question/:type',
             builder: (context, state) => QuestionPage(
               snippetId: state.pathParameters['id']!,
               theme: state.pathParameters['theme']!,
               question: state.pathParameters['question']!,
+              type: state.pathParameters['type']!,
             ),
           ),
           GoRoute(
@@ -165,10 +167,11 @@ final router = GoRouter(
           ),
           
           GoRoute(
-            path: 'responses/:id/:theme/:question',
+            path: 'responses/:id/:theme/:question/:type',
             builder: (context, state) => ResponsesPage(snippetId: state.pathParameters['id']!,
             theme: state.pathParameters['theme']!,
-            question: state.pathParameters['question']!),
+            question: state.pathParameters['question']!,
+            isAnonymous: state.pathParameters['type']! == "anonymous",),
 
           ),
           GoRoute(

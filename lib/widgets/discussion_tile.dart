@@ -14,6 +14,7 @@ class DiscussionTile extends StatelessWidget {
   final bool hasBeenRead;
   final String answerResponse;
   final String theme;
+  final bool isAnonymous;
 
 
   const DiscussionTile(
@@ -26,6 +27,7 @@ class DiscussionTile extends StatelessWidget {
       required this.lastMessageSender,
       required this.lastMessage,
       required this.hasBeenRead,
+      required this.isAnonymous,
 
       required this.theme});
 
@@ -74,7 +76,7 @@ class DiscussionTile extends StatelessWidget {
                             snippetId: snippetId,
                             question: question,
                             theme: theme,
-                            
+                            isAnonymous: isAnonymous,
                             isDisplayOnly: true,
                           ),
 

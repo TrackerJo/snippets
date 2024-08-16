@@ -56,21 +56,26 @@ class _VotingPageState extends State<VotingPage> {
   }
 
   void getData() async {
-    if(widget.blank == {}){
-      Map<String, dynamic> nblank = await Database(uid: FirebaseAuth.instance.currentUser!.uid).getBlankOfTheWeekData();
+    Map<String, dynamic> nblank = {};
+    if(widget.blank.isEmpty){
+      nblank = await Database(uid: FirebaseAuth.instance.currentUser!.uid).getBlankOfTheWeekData();
+      print("Blank: $nblank");
       setState(() {
         blank = nblank;
       });
     } else {
+      nblank = widget.blank;
       setState(() {
+        
         blank = widget.blank;
       });
     }
     
     Map<String, dynamic> data = await HelperFunctions.getUserDataFromSF();
     final provider = Provider.of<CardProvider>(context, listen: false);
+    print(nblank);
 
-    provider.setAnswers(getAnswers(blank["answers"], data));
+    provider.setAnswers(getAnswers(nblank["answers"], data));
     provider.setOnLike(voteForAnswer);
     provider.setOnDislike(skipAnswer);
     setState(() {

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:snippets/api/database.dart';
+import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/pages/responses_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
@@ -16,6 +17,7 @@ class SnippetTile extends StatefulWidget {
   final String snippetId;
   final bool isAnswered;
   final String theme;
+  final String type;
   const SnippetTile({
     super.key,
 
@@ -24,6 +26,7 @@ class SnippetTile extends StatefulWidget {
     required this.snippetId,
     required this.isAnswered,
     required this.theme,
+    required this.type,
   });
 
   @override
@@ -43,25 +46,20 @@ class _SnippetTileState extends State<SnippetTile> {
   Widget build(BuildContext context) {
     return Material(
       elevation: 10,
-      shadowColor: widget.theme == "sunset"
-          ? ColorSys.sunset
-          : widget.theme == "sunrise"
-              ? ColorSys.sunriseGradient.colors[1]
-              : widget.theme == "blue"
-                  ? ColorSys.blueGreenGradient.colors[1]
-                  : ColorSys.purpleBlueGradient.colors[1],
+      shadowColor: widget.type == "anonymous" ?
+        ColorSys.blackGradient.colors[0]
+      : ColorSys.blueGreenGradient.colors[1],
+
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: 350,
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
         decoration: ShapeDecoration(
-          gradient: widget.theme == "sunset"
-              ? ColorSys.sunsetGradient
-              : widget.theme == "sunrise"
-                  ? ColorSys.sunriseGradient
-                  : widget.theme == "blue"
-                      ? ColorSys.blueGreenGradient
-                      : ColorSys.purpleBlueGradient,
+          gradient:  widget.type == "anonymous" ? 
+            ColorSys.blackGradient
+          
+          :ColorSys.blueGreenGradient,
+
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -78,7 +76,8 @@ class _SnippetTileState extends State<SnippetTile> {
                   ResponsesPage(
                       snippetId: widget.snippetId,
                       question: widget.question,
-                      theme: widget.theme),
+                      theme: widget.theme,
+                      isAnonymous: widget.type == "anonymous",),
                 ),
               }
           },
@@ -92,21 +91,21 @@ class _SnippetTileState extends State<SnippetTile> {
                 if(answerController.text.isEmpty){
                   return;
                 }
-                await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-                    .submitAnswer(widget.snippetId, answerController.text, widget.question, widget.theme);
+                if(widget.type == "anonymous") {
+                  String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
+                  await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+                    .submitAnswer(widget.snippetId, answerController.text, widget.question, widget.theme,anonymousID);
+                } else 
+                {
+                  await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+                    .submitAnswer(widget.snippetId, answerController.text, widget.question, widget.theme, null);
+                }
+                setState(() {
+                  answerController.clear();
+                });
                 // Navigator.of(context).pop();
                 //Go to responses page
-                HapticFeedback.mediumImpact();
-                nextScreen(
-                    context,
-                    ResponsesPage(
-                        snippetId: widget.snippetId,
-                        userResponse: answerController.text,
-                        userDiscussionUsers: [
-                          FirebaseAuth.instance.currentUser!.uid
-                        ],
-                        question: widget.question,
-                        theme: widget.theme));
+                
               } else {
                 HapticFeedback.mediumImpact();
                 nextScreen(
@@ -114,7 +113,8 @@ class _SnippetTileState extends State<SnippetTile> {
                   ResponsesPage(
                       snippetId: widget.snippetId,
                       question: widget.question,
-                      theme: widget.theme),
+                      theme: widget.theme,
+                      isAnonymous: widget.type == "anonymous",),
                 );
               }
             },
@@ -142,10 +142,10 @@ class _SnippetTileState extends State<SnippetTile> {
                         //Border color: color: ColorSys.primarySolid,
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20.0),
-                            borderSide: BorderSide(color: ColorSys.primary)),
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20.0),
-                            borderSide: BorderSide(color: ColorSys.secondary)),
+                            
+                        ),
+                        fillColor: ColorSys.primaryInput
+                        
                         //   borderRadius: BorderRadius.circular(20.0),
                         //   borderSide: BorderSide(
                         //     color: ColorSys.primarySolid,

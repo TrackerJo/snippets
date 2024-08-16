@@ -2,15 +2,11 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:snippets/api/auth.dart';
+
+
 import 'package:snippets/api/database.dart';
-import 'package:snippets/api/local_database.dart';
-import 'package:snippets/helper/helper_function.dart';
-import 'package:snippets/main.dart';
-import 'package:snippets/widgets/background_tile.dart';
-import 'package:snippets/widgets/custom_app_bar.dart';
-import 'package:snippets/widgets/custom_nav_bar.dart';
+
+
 import 'package:snippets/widgets/discussion_tile.dart';
 
 class DiscussionsPage extends StatefulWidget {
@@ -121,7 +117,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
                
                 
           for (var discussion in oldDiscussions)
-            // if(discussion.snippetId != null && discussion.answerId != null && discussion["snippetQuestion"] != null && discussion["answerUser"] != null && discussion["lastMessage"] != null && discussion["theme"] != null )
+            if(discussion["snippetId"] != null && discussion["answerId"] != null && discussion["snippetQuestion"] != null && discussion["answerUser"] != null && discussion["lastMessage"] != null && discussion["theme"] != null )
             DiscussionTile(
               snippetId: discussion["snippetId"],
               discussionId: discussion["answerId"],
@@ -134,6 +130,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
                   .contains(FirebaseAuth.instance.currentUser!.uid),
               theme: discussion["theme"],
               answerResponse: discussion["answerResponse"],
+              isAnonymous: discussion["isAnonymous"],
 
             )
         ],
@@ -156,7 +153,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
                
                 
           for (var discussion in discussions)
-            // if(discussion["snippetId"] != null && discussion["answerId"] != null && discussion["snippetQuestion"] != null && discussion["answerUser"] != null && discussion["lastMessage"] != null && discussion["theme"] != null )
+            if(discussion["snippetId"] != null && discussion["answerId"] != null && discussion["snippetQuestion"] != null && discussion["answerUser"] != null && discussion["lastMessage"] != null && discussion["theme"] != null )
             DiscussionTile(
               snippetId: discussion["snippetId"],
               discussionId: discussion["answerId"],
@@ -169,6 +166,8 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
                   .contains(FirebaseAuth.instance.currentUser!.uid),
               theme: discussion["theme"],
               answerResponse: discussion["answerResponse"],
+              isAnonymous: discussion["isAnonymous"],
+
 
             )
         ],

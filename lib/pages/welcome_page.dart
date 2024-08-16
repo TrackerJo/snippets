@@ -122,6 +122,7 @@ class _WelcomePageState extends State<WelcomePage> {
                         TextFormField(
                           decoration: textInputDecoration.copyWith(
                               labelText: "Email",
+                              fillColor: ColorSys.primaryDark,
                               prefixIcon: Icon(
                                 Icons.email,
                                 color: Theme.of(context).primaryColor,
@@ -146,6 +147,7 @@ class _WelcomePageState extends State<WelcomePage> {
                           obscureText: true,
                           decoration: textInputDecoration.copyWith(
                               labelText: "Password",
+                              fillColor: ColorSys.primaryDark,
                               prefixIcon: Icon(
                                 Icons.lock,
                                 color: Theme.of(context).primaryColor,
@@ -172,7 +174,7 @@ class _WelcomePageState extends State<WelcomePage> {
                                 width: double.infinity,
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                      backgroundColor: ColorSys.purpleBtn,
+                                      backgroundColor: ColorSys.primaryDark,
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(
                                           borderRadius:

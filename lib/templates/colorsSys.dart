@@ -7,9 +7,12 @@ class ColorSys {
   static Color secondary = const Color.fromARGB(224, 151, 224, 255);
   static Color secondarySolid = const Color.fromARGB(255, 151, 224, 255);
   static Color background = const Color(0xFF232323);
-  static Color green = const Color(0xD185FFBD);
+
+
+  static Color green = Color.fromARGB(209, 44, 157, 255);
   static Color sunset = const Color.fromARGB(255, 249, 156, 22);
   static Color purpleBtn = Color.fromARGB(255, 186, 127, 255);
+  static Color primaryInput = Color.fromARGB(255, 183, 128, 255);
   static LinearGradient blueGreenGradient = LinearGradient(
     begin: const Alignment(0.00, -1.00),
     end: const Alignment(0, 1),
@@ -18,7 +21,7 @@ class ColorSys {
   static LinearGradient purpleBlueGradient = LinearGradient(
     begin: const Alignment(0.00, -1.00),
     end: const Alignment(0, 1),
-    colors: [Color.fromARGB(181, 163, 93, 255), Color.fromARGB(223, 119, 214, 255)],
+    colors: [ Color.fromARGB(223, 119, 214, 255),Color.fromARGB(181, 163, 93, 255)],
   );
   static LinearGradient purpleBarGradient = LinearGradient(
     begin: const Alignment(0.00, -1.00),
@@ -30,8 +33,8 @@ class ColorSys {
     end: Alignment(0, 1),
     colors: [
       //Sunrise gradient
-      Color.fromARGB(255, 253, 214, 0),
-      Color.fromARGB(255,249, 120, 0)
+      Color.fromARGB(255, 255, 141, 35),
+      Color.fromARGB(255, 233, 24, 45)
       
     ],
   );
@@ -60,6 +63,16 @@ class ColorSys {
       //Sunrise gradient
       sunset,
       const Color.fromARGB(255, 253, 74, 42),
+    ],
+  );
+  static LinearGradient blackGradient = LinearGradient(
+    begin: const Alignment(0.00, -1.00),
+    end: const Alignment(0, 1),
+    colors: [
+      //Sunrise gradient
+      Color.fromARGB(255, 102, 102, 102),
+
+      Color.fromARGB(255, 44, 44, 44),
     ],
   );
 }

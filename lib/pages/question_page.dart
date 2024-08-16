@@ -14,11 +14,13 @@ class QuestionPage extends StatefulWidget {
   final String question;
   final String snippetId;
   final String theme;
+  final String type;
   const QuestionPage(
       {super.key,
       required this.question,
       required this.snippetId,
-      required this.theme});
+      required this.theme,
+      required this.type});
 
   @override
   State<QuestionPage> createState() => _QuestionPageState();
@@ -39,8 +41,16 @@ class _QuestionPageState extends State<QuestionPage> {
   }
 
   void submitAnswer() async {
-    await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-        .submitAnswer(widget.snippetId, answer, widget.question, widget.theme);
+    if(widget.type == "anonymous") {
+      String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
+      await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+        .submitAnswer(widget.snippetId, answer, widget.question, widget.theme, anonymousID);
+    } else {
+      await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+        .submitAnswer(widget.snippetId, answer, widget.question, widget.theme, null);
+
+    }
+    
     // Navigator.of(context).pop();
     //Go to responses page
     Navigator.of(context).pop();
@@ -51,7 +61,8 @@ class _QuestionPageState extends State<QuestionPage> {
             userResponse: answer,
             userDiscussionUsers: [FirebaseAuth.instance.currentUser!.uid],
             question: widget.question,
-            theme: widget.theme));
+            theme: widget.theme,
+            isAnonymous: widget.type == "anonymous",));
   }
 
   @override
