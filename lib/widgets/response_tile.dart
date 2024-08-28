@@ -89,6 +89,7 @@ class _ResponseTileState extends State<ResponseTile> {
                     GestureDetector(
                       onTap: () {
                         if (isCurrentUser) return;
+                        HapticFeedback.mediumImpact();
                         nextScreen(
                           context,
                           ProfilePage(
@@ -111,13 +112,13 @@ class _ResponseTileState extends State<ResponseTile> {
                         ),
                       ),
                     ),
-                    if (!isCurrentUser)
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: IconButton(
-                            onPressed: () {},
-                            icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black)),
-                      )
+                    // if (!isCurrentUser)
+                    //   Align(
+                    //     alignment: Alignment.topRight,
+                    //     child: IconButton(
+                    //         onPressed: () {},
+                    //         icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black)),
+                    //   )
                   ],
                 ),
               ),

@@ -1,0 +1,59 @@
+Date : 2024-08-23 14:57:53
+Directory : /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets
+Total : 32 files,  -2143 codes, -286 comments, -292 blanks, all -2721 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| Dart     |         32 |     -2,143 |       -286 |       -292 |     -2,721 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                           | files      | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                              |         32 |     -2,143 |       -286 |       -292 |     -2,721 |
+| . (Files)                                                                                      |         17 |      1,661 |         85 |        159 |      1,905 |
+| ..                                                                                             |         15 |     -3,804 |       -371 |       -451 |     -4,626 |
+| ../pages                                                                                       |         15 |     -3,804 |       -371 |       -451 |     -4,626 |
++------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                                       | language | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/botw_results_page.dart   | Dart     |        -83 |         -1 |        -15 |        -99 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/comments_page.dart       | Dart     |          0 |       -182 |        -12 |       -194 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/create_account_page.dart | Dart     |       -218 |        -18 |        -23 |       -259 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/discussion_page.dart     | Dart     |       -424 |        -14 |        -45 |       -483 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/discussions_page.dart    | Dart     |       -140 |         -5 |        -33 |       -178 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/find_profile_page.dart   | Dart     |       -162 |        -22 |        -32 |       -216 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/friends_page.dart        | Dart     |       -353 |         -7 |        -22 |       -382 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/home_page.dart           | Dart     |       -138 |        -69 |        -40 |       -247 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/onboarding_page.dart     | Dart     |       -257 |         -3 |        -19 |       -279 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/profile_page.dart        | Dart     |       -722 |         -6 |        -60 |       -788 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/question_page.dart       | Dart     |       -170 |         -3 |        -13 |       -186 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/responses_page.dart      | Dart     |       -257 |        -10 |        -31 |       -298 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/swipe_pages.dart         | Dart     |       -374 |         -9 |        -39 |       -422 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/voting_page.dart         | Dart     |       -307 |         -3 |        -55 |       -365 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/welcome_page.dart        | Dart     |       -199 |        -19 |        -12 |       -230 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/background_tile.dart   | Dart     |         25 |          0 |          3 |         28 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/botw_result_tile.dart  | Dart     |         84 |          2 |         14 |        100 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/botw_tile.dart         | Dart     |        118 |          8 |         18 |        144 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/botw_voting_card.dart  | Dart     |        193 |          2 |         28 |        223 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/comment_tile.dart      | Dart     |        109 |         27 |          8 |        144 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/custom_app_bar.dart    | Dart     |        191 |          2 |          7 |        200 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/custom_nav_bar.dart    | Dart     |        117 |          1 |          5 |        123 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/custom_page_route.dart | Dart     |          8 |          1 |          3 |         12 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/discussion_tile.dart   | Dart     |         93 |          1 |          8 |        102 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/friend_tile.dart       | Dart     |        105 |          1 |          7 |        113 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/friends_count.dart     | Dart     |         73 |          1 |          4 |         78 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/helper_functions.dart  | Dart     |          4 |          0 |          2 |          6 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/message_tile.dart      | Dart     |        120 |         11 |          9 |        140 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/profile_tile.dart      | Dart     |         73 |          1 |          4 |         78 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/quote_tile.dart        | Dart     |         30 |          0 |          4 |         34 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/response_tile.dart     | Dart     |        151 |         15 |         15 |        181 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/widgets/snippet_tile.dart      | Dart     |        167 |         12 |         20 |        199 |
+| Total                                                                                          |          |     -2,143 |       -286 |       -292 |     -2,721 |
++------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+

@@ -11,6 +11,8 @@ class HelperFunctions {
   static String userDataKey = "USERDATAKEY";
   static String openedPageKey = "OPENEDPAGEKEY";
   static String anonymousIDKey = "ANONYMOUSIDKEY";
+  static String seenAnonymousSnippetKey = "SEENANONYMOUSSNIPPETKEY";
+  static String votedBeforeKey = "VOTEDBEFOREKEY";
 
   //Saving data to SF
   static Future<bool> saveUserDisplayNameSF(String userDisplayName) async {
@@ -55,6 +57,17 @@ class HelperFunctions {
     return uniqueId;
   }
 
+  static Future<bool> saveSeenAnonymousSnippetSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    
+    return await sf.setBool(seenAnonymousSnippetKey, true);
+  }
+
+  static Future<bool> saveVotedBeforeSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setBool(votedBeforeKey, true);
+  }
+
   //Getting data from SF
   static Future<String?> getUserNameFromSF() async {
     SharedPreferences sf = await SharedPreferences.getInstance();
@@ -86,6 +99,17 @@ class HelperFunctions {
   static Future<String?> getAnonymousIDFromSF() async {
     SharedPreferences sf = await SharedPreferences.getInstance();
     return sf.getString(anonymousIDKey);
+  }
+
+  static Future<bool> checkIfSeenAnonymousSnippetSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getBool(seenAnonymousSnippetKey) ?? false;
+     
+  }
+
+  static Future<bool> checkIfVotedBeforeSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getBool(votedBeforeKey) ?? false;
   }
   
 

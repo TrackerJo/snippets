@@ -16,7 +16,7 @@ import 'package:snippets/widgets/custom_app_bar.dart';
 import 'package:snippets/widgets/message_tile.dart';
 import 'package:snippets/widgets/response_tile.dart';
 
-import '../api/database.dart';
+import '../api/fb_database.dart';
 
 class DiscussionPage extends StatefulWidget {
   final ResponseTile responseTile;
@@ -70,7 +70,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
         username = userData['username'];
       });
     }
-    List<dynamic> dUsers = await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+    List<dynamic> dUsers = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
         .getDiscussionUsers(widget.responseTile.snippetId, widget.responseTile.userId);
     if (mounted) {
       setState(() {
@@ -81,8 +81,8 @@ class _DiscussionPageState extends State<DiscussionPage> {
     Chat? latestChat = await LocalDatabase().getMostRecentChat("${widget.responseTile.snippetId}-${widget.responseTile.userId}");
     DateTime? latestChatDate = latestChat?.date;
     print(latestChatDate);
-
-    var discussion = await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+    latestChatDate = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).loadDiscussion(widget.responseTile.snippetId, widget.responseTile.userId, latestChatDate);
+    var discussion = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
         .getDiscussion(
             widget.responseTile.snippetId, widget.responseTile.userId, latestChatDate);
     
@@ -90,10 +90,11 @@ class _DiscussionPageState extends State<DiscussionPage> {
       localChats.listen((event) {
         if(combinedChats.isClosed) return;
         print("Local Chats");
+        print(event);
         
         combinedChats.add(event);
       });
-      discussion.listen((event) {
+      discussion.listen((event) async{
         if(combinedChats.isClosed) return;
         print("Firebase Chats");
         
@@ -104,7 +105,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
           for (var i = 0; i < event.docs.length; i++) {
             Map<String, dynamic> data = event.docs[i].data() as Map<String, dynamic>;
            
-            print("Adding chat to local database ${data['message']}");
+            print("Adding chat to local database ${data['message']}  date: ${data['date'].toDate()}");
             Map<String, dynamic> chatMessageMap = {
                 "messageId": event.docs[i].id,
               "message": data['message'],
@@ -117,7 +118,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
               "snippetId": widget.responseTile.snippetId
 
             };
-            LocalDatabase().insertChat(chatMessageMap);
+            await LocalDatabase().insertChat(chatMessageMap);
             
           }
          
@@ -323,11 +324,16 @@ class _DiscussionPageState extends State<DiscussionPage> {
                   itemBuilder: (context, index) {
                     print(snapshot
                             .data[snapshot.data.length - index - 1].message);
+                             print(snapshot
+                            .data[snapshot.data.length - index - 1].date);
+                    DateTime date = snapshot
+                            .data[snapshot.data.length - index - 1].date;
+                    print("Date: $date");
 
                    if (snapshot.data[snapshot.data.length - index - 1].senderUsername != username && index == 0) {
                       if (!snapshot.data[snapshot.data.length - index - 1].readBy.split(',').contains(FirebaseAuth.instance.currentUser!.uid)) {
                         snapshot.data[snapshot.data.length - index - 1].readBy.split(',').add(FirebaseAuth.instance.currentUser!.uid);
-                        Database(uid: FirebaseAuth.instance.currentUser!.uid)
+                        FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
                             .updateReadBy(
                                 widget.responseTile.snippetId,
                                 widget.responseTile.userId,
@@ -346,8 +352,9 @@ class _DiscussionPageState extends State<DiscussionPage> {
                             snapshot.data
                                     [snapshot.data.length - index - 1].senderUsername,
                         theme: widget.theme,
-                        time: snapshot.data
-                            [snapshot.data.length- index - 1].date
+                        senderId: snapshot.data
+                                    [snapshot.data.length - index - 1].senderId,
+                        time: date
                             );
                   })
               : Container();
@@ -362,6 +369,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
       setState(() {
         canSend = false;
       });
+      HapticFeedback.mediumImpact();
       Map<String, dynamic> chatMessageMap = {
         "message": messageController.text,
         "senderUsername": displayTile.isAnonymous? "anonymous" :username,
@@ -384,10 +392,10 @@ class _DiscussionPageState extends State<DiscussionPage> {
         print("Adding user to discussion");
         users.add(userMap);
 
-        await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+        await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
             .updateDiscussionUsers(widget.responseTile.snippetId,
                 widget.responseTile.userId, userMap);
-        await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+        await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
             .addUserToDiscussion(
                 FirebaseAuth.instance.currentUser!.uid,
                 widget.responseTile.snippetId,
@@ -400,7 +408,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
         List<dynamic> userDiscussions = userData['discussions'];
         bool hasDiscussion = userDiscussions.any((element) => element['snippetId'] == widget.responseTile.snippetId && element['answerId'] == widget.responseTile.userId);
         if(!hasDiscussion){
-          await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+          await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
             .addUserToDiscussion(
                 FirebaseAuth.instance.currentUser!.uid,
                 widget.responseTile.snippetId,
@@ -411,7 +419,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
         }
       }
 
-     String id = await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+     String id = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
           .sendDiscussionMessage(widget.responseTile.snippetId,
               widget.responseTile.userId, chatMessageMap);
       chatMessageMap['messageId'] = id;

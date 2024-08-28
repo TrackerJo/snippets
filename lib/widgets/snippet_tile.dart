@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:snippets/api/database.dart';
+import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/pages/responses_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
@@ -92,12 +92,18 @@ class _SnippetTileState extends State<SnippetTile> {
                   return;
                 }
                 if(widget.type == "anonymous") {
-                  String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
-                  await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-                    .submitAnswer(widget.snippetId, answerController.text, widget.question, widget.theme,anonymousID);
-                } else 
-                {
-                  await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+                  bool hasSeenAnonymouse = await HelperFunctions.checkIfSeenAnonymousSnippetSF();
+                  if(!hasSeenAnonymouse){
+                    await HelperFunctions.saveSeenAnonymousSnippetSF();
+                    showAnonymousInfoDialog(context);
+                  } else {
+                    String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
+                    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+                      .submitAnswer(widget.snippetId, answerController.text, widget.question, widget.theme,anonymousID);
+                  }
+                  
+                } else {
+                  await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
                     .submitAnswer(widget.snippetId, answerController.text, widget.question, widget.theme, null);
                 }
                 setState(() {
@@ -157,6 +163,36 @@ class _SnippetTileState extends State<SnippetTile> {
               : null,
         ),
       ),
+    );
+  }
+
+  void showAnonymousInfoDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Anonymous Snippets"),
+          content: const Text("Your response will be completely anonymous to everyone and will be public, not just to your friends."),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                
+                String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
+                await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+                  .submitAnswer(widget.snippetId, answerController.text, widget.question, widget.theme,anonymousID);
+              },
+              child: const Text("I understand"),
+            ),
+          ],
+        );
+      },
     );
   }
 }

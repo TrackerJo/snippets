@@ -41,6 +41,7 @@ class _ProfileTileState extends State<ProfileTile> {
                 ProfilePage(
                   uid: widget.uid,
                   showNavBar: false,
+                  showBackButton: true,
                 ));
           },
           title: Text(

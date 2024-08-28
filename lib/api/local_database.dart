@@ -32,6 +32,8 @@ class SnipResponses extends Table {
   TextColumn get uid => text()();
   TextColumn get displayName => text()();
   DateTimeColumn get date => dateTime()();
+  DateTimeColumn get lastUpdated => dateTime()();
+
 }
 
 
@@ -49,10 +51,19 @@ class Snippets extends Table {
 
 }
 
+class BOTW extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get blank => text()();
+  TextColumn get status => text()();
+  TextColumn get answers => text()();
+  DateTimeColumn get lastUpdated => dateTime()();
+  DateTimeColumn get week => dateTime()();
+}
 
 
 
-@DriftDatabase(tables: [Chats, SnipResponses, Snippets])
+
+@DriftDatabase(tables: [Chats, SnipResponses, Snippets, BOTW])
 class AppDb extends _$AppDb {
   AppDb() : super(_openConnection());
 
@@ -83,13 +94,148 @@ LazyDatabase _openConnection() {
 
 class LocalDatabase {
 
+  String answersToString(Map<String, dynamic> map) {
+    String result = "";
+    map.forEach((key, value) {
+      result += "$key*${answerToString(value)}~";
+    });
+    if(result.isEmpty) return "";
+    result = result.substring(0, result.length - 1);
+    return result;
+  }
+
+  String answerToString(Map<String, dynamic> map) {
+    String result = "";
+    map.forEach((key, value) {
+      if(key == "voters"){
+        result += "$key:${value.join(",")}|";
+        return;
+      }
+      result += "$key:$value|";
+    });
+    result = result.substring(0, result.length - 1);
+    return result;
+  }
+
+  Map<String, dynamic> stringToAnswer(String string) {
+    List<String> split = string.split("|");
+    Map<String, dynamic> result = {};
+    for (var item in split) {
+      List<String> splitItem = item.split(":");
+      print("Split item");
+      print(splitItem);
+      if(splitItem[0] == "voters"){
+        if(splitItem.length < 2){
+          result[splitItem[0]] = [];
+          continue;
+        }
+        result[splitItem[0]] = splitItem[1].split(",");
+        continue;
+      }
+      if(splitItem.length < 2) continue;
+      if(splitItem[0] == "votes"){
+        result[splitItem[0]] = int.parse(splitItem[1]);
+        continue;
+      }
+      result[splitItem[0]] = splitItem[1];
+    }
+    return result;
+  }
+
+  Map<String, dynamic> stringToAnswers(String string) {
+    List<String> split = string.split("~");
+    Map<String, dynamic> result = {};
+    for (var item in split) {
+      List<String> splitItem = item.split("*");
+      if(splitItem.length < 2) continue;
+      result[splitItem[0]] = stringToAnswer(splitItem[1]);
+    }
+    return result;
+  }
+
+  Future<void> addBOTW(Map<String, dynamic> botw) async {
+    print("Adding BOTW");
+    print(botw);
+    print(botw['answers']);
+    print(answersToString(botw['answers']));
+    print(stringToAnswers(answersToString(botw['answers'])));
+    var existingBOTW = await (localDb.select(localDb.botw)).get();
+    if(existingBOTW.isNotEmpty) {
+      print("BOTW already exists");
+      return;
+    }
+    await localDb.into(localDb.botw).insert(BOTWCompanion(
+      status: Value(botw['status']),
+      answers: Value(answersToString(botw['answers'])),
+      lastUpdated: Value(botw['lastUpdated'].toDate()),
+      week: Value(DateTime.now()),
+      blank: Value(botw['blank'])
+    ));
+  }
+
+  Future<void> updateBOTW(Map<String, dynamic> botw) async {
+    await (localDb.update(localDb.botw)..where((tbl) => tbl.week.equals(botw['week']))).write(BOTWCompanion(
+      status: Value(botw['status']),
+      answers: Value(answersToString(botw['answers'])),
+      lastUpdated: Value(botw['lastUpdated']),
+      week: Value(botw['week'])
+    ));
+  }
+
+  Future<void> deleteBOTW() async {
+    await (localDb.delete(localDb.botw)).go();
+  }
+
+  Future<Map<String, dynamic> > getBOTW() async {
+    return (localDb.select(localDb.botw)..orderBy([(u) => OrderingTerm.desc(u.week)])).get().then((value) => value.isNotEmpty ? {
+      "status": value.first.status,
+      "answers": stringToAnswers(value.first.answers),
+      "lastUpdated": value.first.lastUpdated,
+      "week": value.first.week,
+      "blank": value.first.blank
+    } : {});
+  }
+
+  Future<Stream<Map<String, dynamic>>> getBOTWStream() async {
+    Stream<Map<String, dynamic>> botw = (localDb.select(localDb.botw)..orderBy([(u) => OrderingTerm.desc(u.week)])).watch().map((event) {
+      if(event.isNotEmpty){
+        var data = event.first;
+        return {
+          "status": data.status,
+          "answers": stringToAnswers(data.answers),
+          "lastUpdated": data.lastUpdated,
+          "week": data.week,
+          "blank": data.blank
+        };
+        
+      }
+      return {};
+      
+    });
+    return botw;
+  }
+
+
+
   Future<List<String>> getCachedResponsesIDs(String snippetId) async {
-    var responses = await (localDb.select(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippetId))..orderBy([(u) => OrderingTerm.desc(u.date)])).get();
+    var responses = await (localDb.select(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippetId))..orderBy([(u) => OrderingTerm.desc(u.lastUpdated)])).get();
     List<String> ids = [];
     for (var item in responses) {
       ids.add(item.uid);
     }
     return ids;
+  }
+
+  Future<void> updateUsersBOTWAnswer(Map<String, dynamic> answer) async {
+    //Get first BOTW
+    var botw = await (localDb.select(localDb.botw)..orderBy([(u) => OrderingTerm.desc(u.week)])).get();
+    if(botw.isEmpty) return;
+    var answers = stringToAnswers(botw.first.answers);
+    answers[answer['userId']] = answer;
+    await (localDb.update(localDb.botw)..where((tbl) => tbl.week.equals(botw.first.week))).write(BOTWCompanion(
+      answers: Value(answersToString(answers))
+    ));
+
   }
 
   Future<void> answerSnippet(String snippetId) async {
@@ -103,8 +249,20 @@ class LocalDatabase {
     if(snippetIndex.isNotEmpty){
       await (localDb.delete(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippet["snippetId"]))).go();
       await (localDb.delete(localDb.chats)..where((tbl) => tbl.snippetId.equals(snippet["snippetId"]))).go();
-      await (localDb.delete(localDb.snippets)..where((tbl) => tbl.index.equals(snippet["index"]))).go();
+      //Check if snippet already exists
+      Snippet? existingSnippet = await (localDb.select(localDb.snippets)..where((tbl) => tbl.snippetId.equals(snippet["snippetId"]))).get().then((value) => value.isNotEmpty ? value.first : null);
+      if(existingSnippet != null) {
+        print("Snippet already exists");
+        //Check if the snippets are the same
+        if(existingSnippet.question == snippet["question"] && existingSnippet.theme == snippet["theme"] && existingSnippet.type == snippet["type"]) {
+          print("Snippet is the same");
+          return;
+        } else {
+          await (localDb.delete(localDb.snippets)..where((tbl) => tbl.index.equals(snippet["index"]))).go();
+        }
+      }
 
+      
       
     }
     String uid = FirebaseAuth.instance.currentUser!.uid;
@@ -141,6 +299,24 @@ class LocalDatabase {
  
   }
 
+  Future<List<Map<String, dynamic>>> getSnippetsList() async {
+    String uid = FirebaseAuth.instance.currentUser!.uid;
+    var snippets = await (localDb.select(localDb.snippets)..where((tbl) => tbl.uid.equals(uid))..orderBy([(u) => OrderingTerm.desc(u.index)])).get();
+    List<Map<String, dynamic>> result = [];
+    for (var item in snippets) {
+      result.add({
+        "snippetId": item.snippetId,
+        "lastRecieved": item.lastRecieved,
+        "question": item.question,
+        "answered": item.answered,
+        "theme": item.theme,
+        "index": item.index,
+        "type": item.type
+      });
+    }
+    return result;
+  }
+
 
   Future<void> deleteOldResponse() async {
     //Delete all responses older than a day
@@ -168,7 +344,8 @@ class LocalDatabase {
       snippetId: Value(response['snippetId']),
       uid: Value(response['uid']),
       displayName: Value(response['displayName']),
-      date: Value(response['date'])
+      date: Value(response['date']),
+      lastUpdated: Value(response['lastUpdated'])
     ));
   }
 
@@ -197,8 +374,11 @@ class LocalDatabase {
     //Check if chat already exists
     var existingChat = await (localDb.select(localDb.chats)..where((tbl) => tbl.messageId.equals(chat['messageId']))).get();
     if(existingChat.isNotEmpty) {
+      print("Chat already exists");
+      
       return;
     }
+    print("Inserting chat ${chat['message']} date ${chat['date']}"); 
 
     await localDb.into(localDb.chats).insert(ChatsCompanion(
       message: Value(chat['message']),
@@ -223,5 +403,22 @@ class LocalDatabase {
 
     return (localDb.select(localDb.chats)..where((tbl) => tbl.chatId.equals(chatId))..orderBy([(u) => OrderingTerm.desc(u.date)])).get().then((value) => value.isNotEmpty ? value.first : null);
 
+  }
+
+  Future<List<Map<String, dynamic>>> getSnippetResponses(String snippetId) async {
+    var responses = await (localDb.select(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippetId))..orderBy([(u) => OrderingTerm.desc(u.date)])).get();
+    List<Map<String, dynamic>> result = [];
+    for (var item in responses) {
+      result.add({
+        "answer": item.answer,
+        "snippetId": item.snippetId,
+        "uid": item.uid,
+        "displayName": item.displayName,
+        "date": item.date,
+        "lastUpdated": item.lastUpdated,
+        
+      });
+    }
+    return result;
   }
 }

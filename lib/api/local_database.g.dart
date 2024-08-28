@@ -544,9 +544,15 @@ class $SnipResponsesTable extends SnipResponses
   late final GeneratedColumn<DateTime> date = GeneratedColumn<DateTime>(
       'date', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _lastUpdatedMeta =
+      const VerificationMeta('lastUpdated');
+  @override
+  late final GeneratedColumn<DateTime> lastUpdated = GeneratedColumn<DateTime>(
+      'last_updated', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, answer, snippetId, uid, displayName, date];
+      [id, answer, snippetId, uid, displayName, date, lastUpdated];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -592,6 +598,14 @@ class $SnipResponsesTable extends SnipResponses
     } else if (isInserting) {
       context.missing(_dateMeta);
     }
+    if (data.containsKey('last_updated')) {
+      context.handle(
+          _lastUpdatedMeta,
+          lastUpdated.isAcceptableOrUnknown(
+              data['last_updated']!, _lastUpdatedMeta));
+    } else if (isInserting) {
+      context.missing(_lastUpdatedMeta);
+    }
     return context;
   }
 
@@ -613,6 +627,8 @@ class $SnipResponsesTable extends SnipResponses
           .read(DriftSqlType.string, data['${effectivePrefix}display_name'])!,
       date: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}date'])!,
+      lastUpdated: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_updated'])!,
     );
   }
 
@@ -629,13 +645,15 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
   final String uid;
   final String displayName;
   final DateTime date;
+  final DateTime lastUpdated;
   const SnipResponse(
       {required this.id,
       required this.answer,
       required this.snippetId,
       required this.uid,
       required this.displayName,
-      required this.date});
+      required this.date,
+      required this.lastUpdated});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -645,6 +663,7 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
     map['uid'] = Variable<String>(uid);
     map['display_name'] = Variable<String>(displayName);
     map['date'] = Variable<DateTime>(date);
+    map['last_updated'] = Variable<DateTime>(lastUpdated);
     return map;
   }
 
@@ -656,6 +675,7 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
       uid: Value(uid),
       displayName: Value(displayName),
       date: Value(date),
+      lastUpdated: Value(lastUpdated),
     );
   }
 
@@ -669,6 +689,7 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
       uid: serializer.fromJson<String>(json['uid']),
       displayName: serializer.fromJson<String>(json['displayName']),
       date: serializer.fromJson<DateTime>(json['date']),
+      lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
     );
   }
   @override
@@ -681,6 +702,7 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
       'uid': serializer.toJson<String>(uid),
       'displayName': serializer.toJson<String>(displayName),
       'date': serializer.toJson<DateTime>(date),
+      'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
     };
   }
 
@@ -690,7 +712,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
           String? snippetId,
           String? uid,
           String? displayName,
-          DateTime? date}) =>
+          DateTime? date,
+          DateTime? lastUpdated}) =>
       SnipResponse(
         id: id ?? this.id,
         answer: answer ?? this.answer,
@@ -698,6 +721,7 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
         uid: uid ?? this.uid,
         displayName: displayName ?? this.displayName,
         date: date ?? this.date,
+        lastUpdated: lastUpdated ?? this.lastUpdated,
       );
   SnipResponse copyWithCompanion(SnipResponsesCompanion data) {
     return SnipResponse(
@@ -708,6 +732,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
       displayName:
           data.displayName.present ? data.displayName.value : this.displayName,
       date: data.date.present ? data.date.value : this.date,
+      lastUpdated:
+          data.lastUpdated.present ? data.lastUpdated.value : this.lastUpdated,
     );
   }
 
@@ -719,14 +745,15 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
           ..write('snippetId: $snippetId, ')
           ..write('uid: $uid, ')
           ..write('displayName: $displayName, ')
-          ..write('date: $date')
+          ..write('date: $date, ')
+          ..write('lastUpdated: $lastUpdated')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(id, answer, snippetId, uid, displayName, date);
+      Object.hash(id, answer, snippetId, uid, displayName, date, lastUpdated);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -736,7 +763,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
           other.snippetId == this.snippetId &&
           other.uid == this.uid &&
           other.displayName == this.displayName &&
-          other.date == this.date);
+          other.date == this.date &&
+          other.lastUpdated == this.lastUpdated);
 }
 
 class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
@@ -746,6 +774,7 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
   final Value<String> uid;
   final Value<String> displayName;
   final Value<DateTime> date;
+  final Value<DateTime> lastUpdated;
   const SnipResponsesCompanion({
     this.id = const Value.absent(),
     this.answer = const Value.absent(),
@@ -753,6 +782,7 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
     this.uid = const Value.absent(),
     this.displayName = const Value.absent(),
     this.date = const Value.absent(),
+    this.lastUpdated = const Value.absent(),
   });
   SnipResponsesCompanion.insert({
     this.id = const Value.absent(),
@@ -761,11 +791,13 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
     required String uid,
     required String displayName,
     required DateTime date,
+    required DateTime lastUpdated,
   })  : answer = Value(answer),
         snippetId = Value(snippetId),
         uid = Value(uid),
         displayName = Value(displayName),
-        date = Value(date);
+        date = Value(date),
+        lastUpdated = Value(lastUpdated);
   static Insertable<SnipResponse> custom({
     Expression<int>? id,
     Expression<String>? answer,
@@ -773,6 +805,7 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
     Expression<String>? uid,
     Expression<String>? displayName,
     Expression<DateTime>? date,
+    Expression<DateTime>? lastUpdated,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -781,6 +814,7 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
       if (uid != null) 'uid': uid,
       if (displayName != null) 'display_name': displayName,
       if (date != null) 'date': date,
+      if (lastUpdated != null) 'last_updated': lastUpdated,
     });
   }
 
@@ -790,7 +824,8 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
       Value<String>? snippetId,
       Value<String>? uid,
       Value<String>? displayName,
-      Value<DateTime>? date}) {
+      Value<DateTime>? date,
+      Value<DateTime>? lastUpdated}) {
     return SnipResponsesCompanion(
       id: id ?? this.id,
       answer: answer ?? this.answer,
@@ -798,6 +833,7 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
       uid: uid ?? this.uid,
       displayName: displayName ?? this.displayName,
       date: date ?? this.date,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
     );
   }
 
@@ -822,6 +858,9 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
     if (date.present) {
       map['date'] = Variable<DateTime>(date.value);
     }
+    if (lastUpdated.present) {
+      map['last_updated'] = Variable<DateTime>(lastUpdated.value);
+    }
     return map;
   }
 
@@ -833,7 +872,8 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
           ..write('snippetId: $snippetId, ')
           ..write('uid: $uid, ')
           ..write('displayName: $displayName, ')
-          ..write('date: $date')
+          ..write('date: $date, ')
+          ..write('lastUpdated: $lastUpdated')
           ..write(')'))
         .toString();
   }
@@ -1298,18 +1338,355 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
   }
 }
 
+class $BOTWTable extends BOTW with TableInfo<$BOTWTable, BOTWData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BOTWTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _blankMeta = const VerificationMeta('blank');
+  @override
+  late final GeneratedColumn<String> blank = GeneratedColumn<String>(
+      'blank', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+      'status', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _answersMeta =
+      const VerificationMeta('answers');
+  @override
+  late final GeneratedColumn<String> answers = GeneratedColumn<String>(
+      'answers', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _lastUpdatedMeta =
+      const VerificationMeta('lastUpdated');
+  @override
+  late final GeneratedColumn<DateTime> lastUpdated = GeneratedColumn<DateTime>(
+      'last_updated', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _weekMeta = const VerificationMeta('week');
+  @override
+  late final GeneratedColumn<DateTime> week = GeneratedColumn<DateTime>(
+      'week', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, blank, status, answers, lastUpdated, week];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'botw';
+  @override
+  VerificationContext validateIntegrity(Insertable<BOTWData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('blank')) {
+      context.handle(
+          _blankMeta, blank.isAcceptableOrUnknown(data['blank']!, _blankMeta));
+    } else if (isInserting) {
+      context.missing(_blankMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('answers')) {
+      context.handle(_answersMeta,
+          answers.isAcceptableOrUnknown(data['answers']!, _answersMeta));
+    } else if (isInserting) {
+      context.missing(_answersMeta);
+    }
+    if (data.containsKey('last_updated')) {
+      context.handle(
+          _lastUpdatedMeta,
+          lastUpdated.isAcceptableOrUnknown(
+              data['last_updated']!, _lastUpdatedMeta));
+    } else if (isInserting) {
+      context.missing(_lastUpdatedMeta);
+    }
+    if (data.containsKey('week')) {
+      context.handle(
+          _weekMeta, week.isAcceptableOrUnknown(data['week']!, _weekMeta));
+    } else if (isInserting) {
+      context.missing(_weekMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BOTWData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BOTWData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      blank: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}blank'])!,
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
+      answers: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}answers'])!,
+      lastUpdated: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_updated'])!,
+      week: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}week'])!,
+    );
+  }
+
+  @override
+  $BOTWTable createAlias(String alias) {
+    return $BOTWTable(attachedDatabase, alias);
+  }
+}
+
+class BOTWData extends DataClass implements Insertable<BOTWData> {
+  final int id;
+  final String blank;
+  final String status;
+  final String answers;
+  final DateTime lastUpdated;
+  final DateTime week;
+  const BOTWData(
+      {required this.id,
+      required this.blank,
+      required this.status,
+      required this.answers,
+      required this.lastUpdated,
+      required this.week});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['blank'] = Variable<String>(blank);
+    map['status'] = Variable<String>(status);
+    map['answers'] = Variable<String>(answers);
+    map['last_updated'] = Variable<DateTime>(lastUpdated);
+    map['week'] = Variable<DateTime>(week);
+    return map;
+  }
+
+  BOTWCompanion toCompanion(bool nullToAbsent) {
+    return BOTWCompanion(
+      id: Value(id),
+      blank: Value(blank),
+      status: Value(status),
+      answers: Value(answers),
+      lastUpdated: Value(lastUpdated),
+      week: Value(week),
+    );
+  }
+
+  factory BOTWData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BOTWData(
+      id: serializer.fromJson<int>(json['id']),
+      blank: serializer.fromJson<String>(json['blank']),
+      status: serializer.fromJson<String>(json['status']),
+      answers: serializer.fromJson<String>(json['answers']),
+      lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
+      week: serializer.fromJson<DateTime>(json['week']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'blank': serializer.toJson<String>(blank),
+      'status': serializer.toJson<String>(status),
+      'answers': serializer.toJson<String>(answers),
+      'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
+      'week': serializer.toJson<DateTime>(week),
+    };
+  }
+
+  BOTWData copyWith(
+          {int? id,
+          String? blank,
+          String? status,
+          String? answers,
+          DateTime? lastUpdated,
+          DateTime? week}) =>
+      BOTWData(
+        id: id ?? this.id,
+        blank: blank ?? this.blank,
+        status: status ?? this.status,
+        answers: answers ?? this.answers,
+        lastUpdated: lastUpdated ?? this.lastUpdated,
+        week: week ?? this.week,
+      );
+  BOTWData copyWithCompanion(BOTWCompanion data) {
+    return BOTWData(
+      id: data.id.present ? data.id.value : this.id,
+      blank: data.blank.present ? data.blank.value : this.blank,
+      status: data.status.present ? data.status.value : this.status,
+      answers: data.answers.present ? data.answers.value : this.answers,
+      lastUpdated:
+          data.lastUpdated.present ? data.lastUpdated.value : this.lastUpdated,
+      week: data.week.present ? data.week.value : this.week,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BOTWData(')
+          ..write('id: $id, ')
+          ..write('blank: $blank, ')
+          ..write('status: $status, ')
+          ..write('answers: $answers, ')
+          ..write('lastUpdated: $lastUpdated, ')
+          ..write('week: $week')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, blank, status, answers, lastUpdated, week);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BOTWData &&
+          other.id == this.id &&
+          other.blank == this.blank &&
+          other.status == this.status &&
+          other.answers == this.answers &&
+          other.lastUpdated == this.lastUpdated &&
+          other.week == this.week);
+}
+
+class BOTWCompanion extends UpdateCompanion<BOTWData> {
+  final Value<int> id;
+  final Value<String> blank;
+  final Value<String> status;
+  final Value<String> answers;
+  final Value<DateTime> lastUpdated;
+  final Value<DateTime> week;
+  const BOTWCompanion({
+    this.id = const Value.absent(),
+    this.blank = const Value.absent(),
+    this.status = const Value.absent(),
+    this.answers = const Value.absent(),
+    this.lastUpdated = const Value.absent(),
+    this.week = const Value.absent(),
+  });
+  BOTWCompanion.insert({
+    this.id = const Value.absent(),
+    required String blank,
+    required String status,
+    required String answers,
+    required DateTime lastUpdated,
+    required DateTime week,
+  })  : blank = Value(blank),
+        status = Value(status),
+        answers = Value(answers),
+        lastUpdated = Value(lastUpdated),
+        week = Value(week);
+  static Insertable<BOTWData> custom({
+    Expression<int>? id,
+    Expression<String>? blank,
+    Expression<String>? status,
+    Expression<String>? answers,
+    Expression<DateTime>? lastUpdated,
+    Expression<DateTime>? week,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (blank != null) 'blank': blank,
+      if (status != null) 'status': status,
+      if (answers != null) 'answers': answers,
+      if (lastUpdated != null) 'last_updated': lastUpdated,
+      if (week != null) 'week': week,
+    });
+  }
+
+  BOTWCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? blank,
+      Value<String>? status,
+      Value<String>? answers,
+      Value<DateTime>? lastUpdated,
+      Value<DateTime>? week}) {
+    return BOTWCompanion(
+      id: id ?? this.id,
+      blank: blank ?? this.blank,
+      status: status ?? this.status,
+      answers: answers ?? this.answers,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+      week: week ?? this.week,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (blank.present) {
+      map['blank'] = Variable<String>(blank.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (answers.present) {
+      map['answers'] = Variable<String>(answers.value);
+    }
+    if (lastUpdated.present) {
+      map['last_updated'] = Variable<DateTime>(lastUpdated.value);
+    }
+    if (week.present) {
+      map['week'] = Variable<DateTime>(week.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BOTWCompanion(')
+          ..write('id: $id, ')
+          ..write('blank: $blank, ')
+          ..write('status: $status, ')
+          ..write('answers: $answers, ')
+          ..write('lastUpdated: $lastUpdated, ')
+          ..write('week: $week')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDb extends GeneratedDatabase {
   _$AppDb(QueryExecutor e) : super(e);
   $AppDbManager get managers => $AppDbManager(this);
   late final $ChatsTable chats = $ChatsTable(this);
   late final $SnipResponsesTable snipResponses = $SnipResponsesTable(this);
   late final $SnippetsTable snippets = $SnippetsTable(this);
+  late final $BOTWTable botw = $BOTWTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [chats, snipResponses, snippets];
+      [chats, snipResponses, snippets, botw];
 }
 
 typedef $$ChatsTableCreateCompanionBuilder = ChatsCompanion Function({
@@ -1519,6 +1896,7 @@ typedef $$SnipResponsesTableCreateCompanionBuilder = SnipResponsesCompanion
   required String uid,
   required String displayName,
   required DateTime date,
+  required DateTime lastUpdated,
 });
 typedef $$SnipResponsesTableUpdateCompanionBuilder = SnipResponsesCompanion
     Function({
@@ -1528,6 +1906,7 @@ typedef $$SnipResponsesTableUpdateCompanionBuilder = SnipResponsesCompanion
   Value<String> uid,
   Value<String> displayName,
   Value<DateTime> date,
+  Value<DateTime> lastUpdated,
 });
 
 class $$SnipResponsesTableTableManager extends RootTableManager<
@@ -1553,6 +1932,7 @@ class $$SnipResponsesTableTableManager extends RootTableManager<
             Value<String> uid = const Value.absent(),
             Value<String> displayName = const Value.absent(),
             Value<DateTime> date = const Value.absent(),
+            Value<DateTime> lastUpdated = const Value.absent(),
           }) =>
               SnipResponsesCompanion(
             id: id,
@@ -1561,6 +1941,7 @@ class $$SnipResponsesTableTableManager extends RootTableManager<
             uid: uid,
             displayName: displayName,
             date: date,
+            lastUpdated: lastUpdated,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -1569,6 +1950,7 @@ class $$SnipResponsesTableTableManager extends RootTableManager<
             required String uid,
             required String displayName,
             required DateTime date,
+            required DateTime lastUpdated,
           }) =>
               SnipResponsesCompanion.insert(
             id: id,
@@ -1577,6 +1959,7 @@ class $$SnipResponsesTableTableManager extends RootTableManager<
             uid: uid,
             displayName: displayName,
             date: date,
+            lastUpdated: lastUpdated,
           ),
         ));
 }
@@ -1613,6 +1996,11 @@ class $$SnipResponsesTableFilterComposer
       column: $state.table.date,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<DateTime> get lastUpdated => $state.composableBuilder(
+      column: $state.table.lastUpdated,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
 }
 
 class $$SnipResponsesTableOrderingComposer
@@ -1645,6 +2033,11 @@ class $$SnipResponsesTableOrderingComposer
 
   ColumnOrderings<DateTime> get date => $state.composableBuilder(
       column: $state.table.date,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<DateTime> get lastUpdated => $state.composableBuilder(
+      column: $state.table.lastUpdated,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }
@@ -1833,6 +2226,141 @@ class $$SnippetsTableOrderingComposer
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }
 
+typedef $$BOTWTableCreateCompanionBuilder = BOTWCompanion Function({
+  Value<int> id,
+  required String blank,
+  required String status,
+  required String answers,
+  required DateTime lastUpdated,
+  required DateTime week,
+});
+typedef $$BOTWTableUpdateCompanionBuilder = BOTWCompanion Function({
+  Value<int> id,
+  Value<String> blank,
+  Value<String> status,
+  Value<String> answers,
+  Value<DateTime> lastUpdated,
+  Value<DateTime> week,
+});
+
+class $$BOTWTableTableManager extends RootTableManager<
+    _$AppDb,
+    $BOTWTable,
+    BOTWData,
+    $$BOTWTableFilterComposer,
+    $$BOTWTableOrderingComposer,
+    $$BOTWTableCreateCompanionBuilder,
+    $$BOTWTableUpdateCompanionBuilder> {
+  $$BOTWTableTableManager(_$AppDb db, $BOTWTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          filteringComposer:
+              $$BOTWTableFilterComposer(ComposerState(db, table)),
+          orderingComposer:
+              $$BOTWTableOrderingComposer(ComposerState(db, table)),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> blank = const Value.absent(),
+            Value<String> status = const Value.absent(),
+            Value<String> answers = const Value.absent(),
+            Value<DateTime> lastUpdated = const Value.absent(),
+            Value<DateTime> week = const Value.absent(),
+          }) =>
+              BOTWCompanion(
+            id: id,
+            blank: blank,
+            status: status,
+            answers: answers,
+            lastUpdated: lastUpdated,
+            week: week,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String blank,
+            required String status,
+            required String answers,
+            required DateTime lastUpdated,
+            required DateTime week,
+          }) =>
+              BOTWCompanion.insert(
+            id: id,
+            blank: blank,
+            status: status,
+            answers: answers,
+            lastUpdated: lastUpdated,
+            week: week,
+          ),
+        ));
+}
+
+class $$BOTWTableFilterComposer extends FilterComposer<_$AppDb, $BOTWTable> {
+  $$BOTWTableFilterComposer(super.$state);
+  ColumnFilters<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get blank => $state.composableBuilder(
+      column: $state.table.blank,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get status => $state.composableBuilder(
+      column: $state.table.status,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get answers => $state.composableBuilder(
+      column: $state.table.answers,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<DateTime> get lastUpdated => $state.composableBuilder(
+      column: $state.table.lastUpdated,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<DateTime> get week => $state.composableBuilder(
+      column: $state.table.week,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+}
+
+class $$BOTWTableOrderingComposer
+    extends OrderingComposer<_$AppDb, $BOTWTable> {
+  $$BOTWTableOrderingComposer(super.$state);
+  ColumnOrderings<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get blank => $state.composableBuilder(
+      column: $state.table.blank,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get status => $state.composableBuilder(
+      column: $state.table.status,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get answers => $state.composableBuilder(
+      column: $state.table.answers,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<DateTime> get lastUpdated => $state.composableBuilder(
+      column: $state.table.lastUpdated,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<DateTime> get week => $state.composableBuilder(
+      column: $state.table.week,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+}
+
 class $AppDbManager {
   final _$AppDb _db;
   $AppDbManager(this._db);
@@ -1842,4 +2370,5 @@ class $AppDbManager {
       $$SnipResponsesTableTableManager(_db, _db.snipResponses);
   $$SnippetsTableTableManager get snippets =>
       $$SnippetsTableTableManager(_db, _db.snippets);
+  $$BOTWTableTableManager get botw => $$BOTWTableTableManager(_db, _db.botw);
 }

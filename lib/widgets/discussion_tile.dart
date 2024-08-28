@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:snippets/pages/discussion_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/widgets/helper_functions.dart';
@@ -65,6 +66,8 @@ class DiscussionTile extends StatelessWidget {
                       style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text("${lastMessageSender == "" ? "" : "$lastMessageSender: "}$lastMessage", style: const TextStyle(fontSize: 12, color: Colors.black)),
                   onTap: () {
+                    HapticFeedback.mediumImpact();
+
                     // navigate to discussion page
                     nextScreen(
                         context,

@@ -2,12 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_widgetkit/flutter_widgetkit.dart';
 import 'package:phone_input/phone_input_package.dart';
 import 'package:snippets/api/notifications.dart';
 import 'package:snippets/main.dart';
 
 import '../helper/helper_function.dart';
-import 'database.dart';
+import 'fb_database.dart';
 
 class Auth {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -18,7 +19,7 @@ class Auth {
               email: email, password: password))
           .user!;
 
-      var userInfoMap = await Database(uid: user.uid).getUserData(user.uid);
+      var userInfoMap = await FBDatabase(uid: user.uid).getUserData(user.uid);
       await HelperFunctions.saveUserNameSF(userInfoMap["username"]);
       await HelperFunctions.saveUserDisplayNameSF(userInfoMap["fullname"]);
       await HelperFunctions.saveUserEmailSF(userInfoMap["email"]);
@@ -50,7 +51,7 @@ class Auth {
               email: email, password: password))
           .user!;
 
-      await Database(uid: user.uid)
+      await FBDatabase(uid: user.uid)
           .savingUserData(fullName, email, username, phoneNumber);
       await HelperFunctions.saveUserNameSF(username);
       await HelperFunctions.saveUserDisplayNameSF(fullName);
@@ -72,6 +73,12 @@ class Auth {
       await HelperFunctions.saveUserNameSF("");
       await HelperFunctions.saveUserDataSF("");
       await PushNotifications().unsubscribeFromTopic("all");
+      //Clear widgetData
+      WidgetKit.removeItem("botwData", "group.kazoom_snippets");
+      WidgetKit.removeItem("snippetsData", "group.kazoom_snippets");
+      WidgetKit.removeItem("snippetsResponsesData", "group.kazoom_snippets");
+
+      WidgetKit.reloadAllTimelines();
       await _auth.signOut();
     } catch (e) {
       return null;
@@ -86,7 +93,7 @@ class Auth {
   void listenToAuthState(StreamController streamController) {
     StreamSubscription stream = const Stream.empty().listen((event) {});
     if (FirebaseAuth.instance.currentUser != null) {
-      stream = Database(uid: FirebaseAuth.instance.currentUser!.uid)
+      stream = FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
           .userDataStream(streamController);
     }
 
@@ -97,7 +104,7 @@ class Auth {
         stream.cancel();
       } else {
         print("Starting");
-        stream = Database(uid: FirebaseAuth.instance.currentUser!.uid)
+        stream = FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
             .userDataStream(streamController);
       }
     });

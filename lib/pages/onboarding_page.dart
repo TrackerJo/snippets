@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:snippets/api/database.dart';
+import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/api/notifications.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
@@ -50,9 +50,13 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      appBar: const PreferredSize(
+      appBar: PreferredSize(
         preferredSize: Size.fromHeight(kToolbarHeight),
-        child: CustomAppBar(title: 'Welcome to Snippets'),
+        child: CustomAppBar(title: 'Welcome to Snippets', showBackButton: widget.alreadyOnboarded == true ? true : false, onBackButtonPressed: () {
+          HapticFeedback.mediumImpact();
+          Navigator.of(context).pop();
+        },
+        fixRight: widget.alreadyOnboarded == true ? true : false,),
       ),
       backgroundColor: const Color(0xFF232323),
       body: Stack(
@@ -73,9 +77,9 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
               
               makePage(
                   image: 'assets/slide_3.png',
-                  title: '3 prompts every day, 1 new person every week',
+                  title: '3 prompts daily,  1 anonymous prompt weekly',
                   content:
-                      'Answer each prompt, view your friends responses plus one random response. Every week, you will be matched with a new person to have a conversation with.',
+                      'Answer each prompt, view your friends responses. Every week at a random time, there will be an public anonymous snippet for all to answer.',
                   smallText: true),
                   
               makePage(
@@ -140,6 +144,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                   print("Already Onboarded: ${widget.alreadyOnboarded}");
                   if(widget.alreadyOnboarded == true){
                     // router.pushReplacement("/home");
+                    HapticFeedback.mediumImpact();
                     Navigator.of(context).pop();
                     return;
                   }
@@ -151,7 +156,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorSys.primarySolid,
+                  backgroundColor: ColorSys.primaryDark,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -248,7 +253,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                       onPressed: () async {
                         Navigator.of(context).pop();
                         await PushNotifications().initNotifications();
-                        await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+                        await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
                             .updateUserDescription(editDescription);
                 
                         if(widget.toProfile == true){

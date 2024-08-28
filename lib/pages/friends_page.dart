@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:snippets/api/database.dart';
+import 'package:flutter/services.dart';
+import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/templates/colorsSys.dart';
@@ -93,10 +94,15 @@ class _FriendsPageState extends State<FriendsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: const PreferredSize(
+        appBar: PreferredSize(
           preferredSize: Size.fromHeight(kToolbarHeight),
           child: CustomAppBar(
             title: 'Friends',
+            showBackButton: true,
+            onBackButtonPressed: ()  {
+              HapticFeedback.mediumImpact();
+              Navigator.of(context).pop();
+            },
           ),
         ),
         backgroundColor: const Color(0xFF232323),
@@ -129,6 +135,7 @@ class _FriendsPageState extends State<FriendsPage> {
                     ),
                     child: TextButton(
                       onPressed: () {
+                        HapticFeedback.mediumImpact();
                         setState(() {
                           friendsView = "friends";
                         });
@@ -167,6 +174,8 @@ class _FriendsPageState extends State<FriendsPage> {
                     ),
                     child: TextButton(
                       onPressed: () {
+                        HapticFeedback.mediumImpact();
+
                         setState(() {
                           friendsView = "friendRequests";
                         });
@@ -236,6 +245,7 @@ class _FriendsPageState extends State<FriendsPage> {
                     ),
                     child: TextButton(
                       onPressed: () {
+                        HapticFeedback.mediumImpact();
                         setState(() {
                           friendsView = "outgoingRequests";
                         });
@@ -297,7 +307,8 @@ class _FriendsPageState extends State<FriendsPage> {
             showCheck: true,
             showX: true,
             onCheckPressed: () async {
-              await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+               HapticFeedback.mediumImpact();
+              await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
                   .acceptFriendRequest(
                       friendRequests[index]["userId"],
                       friendRequests[index]["displayName"],
@@ -314,7 +325,8 @@ class _FriendsPageState extends State<FriendsPage> {
               //Refresh friend requests
             },
             onXPressed: () async {
-              await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+               HapticFeedback.mediumImpact();
+              await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
                   .declineFriendRequest(
                       friendRequests[index]["userId"],
                       friendRequests[index]["FCMToken"],
@@ -347,7 +359,8 @@ class _FriendsPageState extends State<FriendsPage> {
             uid: outgoingRequests[index]["userId"],
             showX: true,
             onXPressed: () async {
-              await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+               HapticFeedback.mediumImpact();
+              await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
                   .cancelFriendRequest(
                       outgoingRequests[index]["userId"],
                       outgoingRequests[index]["displayName"],

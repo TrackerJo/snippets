@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:snippets/api/auth.dart';
 import 'package:snippets/helper/helper_function.dart';
@@ -35,6 +36,7 @@ class _WelcomePageState extends State<WelcomePage> {
       setState(() {
         _isLoading = true;
       });
+      HapticFeedback.mediumImpact();
       authService.loginWithEmailandPassword(email, password).then((val) {
         if (val == true) {
           if(widget.toProfile == true){
@@ -122,7 +124,7 @@ class _WelcomePageState extends State<WelcomePage> {
                         TextFormField(
                           decoration: textInputDecoration.copyWith(
                               labelText: "Email",
-                              fillColor: ColorSys.primaryDark,
+                              fillColor: ColorSys.secondary,
                               prefixIcon: Icon(
                                 Icons.email,
                                 color: Theme.of(context).primaryColor,
@@ -147,7 +149,7 @@ class _WelcomePageState extends State<WelcomePage> {
                           obscureText: true,
                           decoration: textInputDecoration.copyWith(
                               labelText: "Password",
-                              fillColor: ColorSys.primaryDark,
+                              fillColor: ColorSys.secondary,
                               prefixIcon: Icon(
                                 Icons.lock,
                                 color: Theme.of(context).primaryColor,

@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:snippets/api/database.dart';
+import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/pages/responses_page.dart';
 import 'package:snippets/providers/card_provider.dart';
 import 'package:snippets/templates/colorsSys.dart';

@@ -8,7 +8,7 @@ import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
 import 'package:snippets/widgets/helper_functions.dart';
 
-import '../api/database.dart';
+import '../api/fb_database.dart';
 
 class QuestionPage extends StatefulWidget {
   final String question;
@@ -40,13 +40,49 @@ class _QuestionPageState extends State<QuestionPage> {
     savePage();
   }
 
+  void showAnonymousInfoDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Anonymous Snippets"),
+          content: const Text("Your response will be completely anonymous to everyone and will be public, not just to your friends."),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
+                  await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+                    .submitAnswer(widget.snippetId, answer, widget.question, widget.theme, anonymousID);
+              },
+              child: const Text("I understand"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void submitAnswer() async {
     if(widget.type == "anonymous") {
-      String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
-      await Database(uid: FirebaseAuth.instance.currentUser!.uid)
-        .submitAnswer(widget.snippetId, answer, widget.question, widget.theme, anonymousID);
+      bool hasSeenAnonymouse = (await HelperFunctions.checkIfSeenAnonymousSnippetSF())!;
+      if(!hasSeenAnonymouse) {
+        await HelperFunctions.saveSeenAnonymousSnippetSF();
+        showAnonymousInfoDialog(context);
+      } else {
+
+        String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
+        await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+          .submitAnswer(widget.snippetId, answer, widget.question, widget.theme, anonymousID);
+      }
     } else {
-      await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+      await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
         .submitAnswer(widget.snippetId, answer, widget.question, widget.theme, null);
 
     }
@@ -71,9 +107,10 @@ class _QuestionPageState extends State<QuestionPage> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(
-          title: widget.question,
+          title: "Snippet",
           theme: widget.theme,
           showBackButton: true,
+          fixRight: true,
           onBackButtonPressed: () {
             Navigator.of(context).pop();
           },
@@ -89,6 +126,18 @@ class _QuestionPageState extends State<QuestionPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Text(
+                  widget.question,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontFamily: 'Inknut Antiqua',
+                    fontWeight: FontWeight.w400,
+                    height: 0,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
                 SizedBox(
                   width: MediaQuery.of(context).size.width - 50,
                   height: 100,

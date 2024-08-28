@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:snippets/api/database.dart';
+import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/widgets/botw_result_tile.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
@@ -20,7 +21,7 @@ class _BotwResultsPageState extends State<BotwResultsPage> {
   void getResults() async {
      Map<String, dynamic> botwAnswers = widget.answers;
     if(botwAnswers.isEmpty){
-      botwAnswers = await Database(uid: FirebaseAuth.instance.currentUser!.uid).getBotwAnswers();
+      botwAnswers = (await Database().getBOTW())["answers"];
     }
     List<Map<String, dynamic>> botwResults = [];
     botwAnswers.forEach((key, value) {

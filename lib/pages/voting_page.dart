@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:snippets/api/database.dart';
+import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/api/notifications.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/providers/card_provider.dart';
@@ -56,9 +58,15 @@ class _VotingPageState extends State<VotingPage> {
   }
 
   void getData() async {
+    bool hasVotedBefore = await HelperFunctions.checkIfVotedBeforeSF();
+    if(!hasVotedBefore){
+      await HelperFunctions.saveVotedBeforeSF();
+      showVotingHelp();
+
+    }
     Map<String, dynamic> nblank = {};
     if(widget.blank.isEmpty){
-      nblank = await Database(uid: FirebaseAuth.instance.currentUser!.uid).getBlankOfTheWeekData();
+      nblank = await Database().getBOTW();
       print("Blank: $nblank");
       setState(() {
         blank = nblank;
@@ -94,13 +102,14 @@ class _VotingPageState extends State<VotingPage> {
   }
 
   void voteForAnswer(Map<String, dynamic> answer) async {
+
     if(votesLeft == 0){
       showOutOfVotes();
       final provider = Provider.of<CardProvider>(context, listen: false);
       provider.goBack(answer);
       return;
     }
-   
+    HapticFeedback.mediumImpact();
     setState(() {
       hasSavedVotes = false;
       movedAnswers.add(answer);
@@ -120,6 +129,7 @@ class _VotingPageState extends State<VotingPage> {
   }
 
    void skipAnswer(Map<String, dynamic> answer) {
+    HapticFeedback.mediumImpact();
     setState(() {
 
       movedAnswers.add(answer);
@@ -150,18 +160,18 @@ class _VotingPageState extends State<VotingPage> {
                 if(answer["voters"].contains(profileData["uid"])) continue;
                 answer["votes"] += 1;
                 answer["voters"].add(FirebaseAuth.instance.currentUser!.uid);
-                await Database(uid: FirebaseAuth.instance.currentUser!.uid).updateBOTWAnswer(answer);
-                await Database(uid: FirebaseAuth.instance.currentUser!.uid).updateUserVotesLeft(votesLeft);
+                await Database().updateBOTWAnswer(answer);
+                await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).updateUserVotesLeft(votesLeft);
                 PushNotifications().sendNotification(title: "${profileData["fullname"]} voted for your ${blank["blank"]}", body: "Click here to see how many votes it now has!", targetIds: [answer["FCMToken"]], data: {"type": "voted"});
               }
               for (var answer in removedVotedAnswers) {
                 answer["votes"] -= 1;
                 answer["voters"].remove(profileData["uid"]);
-                await Database(uid: FirebaseAuth.instance.currentUser!.uid).updateBOTWAnswer(answer);
-                await Database(uid: FirebaseAuth.instance.currentUser!.uid).updateUserVotesLeft(votesLeft);
+                await Database().updateBOTWAnswer(answer);
+                await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).updateUserVotesLeft(votesLeft);
               }
               //update votes left
-              await Database(uid: FirebaseAuth.instance.currentUser!.uid).updateUserVotesLeft(votesLeft);
+              await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).updateUserVotesLeft(votesLeft);
               Navigator.pop(context, true);
             },
           ),
@@ -200,6 +210,7 @@ class _VotingPageState extends State<VotingPage> {
                     ),
                     child: IconButton(onPressed: () {
                       if(movedAnswers.isEmpty ) return;
+                      HapticFeedback.mediumImpact();
                       final provider = Provider.of<CardProvider>(context, listen: false);
                       provider.goBack(movedAnswers.last);
                       setState(() {
@@ -227,6 +238,7 @@ class _VotingPageState extends State<VotingPage> {
                     ),
                     
                     child: IconButton(onPressed: () {
+                      HapticFeedback.mediumImpact();
                       if(votesLeft == 0){
                         showOutOfVotes();
                         return;
@@ -267,6 +279,7 @@ class _VotingPageState extends State<VotingPage> {
                         title: Text(votedAnswers[index]["answer"], style: const TextStyle(color: Colors.white, fontSize: 16)),
                         subtitle: Text(votedAnswers[index]["displayName"], style: const TextStyle(color: Colors.white, fontSize: 14)),
                         trailing: IconButton(onPressed: () {
+                          HapticFeedback.mediumImpact();
                           setState(() {
                             //Add back to answers
                             final provider = Provider.of<CardProvider>(context, listen: false);
@@ -302,6 +315,7 @@ class _VotingPageState extends State<VotingPage> {
           actions: [
             TextButton(
               onPressed: () {
+                HapticFeedback.mediumImpact();
                 Navigator.of(context).pop();
               },
               child: const Text("OK"),
@@ -322,6 +336,7 @@ class _VotingPageState extends State<VotingPage> {
           actions: [
             TextButton(
               onPressed: () {
+                HapticFeedback.mediumImpact();
                 Navigator.of(context).pop();
               },
               child: const Text("OK"),

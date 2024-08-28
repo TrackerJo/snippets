@@ -11,6 +11,6 @@ import SwiftUI
 @main
 struct CurrentSnippetsBundle: WidgetBundle {
     var body: some Widget {
-        CurrentSnippets()
+        SnippetsWidget()
     }
 }

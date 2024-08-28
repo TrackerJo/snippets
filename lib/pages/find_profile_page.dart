@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:snippets/api/auth.dart';
-import 'package:snippets/api/database.dart';
+import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/templates/input_decoration.dart';
@@ -29,7 +29,7 @@ class _FindProfilePageState extends State<FindProfilePage> {
   void getData() async {
     
 
-    List<Map<String, dynamic>> mutual = await Database(uid: FirebaseAuth.instance.currentUser!.uid).getSuggestedFriends();
+    List<Map<String, dynamic>> mutual = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).getSuggestedFriends();
     print("mutual");
     print(mutual);
     if(!mounted) return;
@@ -83,6 +83,7 @@ class _FindProfilePageState extends State<FindProfilePage> {
                     child: TextFormField(
                       onTap: () {
                         HapticFeedback.selectionClick();
+                        
                       },
                       decoration: textInputDecoration.copyWith(
                         hintText: "Enter Profile Name",
@@ -97,7 +98,7 @@ class _FindProfilePageState extends State<FindProfilePage> {
                           });
                           return;
                         }
-                        var stream = await Database(
+                        var stream = await FBDatabase(
                           uid: FirebaseAuth.instance.currentUser!.uid)
                       .searchUsers(value);
                         setState(() {

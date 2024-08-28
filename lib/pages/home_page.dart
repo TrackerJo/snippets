@@ -10,7 +10,7 @@ import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/widgets/snippet_tile.dart';
 
-import '../api/database.dart';
+import '../api/fb_database.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -35,27 +35,40 @@ class _HomePageState extends State<HomePage> {
     DateTime? latestSnippetDate = latestSnippet?.lastRecieved;
     
     print(latestSnippetDate);
-    await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
             .getCurrentSnippets(latestSnippetDate, firebaseController, snippetsStreamController);
 
     
     await LocalDatabase().getSnippets(localController, snippetsStreamController);
-    localController.stream.listen((event) {
+    localController.stream.listen((event) async {
       if(snippetsStreamController.isClosed) return;
-      print("Local Chats");
+      print("Local Snippets");
       //Check for duplicates
       List<Snippet> localSnippets = event as List<Snippet>;
       List<String> read = [];
+        List<String> duplicates = []; // List to collect IDs of duplicates
+
       for (var element in localSnippets) {
+        //Check if is anonymous
+        if(element.type == "anonymous"){
+          DateTime lastRecieved = element.lastRecieved;
+          DateTime now = DateTime.now();
+          if(now.difference(lastRecieved).inDays > 1){
+            await LocalDatabase().deleteSnippetById(element.snippetId);
+            duplicates.add(element.snippetId); // Collect duplicate IDs
+          }
+        }
         if(read.contains(element.snippetId)){
           print("Duplicate found");
-          LocalDatabase().deleteSnippetById(element.snippetId);
-          localSnippets.remove(element);
+          await LocalDatabase().deleteSnippetById(element.snippetId);
+          duplicates.add(element.snippetId); // Collect duplicate IDs
         } else {
           read.add(element.snippetId);
         }
 
       }
+      localSnippets.removeWhere((element) => duplicates.contains(element.snippetId));
+
       
       snippetsStreamController.add(localSnippets);
     });
@@ -86,7 +99,7 @@ class _HomePageState extends State<HomePage> {
             "type": data["type"]
              
           };
-          LocalDatabase().addSnippet(snippetMap);
+          await LocalDatabase().addSnippet(snippetMap);
           
         }
         

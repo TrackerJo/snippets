@@ -1,0 +1,47 @@
+Date : 2024-08-23 14:57:44
+Directory : /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages
+Total : 20 files,  804 codes, 240 comments, 128 blanks, all 1172 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| Dart     |         20 |        804 |        240 |        128 |      1,172 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                           | files      | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                              |         20 |        804 |        240 |        128 |      1,172 |
+| . (Files)                                                                                      |         15 |      3,804 |        371 |        451 |      4,626 |
+| ..                                                                                             |          5 |     -3,000 |       -131 |       -323 |     -3,454 |
+| ../api                                                                                         |          5 |     -3,000 |       -131 |       -323 |     -3,454 |
++------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                                       | language | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/api/auth.dart                  | Dart     |        -86 |         -4 |        -16 |       -106 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/api/database.dart              | Dart     |       -773 |        -17 |       -115 |       -905 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/api/local_database.dart        | Dart     |       -162 |        -11 |        -57 |       -230 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/api/local_database.g.dart      | Dart     |     -1,799 |         -2 |       -101 |     -1,902 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/api/notifications.dart         | Dart     |       -180 |        -97 |        -34 |       -311 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/botw_results_page.dart   | Dart     |         83 |          1 |         15 |         99 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/comments_page.dart       | Dart     |          0 |        182 |         12 |        194 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/create_account_page.dart | Dart     |        218 |         18 |         23 |        259 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/discussion_page.dart     | Dart     |        424 |         14 |         45 |        483 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/discussions_page.dart    | Dart     |        140 |          5 |         33 |        178 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/find_profile_page.dart   | Dart     |        162 |         22 |         32 |        216 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/friends_page.dart        | Dart     |        353 |          7 |         22 |        382 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/home_page.dart           | Dart     |        138 |         69 |         40 |        247 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/onboarding_page.dart     | Dart     |        257 |          3 |         19 |        279 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/profile_page.dart        | Dart     |        722 |          6 |         60 |        788 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/question_page.dart       | Dart     |        170 |          3 |         13 |        186 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/responses_page.dart      | Dart     |        257 |         10 |         31 |        298 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/swipe_pages.dart         | Dart     |        374 |          9 |         39 |        422 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/voting_page.dart         | Dart     |        307 |          3 |         55 |        365 |
+| /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/pages/welcome_page.dart        | Dart     |        199 |         19 |         12 |        230 |
+| Total                                                                                          |          |        804 |        240 |        128 |      1,172 |
++------------------------------------------------------------------------------------------------+----------+------------+------------+------------+------------+

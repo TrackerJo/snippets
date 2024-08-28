@@ -70,9 +70,61 @@ class ColorSys {
     end: const Alignment(0, 1),
     colors: [
       //Sunrise gradient
-      Color.fromARGB(255, 102, 102, 102),
+      Color.fromARGB(255, 145, 145, 145),
 
       Color.fromARGB(255, 44, 44, 44),
+    ],
+  );
+
+  static LinearGradient widgetBPGradient = const LinearGradient(
+
+    begin: const Alignment(0.00, -1.00),
+
+    end: const Alignment(0, 1),
+    colors: [
+      //Sunrise gradient
+      Color.fromARGB(255,10,122,255),
+
+      Color.fromARGB(255,157, 79, 207),
+    ],
+  );
+  static LinearGradient widgetBGGradient = const LinearGradient(
+    begin: const Alignment(0.00, -1.00),
+    end: const Alignment(0, 1),
+    colors: [
+      //Sunrise gradient
+      Color.fromARGB(255, 10, 122, 255),
+      Color.fromARGB(255, 38, 169, 94),
+    ],
+  );
+
+  static LinearGradient widgetORGradient = const LinearGradient(
+    begin: const Alignment(0.00, -1.00),
+    end: const Alignment(0, 1),
+    colors: [
+      //Sunrise gradient
+      Color.fromARGB(255, 245, 139, 5),
+      Color.fromARGB(255, 228, 57, 43),
+    ],
+  );
+
+  static LinearGradient widgetYRGradient = const LinearGradient(
+    begin: const Alignment(0.00, -1.00),
+    end: const Alignment(0, 1),
+    colors: [
+      //Sunrise gradient
+      Color.fromARGB(255, 241, 190, 2),
+      Color.fromARGB(255, 228, 57, 43),
+    ],
+  );
+
+  static LinearGradient widgetPPGradient = const LinearGradient(
+    begin: const Alignment(0.00, -1.00),
+    end: const Alignment(0, 1),
+    colors: [
+      //Sunrise gradient
+      Color.fromARGB(255, 236, 45, 82),
+      Color.fromARGB(255, 153, 71, 194),
     ],
   );
 }

@@ -1,7 +1,7 @@
 name: snippets
 description: A new Flutter project.
 publish_to: 'none'
-version: 0.9.1
+version: 0.9.7
 
 environment:
   sdk: '>=3.0.6 <4.0.0'
@@ -13,6 +13,8 @@ dependencies:
   phone_input: ^1.0.0
   firebase_core: ^2.24.2
   shared_preferences: ^2.2.0
+  home_widget: ^0.6.0
+  workmanager: ^0.5.0
   async: ^2.4.1
   firebase_messaging: ^14.7.10
   firebase_auth: ^4.16.0
@@ -32,7 +34,8 @@ dependencies:
   path_provider: ^2.0.0
   path: ^1.8.3
   auto_size_text: ^3.0.0
-
+  flutter_native_splash: ^2.4.1
+  flutter_widgetkit: ^1.0.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -55,3 +58,5 @@ flutter:
     - assets/
     - assets/icon/
 
+flutter_native_splash:
+  background_image: "assets/splash.png"

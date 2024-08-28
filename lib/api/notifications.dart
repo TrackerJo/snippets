@@ -5,9 +5,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_widgetkit/flutter_widgetkit.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:snippets/api/auth.dart';
-import 'package:snippets/api/database.dart';
+import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/pages/discussion_page.dart';
@@ -39,6 +40,102 @@ class PushNotifications {
   void handleInAppMessage(RemoteMessage? message) async {
     print("Handling in app message");
     if (message == null) {
+      return;
+    }
+    if(message.data["type"].contains("widget-")) {
+      print("Widget message");
+      if(message.data["type"] == "widget-botw"){
+        Map<String, dynamic> data = WidgetData(message.data["blank"].split(" of")[0], answers: []).toJson();
+        print("NEW BOTW: $data");
+          WidgetKit.setItem(
+            'botwData',
+            jsonEncode(data),
+            'group.kazoom_snippets');
+          WidgetKit.reloadAllTimelines();
+      } else if(message.data["type"] == "widget-question"){
+        Map<String, dynamic> oldSnippets = json.decode(await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets'));
+        List<String> questions = oldSnippets["questions"].cast<String>();
+        List<String> ids = oldSnippets["ids"].cast<String>();
+        List<String> indexes = oldSnippets["indexes"].cast<String>();
+        List<bool> isAnonymous = oldSnippets["isAnonymous"].cast<bool>();
+        int index = questions.indexOf(message.data["question"]);
+        if(index == -1) {
+          questions.add(message.data["question"]);
+          ids.add(message.data["id"]);
+          indexes.add(message.data["index"]);
+          isAnonymous.add(message.data["snippetType"] == "anonymous");
+        } else {
+          questions[index] = message.data["question"];
+          ids[index] = message.data["id"];
+          indexes[index] = message.data["index"];
+          isAnonymous[index] = message.data["snippetType"] == "anonymous";
+        }
+        Map<String, dynamic> snippetData = {
+          "questions": questions,
+          "ids": ids,
+          "indexes": indexes,
+          "isAnonymous": isAnonymous,
+        };
+
+        WidgetKit.setItem(
+          'snippetsData',
+          jsonEncode(snippetData),
+          'group.kazoom_snippets');
+        WidgetKit.reloadAllTimelines();
+
+
+      } else if(message.data["type"] == "widget-botw-answer"){
+        Map<String, dynamic> oldBOTW = json.decode(await WidgetKit.getItem('botwData', 'group.kazoom_snippets'));
+        Map<String, dynamic> answer = {
+          "answer": message.data["answer"],
+          "uid": message.data["uid"],
+          "displayName": message.data["displayName"],
+          
+        };
+        List<dynamic> oldAnswersList = oldBOTW["answers"];
+        List<Map<String, dynamic>> oldAnswers = [];
+        for (var i = 0; i < oldAnswersList.length; i++) {
+          oldAnswers.add({
+            "answer": oldAnswersList[i]["answer"],
+            "uid": oldAnswersList[i]["uid"],
+            "displayName": oldAnswersList[i]["displayName"],
+          });
+        }
+        //Check if answer already exists
+        Map<String, dynamic>? oldAnswer = oldAnswers.firstWhere((element) => element["uid"] == message.data["uid"], orElse: () => {});
+        if(oldAnswer.isEmpty) {
+          oldAnswers.add(answer);
+        } else {
+          oldAnswers[oldAnswers.indexOf(oldAnswer)] = answer;
+        }
+        oldBOTW["answers"] = oldAnswers;
+        print("NEW BOTW: $oldBOTW");
+        WidgetKit.setItem(
+          'botwData',
+          jsonEncode(oldBOTW),
+          'group.kazoom_snippets');
+        WidgetKit.reloadAllTimelines();
+        
+
+      } else if(message.data["type"] == "widget-snippet-response"){
+        Map<String, dynamic> oldResponsesMap = json.decode(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets'));
+        List<String> oldResponses = oldResponsesMap["responses"].cast<String>();
+        String responseString = "${message.data["displayName"]}|${message.data["question"]}|${message.data["response"]}|${message.data["snippetId"]}|${message.data["userId"]}|${message.data["snippetType"] == "anonymous"}|${message.data["answered"]}";
+        if(oldResponses.contains(responseString)) {
+          return;
+        }
+        for(var response in oldResponses) {
+          if(response.split("|")[3] == message.data["snippetId"] && response.split("|")[6] == "false") {
+            oldResponses[oldResponses.indexOf(response)] = "${response.split("|")[0]}|${response.split("|")[1]}|${response.split("|")[2]}|${response.split("|")[3]}|${response.split("|")[4]}|${response.split("|")[5]}|true";
+          }
+        }
+        oldResponses.add(responseString);
+        WidgetKit.setItem(
+          'snippetsResponsesData',
+          jsonEncode({"responses": oldResponses}),
+          'group.kazoom_snippets');
+        WidgetKit.reloadAllTimelines();
+      }
       return;
     }
     //Check if user is logged in
@@ -133,7 +230,8 @@ class PushNotifications {
         //     },
         //   ),
         // );
-        router.push("/home/question/${message.data['snippetId']}/${message.data['theme']}/${message.data['question']}/${message.data['snippetType']}");
+ 
+        router.push("/home/question/${message.data['snippetId']}/${message.data['theme']}/${message.data['question'].replaceAll("?", "~")}/${message.data['snippetType']}");
       } else if (message.data['type'] == "discussion") {
         print("Discussion");
 
@@ -175,7 +273,7 @@ class PushNotifications {
       } else if (message.data['type'] == "snippetAnswered") {
 
         //Check if user answered the snippet
-        bool hasResponded = await Database(uid: FirebaseAuth.instance.currentUser!.uid).didUserAnswerSnippet(message.data['snippetId']);
+        bool hasResponded = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).didUserAnswerSnippet(message.data['snippetId']);
         if(hasResponded) {
           // navigatorKey.currentState?.push(
           //   CustomPageRoute(
@@ -296,11 +394,36 @@ class PushNotifications {
         if(data["type"] == "discussion") {
           data["discussionUsers"] = createDiscussionUsersString(data["discussionUsers"]);
         }
+        
     HttpsCallableResult result = await FirebaseFunctions.instance
         .httpsCallable('sendNotifications')
         .call({
       "title": title,
       "body": body,
+      "targetIds": targetIds,
+      "data": data,
+    });
+    return result.data;
+  }
+
+  Future sendTopicData(String topic, Map<String, dynamic> data) async{
+    print("Sending topic data");
+    print(data);
+    print(topic);
+    await FirebaseFunctions.instance
+        .httpsCallable('sendTopicData')
+        .call({
+      
+      "topic": topic,
+      "data": data,
+    });
+  }
+
+  Future sendTokenData(List<String> targetIds, Map<String, dynamic> data) async{
+    HttpsCallableResult result = await FirebaseFunctions.instance
+        .httpsCallable('sendTokenData')
+        .call({
+      
       "targetIds": targetIds,
       "data": data,
     });

@@ -8,5 +8,11 @@
 	<array>
 		<string>applinks:snippets2024.web.app</string>
 	</array>
+	<key>com.apple.developer.usernotifications.time-sensitive</key>
+	<true/>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.kazoom_snippets</string>
+	</array>
 </dict>
 </plist>

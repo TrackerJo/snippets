@@ -1,12 +1,15 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_widgetkit/flutter_widgetkit.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:snippets/api/auth.dart';
-import 'package:snippets/api/database.dart';
+import 'package:snippets/api/fb_database.dart';
+import 'package:snippets/api/notifications.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/pages/discussions_page.dart';
@@ -20,6 +23,7 @@ import 'package:snippets/templates/input_decoration.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
 import 'package:snippets/widgets/custom_nav_bar.dart';
 import 'package:snippets/widgets/custom_page_route.dart';
+import 'package:snippets/widgets/widget_gradient_tile.dart';
 
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -215,7 +219,7 @@ class _SwipePagesState extends State<SwipePages> {
                   TextFormField(
                     onTap: () => HapticFeedback.selectionClick(),
                     initialValue: editDescription,
-                    maxLines: 7,
+                    maxLines: 6,
                     decoration: textInputDecoration.copyWith(
                       hintText: 'Description',
                       counterStyle: TextStyle(color: Colors.white),
@@ -249,7 +253,7 @@ class _SwipePagesState extends State<SwipePages> {
                     userData["description"] = editDescription;
                   });
           
-                  await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+                  await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
                       .updateUserDescription(editDescription);
                   Navigator.of(context).pop();
                 },
@@ -264,9 +268,11 @@ class _SwipePagesState extends State<SwipePages> {
   }
 
   void onSettingsButtonPressed() {
+  HapticFeedback.mediumImpact();
    showModalBottomSheet<void>(
                   context: context,
                   backgroundColor: ColorSys.background,
+                  isScrollControlled: true,
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(23),
@@ -275,7 +281,7 @@ class _SwipePagesState extends State<SwipePages> {
                   ),
                   builder: (BuildContext context) {
                     return SizedBox(
-                        height: 300,
+                        height: 425,
                         child: Padding(
                             padding: const EdgeInsets.all(32.0),
                             child: Column(
@@ -321,6 +327,26 @@ class _SwipePagesState extends State<SwipePages> {
                                               color: Colors.white, fontSize: 15))),
                                 ),
                                  const SizedBox(height: 20),
+                                 SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                      onPressed: () {
+                                        HapticFeedback.mediumImpact();
+                                        Navigator.of(context).pop();
+                                        widgetCustomization();
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: ColorSys.purpleBtn,
+                                          elevation: 10,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12)),
+                                          shadowColor: ColorSys.primaryDark),
+                                      child: const Text("Customize Widgets",
+                                          style: TextStyle(
+                                              color: Colors.white, fontSize: 15))),
+                                ),
+                                 const SizedBox(height: 20),
                                 SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton(
@@ -339,10 +365,381 @@ class _SwipePagesState extends State<SwipePages> {
                                           style: TextStyle(
                                               color: Colors.white, fontSize: 15))),
                                 ),
+                                 const SizedBox(height: 20),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                      onPressed: () {
+                                        HapticFeedback.mediumImpact();
+                                        showShareFeedbackDialog(context);
+                                        
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: ColorSys.purpleBtn,
+                                          elevation: 10,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12)),
+                                          shadowColor: ColorSys.primaryDark),
+                                      child: const Text("Share Feedback",
+                                          style: TextStyle(
+                                              color: Colors.white, fontSize: 15))),
+                                ),
                               ],
                             )));
                   });
             
+  }
+
+   void widgetCustomization() async {
+    String botwGradient = "bluePurple";
+    String snippetGradient = "bluePurple";
+    String responseGradient = "bluePurple";
+    String? botwConfig = await WidgetKit.getItem('botwConfig', 'group.kazoom_snippets');
+    String? snippetsConfig = await WidgetKit.getItem('snippetsConfig', 'group.kazoom_snippets');
+    String? snippetsResponsesConfig = await WidgetKit.getItem('snippetsResponsesConfig', 'group.kazoom_snippets');
+    if(botwConfig != null){
+      Map<String, dynamic> botwConfigMap = jsonDecode(botwConfig);
+      botwGradient = botwConfigMap["gradient"];
+    }
+    if(snippetsConfig != null){
+      Map<String, dynamic> snippetsConfigMap = jsonDecode(snippetsConfig);
+      snippetGradient = snippetsConfigMap["gradient"];
+    }
+    if(snippetsResponsesConfig != null){
+      Map<String, dynamic> snippetsResponsesConfigMap = jsonDecode(snippetsResponsesConfig);
+      responseGradient = snippetsResponsesConfigMap["gradient"];
+    }
+   showModalBottomSheet<void>(
+                  context: context,
+                  backgroundColor: ColorSys.background,
+                  isScrollControlled: true,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(23),
+                      topRight: Radius.circular(23),
+                    ),
+                  ),
+                  builder: (BuildContext context) {
+                    return StatefulBuilder(
+                      builder: (context, setState) {
+                        return SizedBox(
+                            height: MediaQuery.of(context).size.height - 100,
+                            child: Padding(
+                                padding: const EdgeInsets.all(32.0),
+                                child: SingleChildScrollView(
+                                  child: Column(
+                                    children: [
+                                      Text("Customize Widgets", style: TextStyle(color: ColorSys.primary, fontSize: 20),),
+                                      const SizedBox(height: 20),
+                                      Text("Select a color for the BOTW Widget", style: TextStyle(color: Colors.white),),
+                                      const SizedBox(height: 20),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          WidgetGradientTile(gradient: ColorSys.widgetBPGradient, name: "bluePurple", onTap: () {
+                                            setState(() {
+                                              botwGradient = "bluePurple";
+                                            });
+                                             WidgetKit.setItem(
+                                              'botwConfig',
+                                              jsonEncode({
+                                                "gradient": "bluePurple",
+                                              }),
+                                              'group.kazoom_snippets');
+                                              WidgetKit.reloadAllTimelines();
+                                            WidgetKit.reloadAllTimelines();
+                                          }, isSelected: botwGradient == "bluePurple",),
+                                          WidgetGradientTile(gradient: ColorSys.widgetBGGradient, name: "blueGreen", onTap: () {
+                                            setState(() {
+                                              botwGradient = "blueGreen";
+                                            });
+                                              WidgetKit.setItem(
+                                                'botwConfig',
+                                                jsonEncode({
+                                                  "gradient": "blueGreen",
+                                                }),
+                                                'group.kazoom_snippets');
+                                                WidgetKit.reloadAllTimelines();
+                                          }, isSelected: botwGradient == "blueGreen",),
+                                          WidgetGradientTile(gradient: ColorSys.widgetORGradient, name: "orangeRed", onTap: () {
+                                            setState(() {
+                                              botwGradient = "orangeRed";
+                                            });
+                                              WidgetKit.setItem(
+                                                'botwConfig',
+                                                jsonEncode({
+                                                  "gradient": "orangeRed",
+                                                }),
+                                                'group.kazoom_snippets');
+                                                WidgetKit.reloadAllTimelines();
+                                          }, isSelected: botwGradient == "orangeRed",),
+                                          
+                                  
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          
+                                          WidgetGradientTile(gradient: ColorSys.widgetYRGradient, name: "yellowRed", onTap: () {
+                                            setState(() {
+                                              botwGradient = "yellowRed";
+                                            });
+                                              WidgetKit.setItem(
+                                                'botwConfig',
+                                                jsonEncode({
+                                                  "gradient": "yellowRed",
+                                                }),
+                                                'group.kazoom_snippets');
+                                                WidgetKit.reloadAllTimelines();
+                                          }, isSelected: botwGradient == "yellowRed",),
+                                          WidgetGradientTile(gradient: ColorSys.widgetPPGradient, name: "pinkPurple", onTap: () {
+                                            setState(() {
+                                              botwGradient = "pinkPurple";
+                                            });
+                                              WidgetKit.setItem(
+                                                'botwConfig',
+                                                jsonEncode({
+                                                  "gradient": "pinkPurple",
+                                                }),
+                                                'group.kazoom_snippets');
+                                                WidgetKit.reloadAllTimelines();
+                                          }, isSelected: botwGradient == "pinkPurple",),
+                                  
+                                        ],
+                                      ),
+                                      const SizedBox(height: 20),
+                                      Text("Select a color for the Current Snippet Widget", style: TextStyle(color: Colors.white),),
+                                      const SizedBox(height: 20),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          WidgetGradientTile(gradient: ColorSys.widgetBPGradient, name: "bluePurple", onTap: () {
+                                            setState(() {
+                                              snippetGradient = "bluePurple";
+                                            });
+                                              WidgetKit.setItem(
+                                                'snippetsConfig',
+                                                jsonEncode({
+                                                  "gradient": "bluePurple",
+                                                }),
+                                                'group.kazoom_snippets');
+                                                WidgetKit.reloadAllTimelines();
+                                          }, isSelected: snippetGradient == "bluePurple",),
+                                          WidgetGradientTile(gradient: ColorSys.widgetBGGradient, name: "blueGreen", onTap: () {
+                                            setState(() {
+                                              snippetGradient = "blueGreen";
+                                            });
+                                              WidgetKit.setItem(
+                                                'snippetsConfig',
+                                                jsonEncode({
+                                                  "gradient": "blueGreen",
+                                                }),
+                                                'group.kazoom_snippets');
+                                                WidgetKit.reloadAllTimelines();
+                                          }, isSelected: snippetGradient == "blueGreen",),
+                                          WidgetGradientTile(gradient: ColorSys.widgetORGradient, name: "orangeRed", onTap: () {
+                                            setState(() {
+                                              snippetGradient = "orangeRed";
+                                            });
+                                              WidgetKit.setItem(
+                                                'snippetsConfig',
+                                                jsonEncode({
+                                                  "gradient": "orangeRed",
+                                                }),
+                                                'group.kazoom_snippets');
+                                                WidgetKit.reloadAllTimelines();
+                                          }, isSelected: snippetGradient == "orangeRed",),
+                                          
+                                  
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          
+                                          WidgetGradientTile(gradient: ColorSys.widgetYRGradient, name: "yellowRed", onTap: () {
+                                            setState(() {
+                                              snippetGradient = "yellowRed";
+                                            });
+                                              WidgetKit.setItem(
+                                                'snippetsConfig',
+                                                jsonEncode({
+                                                  "gradient": "yellowRed",
+                                                }),
+                                                'group.kazoom_snippets');
+                                                WidgetKit.reloadAllTimelines();
+                                          }, isSelected: snippetGradient == "yellowRed",),
+                                          WidgetGradientTile(gradient: ColorSys.widgetPPGradient, name: "pinkPurple", onTap: () {
+                                            setState(() {
+                                              snippetGradient = "pinkPurple";
+                                            });
+                                              WidgetKit.setItem(
+                                                'snippetsConfig',
+                                                jsonEncode({
+                                                  "gradient": "pinkPurple",
+                                                }),
+                                                'group.kazoom_snippets');
+                                                WidgetKit.reloadAllTimelines();
+                                          }, isSelected: snippetGradient == "pinkPurple",),
+                                  
+                                        ],
+                                      ),
+                                      const SizedBox(height: 20),
+                                      Text("Select a color for the Responses Widget", style: TextStyle(color: Colors.white),),
+                                      const SizedBox(height: 20),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          WidgetGradientTile(gradient: ColorSys.widgetBPGradient, name: "bluePurple", onTap: () {
+                                            setState(() {
+                                              responseGradient = "bluePurple";
+                                            });
+                                              WidgetKit.setItem(
+                                                'snippetsResponsesConfig',
+                                                jsonEncode({
+                                                  "gradient": "bluePurple",
+                                                }),
+                                                'group.kazoom_snippets');
+                                                WidgetKit.reloadAllTimelines();
+                                          }, isSelected: responseGradient == "bluePurple",),
+                                          WidgetGradientTile(gradient: ColorSys.widgetBGGradient, name: "blueGreen", onTap: () {
+                                            setState(() {
+                                              responseGradient = "blueGreen";
+                                            });
+                                              WidgetKit.setItem(
+                                                'snippetsResponsesConfig',
+                                                jsonEncode({
+                                                  "gradient": "blueGreen",
+                                                }),
+                                                'group.kazoom_snippets');
+                                                WidgetKit.reloadAllTimelines();
+                                          }, isSelected: responseGradient == "blueGreen",),
+                                          WidgetGradientTile(gradient: ColorSys.widgetORGradient, name: "orangeRed", onTap: () {
+                                            setState(() {
+                                              responseGradient = "orangeRed";
+                                            });
+                                              WidgetKit.setItem(
+                                                'snippetsResponsesConfig',
+                                                jsonEncode({
+                                                  "gradient": "orangeRed",
+                                                }),
+                                                'group.kazoom_snippets');
+                                                WidgetKit.reloadAllTimelines();
+                                          }, isSelected: responseGradient == "orangeRed",),
+                                          
+                                  
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                        children: [
+                                          
+                                          WidgetGradientTile(gradient: ColorSys.widgetYRGradient, name: "yellowRed", onTap: () {
+                                            setState(() {
+                                              responseGradient = "yellowRed";
+                                            });
+                                              WidgetKit.setItem(
+                                                'snippetsResponsesConfig',
+                                                jsonEncode({
+                                                  "gradient": "yellowRed",
+                                                }),
+                                                'group.kazoom_snippets');
+                                                WidgetKit.reloadAllTimelines();
+                                          }, isSelected: responseGradient == "yellowRed",),
+                                          WidgetGradientTile(gradient: ColorSys.widgetPPGradient, name: "pinkPurple", onTap: () {
+                                            setState(() {
+                                              responseGradient = "pinkPurple";
+                                            });
+                                              WidgetKit.setItem(
+                                                'snippetsResponsesConfig',
+                                                jsonEncode({
+                                                  "gradient": "pinkPurple",
+                                                }),
+                                                'group.kazoom_snippets');
+                                                WidgetKit.reloadAllTimelines();
+                                          }, isSelected: responseGradient == "pinkPurple",),
+                                  
+                                        ],
+                                      ),
+                                  
+                                      
+                                    ],
+                                  ),
+                                )));
+                      }
+                    );
+                  });
+            
+  }
+
+  void showShareFeedbackDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: ColorSys.background,
+          title: Text("Share Feedback", style: TextStyle(color: ColorSys.primary)),
+          content: SizedBox(
+            width: 300,
+            height: 300,
+            child: Column(
+              children: [
+                const Text(
+                    "We would love to hear your feedback! Please share any thoughts or suggestions you have.",
+                    style: TextStyle(color: Colors.white)),
+                const SizedBox(
+                  height: 20,
+                ),
+                TextFormField(
+                  onTap: () => HapticFeedback.selectionClick(),
+                  maxLines: 6,
+                  decoration: textInputDecoration.copyWith(
+                    hintText: 'Feedback',
+                    counterStyle: TextStyle(color: Colors.white),
+                    // counter: Text("Characters: ${editDescription.length}/125", style: TextStyle(color: Colors.white, fontSize: 11)),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      print(value);
+                      editDescription = value;
+                    });
+                  },
+                  maxLength: 500,
+                  maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                HapticFeedback.mediumImpact();
+                Navigator.of(context).pop();
+              },
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorSys.primary,
+              ),
+              onPressed: () async {
+                HapticFeedback.mediumImpact();
+                await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+                    .shareFeedback(editDescription);
+                Navigator.of(context).pop();
+              },
+              child: const Text("Submit", style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   
@@ -373,6 +770,7 @@ class _SwipePagesState extends State<SwipePages> {
           showShareButton: selectedIndex == 0,
           onShareButtonPressed: () async{
             HapticFeedback.mediumImpact();
+            
             await Share.share("https://snippets2024.web.app/friendLink?name=${userData["fullname"].replaceAll(" ", "%20")}&uid=${userData["uid"]}", subject: "Share your profile with friends");
             
           },
@@ -389,6 +787,7 @@ class _SwipePagesState extends State<SwipePages> {
         allowImplicitScrolling: true,
 
         onPageChanged: (int index) async{
+          FocusManager.instance.primaryFocus?.unfocus();
           if(index == 0){
             await HelperFunctions.saveOpenedPageSF("profile");
           } else if(index == 1){

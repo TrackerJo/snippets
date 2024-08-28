@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 
-import 'package:snippets/api/database.dart';
+import 'package:snippets/api/fb_database.dart';
 
 
 import 'package:snippets/widgets/discussion_tile.dart';
@@ -31,19 +31,34 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
     });
     StreamController discStream = StreamController();
     
-    await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
         .getDiscussions(FirebaseAuth.instance.currentUser!.uid, discStream);
+      setState(() {
+        discussions = [];
+      });
     discSub = discStream.stream.listen((discussionsMap) {
       if (mounted) {
       setState(() {
         // discussions.add(discussionsMap);
         if(discussions.any((element) => element["snippetId"] == discussionsMap["snippetId"] && element["answerId"] == discussionsMap["answerId"])) {
+          //Get one that exists
+          var existing = discussions.firstWhere((element) => element["snippetId"] == discussionsMap["snippetId"] && element["answerId"] == discussionsMap["answerId"]);
           print("REMOVING");
+          discussionsMap["snippetQuestion"] = existing["snippetQuestion"];
+          discussionsMap["isAnonymous"] = existing["isAnonymous"];
           discussions.removeWhere((element) => element["snippetId"] == discussionsMap["snippetId"] && element["answerId"] == discussionsMap["answerId"]);
+
+          // discussions.add(existing);
         }
+
         
         discussions.add(discussionsMap);
-        print(discussionsMap);
+        //Sort by last message
+        discussions.sort((a, b) {
+          var aTime = a["lastMessage"]["date"];
+          var bTime = b["lastMessage"]["date"];
+          return bTime.compareTo(aTime);
+      });
       });
     }
     });
@@ -117,7 +132,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
                
                 
           for (var discussion in oldDiscussions)
-            if(discussion["snippetId"] != null && discussion["answerId"] != null && discussion["snippetQuestion"] != null && discussion["answerUser"] != null && discussion["lastMessage"] != null && discussion["theme"] != null )
+            if(discussion["snippetId"] != null && discussion["answerId"] != null && discussion["snippetQuestion"] != null && discussion["answerUser"] != null && discussion["lastMessage"] != null )
             DiscussionTile(
               snippetId: discussion["snippetId"],
               discussionId: discussion["answerId"],
@@ -128,7 +143,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
               lastMessage: discussion["lastMessage"]["message"],
               hasBeenRead: discussion["lastMessage"]["readBy"]
                   .contains(FirebaseAuth.instance.currentUser!.uid),
-              theme: discussion["theme"],
+              theme: "blue",
               answerResponse: discussion["answerResponse"],
               isAnonymous: discussion["isAnonymous"],
 
@@ -153,7 +168,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
                
                 
           for (var discussion in discussions)
-            if(discussion["snippetId"] != null && discussion["answerId"] != null && discussion["snippetQuestion"] != null && discussion["answerUser"] != null && discussion["lastMessage"] != null && discussion["theme"] != null )
+            if(discussion["snippetId"] != null && discussion["answerId"] != null && discussion["snippetQuestion"] != null && discussion["answerUser"] != null && discussion["lastMessage"] != null )
             DiscussionTile(
               snippetId: discussion["snippetId"],
               discussionId: discussion["answerId"],
@@ -164,7 +179,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
               lastMessage: discussion["lastMessage"]["message"],
               hasBeenRead: discussion["lastMessage"]["readBy"]
                   .contains(FirebaseAuth.instance.currentUser!.uid),
-              theme: discussion["theme"],
+              theme: "blue",
               answerResponse: discussion["answerResponse"],
               isAnonymous: discussion["isAnonymous"],
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:snippets/api/database.dart';
+import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/pages/botw_results_page.dart';
@@ -61,6 +62,7 @@ class _ProfilePageState extends State<ProfilePage> {
   StreamSubscription userStreamSub = const Stream.empty().listen((event) {});
   StreamSubscription blankStreamSub = const Stream.empty().listen((event) {});
   StreamSubscription userStreamSub2 = const Stream.empty().listen((event) {});
+  StreamController botwStreamController = StreamController();
 
   
 
@@ -71,9 +73,15 @@ class _ProfilePageState extends State<ProfilePage> {
   void checkForBlankOfTheWeek(String uid) async {
     
 
-    Stream blankStream = await Database(uid: FirebaseAuth.instance.currentUser!.uid).getBlankOfTheWeek();
+    Stream blankStream = await Database().getBOTWStream(botwStreamController);
     blankStreamSub = blankStream.listen((event) {
-      Map<String, dynamic> data = event.data() as Map<String, dynamic>;
+      if(botwStreamController.isClosed) return;
+      Map<String, dynamic> data = event;
+      print("Blank of the Week Data");
+      print(data);
+      if (data.isEmpty) {
+        return;
+      }
       Map<String, dynamic> answers = data["answers"];
       if (!answers.containsKey(uid)) {
         data["answers"][uid] = {
@@ -142,7 +150,7 @@ class _ProfilePageState extends State<ProfilePage> {
       });
 
     } else {
-      Stream viewerDataStream = await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+      Stream viewerDataStream = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
           .getUserStream(widget.uid);
       userStreamSub = viewerDataStream.listen((event) async {
         print("Viewer Data Changed");
@@ -243,7 +251,7 @@ class _ProfilePageState extends State<ProfilePage> {
         });
       
       Map<String, dynamic> viewerData =
-          (await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+          (await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
               .getUserData(widget.uid));
       setState(() {
         profileData = viewerData;
@@ -362,9 +370,11 @@ class _ProfilePageState extends State<ProfilePage> {
     userStreamSub.cancel();
     blankStreamSub.cancel();
     userStreamSub2.cancel();
+    botwStreamController.close();
   }
 
   void showFriendsPopup() {
+    HapticFeedback.mediumImpact();
     showModalBottomSheet<void>(
         context: context,
         backgroundColor: ColorSys.background,
@@ -411,6 +421,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void showMutualFriendsPopup() {
+     HapticFeedback.mediumImpact();
     showModalBottomSheet<void>(
         context: context,
         backgroundColor: ColorSys.background,
@@ -455,7 +466,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future sendFriendRequest() async {
-    await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
         .sendFriendRequest(widget.uid, displayName, profileData["username"],
             profileData["FCMToken"]);
 
@@ -465,7 +476,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future removeFriend() async {
-    await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
         .removeFriend(widget.uid, displayName, profileData["username"], profileData["FCMToken"]);
     setState(() {
       isFriends = false;
@@ -473,7 +484,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future cancelFriendRequest() async {
-    await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
         .cancelFriendRequest(widget.uid, displayName, profileData["username"], profileData["FCMToken"]);
     setState(() {
       sentFriendRequest = false;
@@ -481,7 +492,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future acceptFriendRequest() async {
-    await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
         .acceptFriendRequest(widget.uid, displayName, profileData["username"],
             profileData["FCMToken"]);
     setState(() {
@@ -508,6 +519,7 @@ class _ProfilePageState extends State<ProfilePage> {
             showBackButton: widget.showBackButton || widget.isFriendLink,
             onBackButtonPressed: () {
               HapticFeedback.mediumImpact();
+              print("Back Button Pressed");
               if (widget.isFriendLink) {
                 // Navigator.of(context).pop();
                 router.go('/home');
@@ -686,6 +698,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 20),
                   if(blankOfTheWeek.isNotEmpty && blankOfTheWeek["status"] == "voting" && isCurrentUser)
                     ElevatedButton(onPressed: () {
+                      HapticFeedback.mediumImpact();
                       nextScreen(context, VotingPage(blank: blankOfTheWeek,));
                     },style: elevatedButtonDecoration ,child: Text(
                       "Vote",
@@ -768,7 +781,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     profileData["description"] = editDescription;
                   });
           
-                  await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+                  await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
                       .updateUserDescription(editDescription);
                   Navigator.of(context).pop();
                 },

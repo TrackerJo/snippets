@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:snippets/api/database.dart';
+import 'package:snippets/api/fb_database.dart';
+import 'package:snippets/api/notifications.dart';
 import 'package:snippets/pages/responses_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
@@ -101,12 +103,18 @@ class _BOTWTileState extends State<BOTWTile> {
                           isEditting = false;
                         });
                         widget.answer["answer"] = answerController.text;
-                        await Database(uid: FirebaseAuth.instance.currentUser!.uid).updateUsersBOTWAnswer(widget.answer);
+                        await Database().updateUsersBOTWAnswer(widget.answer);
+                        PushNotifications().sendTopicData("all", {
+                          "type": "widget-botw-answer",
+                          "answer": widget.answer["answer"],
+                          "uid": FirebaseAuth.instance.currentUser!.uid,
+                          "displayName": widget.answer["displayName"],
+                        });
 
 
                        
                       },
-                      style: elevatedButtonDecorationBlue,
+                      style: elevatedButtonDecoration,
                       child: Text(isEditting ? "Save" : "Submit",
                           style: TextStyle(fontSize: 16, color: Colors.black)),
                     ),

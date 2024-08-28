@@ -1,10 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:phone_input/phone_input_package.dart';
 import 'package:snippets/api/auth.dart';
-import 'package:snippets/api/database.dart';
+import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 
@@ -41,7 +42,8 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       setState(() {
         _isLoading = true;
       });
-      bool isUsernameTaken = await Database().checkUsername(usernameController.text);
+      HapticFeedback.mediumImpact();
+      bool isUsernameTaken = await FBDatabase().checkUsername(usernameController.text);
       if (isUsernameTaken) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -124,7 +126,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       controller: fullNameController,
                       decoration: textInputDecoration.copyWith(
                           labelText: "Full Name",
-                          fillColor: ColorSys.primaryDark,
+                          fillColor: ColorSys.secondary,
                           prefixIcon: Icon(
                             Icons.person,
                             color: Theme.of(context).primaryColor,
@@ -143,7 +145,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       controller: usernameController,
                       decoration: textInputDecoration.copyWith(
                           labelText: "Username",
-                          fillColor: ColorSys.primaryDark,
+                          fillColor: ColorSys.secondary,
                           prefixIcon: Icon(
                             Icons.person,
                             color: Theme.of(context).primaryColor,
@@ -162,7 +164,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       controller: emailController,
                       decoration: textInputDecoration.copyWith(
                           labelText: "Email",
-                          fillColor: ColorSys.primaryDark,
+                          fillColor: ColorSys.secondary,
                           prefixIcon: Icon(
                             Icons.email,
                             color: Theme.of(context).primaryColor,
@@ -197,7 +199,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       obscureText: true,
                       controller: passwordController,
                       decoration: textInputDecoration.copyWith(
-                        fillColor: ColorSys.primaryDark,
+                        fillColor: ColorSys.secondary,
                           labelText: "Password",
                           prefixIcon: Icon(
                             Icons.lock,

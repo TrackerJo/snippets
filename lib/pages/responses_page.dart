@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:snippets/api/database.dart';
+import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/api/local_database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/pages/discussion_page.dart';
@@ -94,7 +94,7 @@ class _ResponsesPageState extends State<ResponsesPage> {
       }
     }
      var responsesList =
-        await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+        await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
             .getResponsesList(widget.snippetId, latestResDate, newFriends.isNotEmpty, newFriends, widget.isAnonymous);
     var localResponses = await LocalDatabase().getResponses(widget.snippetId, friends, widget.isAnonymous);
 
@@ -105,6 +105,8 @@ class _ResponsesPageState extends State<ResponsesPage> {
     responsesList.listen((event) {
       if(responsesStream.isClosed) return;
       print("Firebase response");
+      print(event);
+      print(event.docs.length);
 
         if(event.docs.isNotEmpty){
 
@@ -113,13 +115,14 @@ class _ResponsesPageState extends State<ResponsesPage> {
           for (var i = 0; i < event.docs.length; i++) {
             Map<String, dynamic> data = event.docs[i].data() as Map<String, dynamic>;
            
-            print("Adding chat to local database ${data['answer']}");
+            print("Adding chat to local database ${data['answer']} ");
             Map<String, dynamic> responseMap = {
               "snippetId": widget.snippetId,
               "uid": data["uid"],
               "displayName": data["displayName"],
               "answer": data["answer"],
               "date": data["date"].toDate(),
+              "lastUpdated": data["lastUpdated"].toDate()
               
               
             };
@@ -155,7 +158,7 @@ class _ResponsesPageState extends State<ResponsesPage> {
         return;
       }
       Map<String, dynamic> response =
-          (await Database(uid: FirebaseAuth.instance.currentUser!.uid)
+          (await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
               .getUserResponse(widget.snippetId));
       if (mounted) {
         setState(() {
