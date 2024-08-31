@@ -1,77 +1,63 @@
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:snippets/api/auth.dart';
-import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
-import 'package:snippets/pages/create_account_page.dart';
-import 'package:snippets/pages/home_page.dart';
-import 'package:snippets/pages/swipe_pages.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
 
-import '../widgets/custom_page_route.dart';
 
-class WelcomePage extends StatefulWidget {
+class ForgotPasswordPage extends StatefulWidget {
   final bool? toProfile;
   final String? uid;
-  const WelcomePage({super.key, this.toProfile, this.uid});
+  const ForgotPasswordPage({super.key, this.toProfile, this.uid});
 
   @override
-  State<WelcomePage> createState() => _WelcomePageState();
+  State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
 }
 
-class _WelcomePageState extends State<WelcomePage> {
+class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   var formKey = GlobalKey<FormState>();
   String email = "";
-  String password = "";
   bool _isLoading = false;
-  Auth authService = Auth();
 
-  void login() {
-    print("Logging in");
-    print(widget.toProfile);
+  void sendEmail() async {
     if (formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
-      HapticFeedback.mediumImpact();
-      authService.loginWithEmailandPassword(email, password).then((val) {
+      //Send email
+      Auth().resetPassword(email).then((val) {
         if (val == true) {
-          if(widget.toProfile == true){
-            router.pushReplacement("/home");
-            router.push("/home/profile/${widget.uid}");
-          } else {
-            router.pushReplacement("/home");
-          }
-          
-
+          router.pushReplacement("/welcome/${widget.uid}/${widget.toProfile}");
         } else {
-          setState(() {
-            _isLoading = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-
-            SnackBar(
-              content: Text(val!.toString()),
+         showModalBottomSheet<void>(
+              context: context,
               backgroundColor: Colors.red,
-            ),
-          );
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(23),
+                  topRight: Radius.circular(23),
+                ),
+              ),
+              builder: (BuildContext context) {
+                return SizedBox(
+                    height: 200,
+                    width: double.infinity,
+                    child: Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Text(
+                          val.toString(),
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 20),
+                        )));
+              });
         }
       });
+      setState(() {
+        _isLoading = false;
+      });
     }
-  }
-
-  void savePage() async {
-    await HelperFunctions.saveOpenedPageSF("login");
-  }
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    savePage();
   }
 
   @override
@@ -106,7 +92,13 @@ class _WelcomePageState extends State<WelcomePage> {
                                 fontSize: 15,
                                 fontWeight: FontWeight.w400,
                                 color: Colors.white)),
-                        const SizedBox(height: 50),
+                        const SizedBox(height: 25),
+                        Text("Enter your email connected to your account and then click send email to reset your password, you will receive an email with instructions on how to reset your password",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                ),textAlign: TextAlign.center,),
+                        const SizedBox(height: 20),
                         TextFormField(
                           decoration: textInputDecoration.copyWith(
                               labelText: "Email",
@@ -130,39 +122,7 @@ class _WelcomePageState extends State<WelcomePage> {
                                 : "Please enter a valid email";
                           },
                         ),
-                        const SizedBox(height: 10),
-                        TextFormField(
-                          obscureText: true,
-                          decoration: textInputDecoration.copyWith(
-                              labelText: "Password",
-                              fillColor: ColorSys.secondary,
-                              prefixIcon: Icon(
-                                Icons.lock,
-                                color: Theme.of(context).primaryColor,
-                              )),
-                          validator: (val) {
-                            if (val!.length < 6) {
-                              return "Password must be at least 6 characters";
-                            } else {
-                              return null;
-                            }
-                          },
-                          onChanged: (val) {
-                            setState(() {
-                              password = val;
-                            });
-                          },
-                        ),
-                        Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                                onPressed: () {
-                                  router.pushReplacement("/forgotPassword/${widget.uid}/${widget.toProfile}");
-                                },
-                                child: Text(
-                                  "Forgot Password?",
-                                  style: TextStyle(color: ColorSys.primary),
-                                ))),
+                        
                         const SizedBox(height: 20),
                         _isLoading
                             ? CircularProgressIndicator(
@@ -178,12 +138,12 @@ class _WelcomePageState extends State<WelcomePage> {
                                           borderRadius:
                                               BorderRadius.circular(30))),
                                   child: const Text(
-                                    "Sign In",
+                                    "Send Email",
                                     style: TextStyle(
                                         color: Colors.black, fontSize: 16),
                                   ),
                                   onPressed: () {
-                                    login();
+                                    sendEmail();
                                   },
                                 )),
                         const SizedBox(height: 10),
@@ -204,21 +164,18 @@ class _WelcomePageState extends State<WelcomePage> {
                         //   onPressed: () {},
                         // ),
                         // const SizedBox(height: 10),
-                        Text.rich(TextSpan(
-                            text: "Don't have an account? ",
-                            style: const TextStyle(color: Colors.white),
-                            children: [
+                        Text.rich(
                               TextSpan(
-                                  text: "Register here",
+                                  text: "Back",
                                   style: TextStyle(
                                       color: ColorSys.primary,
                                       fontWeight: FontWeight.bold),
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
-                                      print("Register here");
-                                      router.pushReplacement("/createAccount/${widget.uid}/${widget.toProfile}");
+
+                                      router.pushReplacement("/welcome/${widget.uid}/${widget.toProfile}");
                                     })
-                            ]))
+                            )
                       ]),
                 ))),
       ),

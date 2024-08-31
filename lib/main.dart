@@ -18,10 +18,12 @@ import 'package:snippets/api/database.dart';
 import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/api/local_database.dart';
 import 'package:snippets/api/notifications.dart';
+import 'package:snippets/helper/app_badge.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/pages/botw_results_page.dart';
 import 'package:snippets/pages/create_account_page.dart';
 import 'package:snippets/pages/discussion_page.dart';
+import 'package:snippets/pages/forgot_password_page.dart';
 import 'package:snippets/pages/onboarding_page.dart';
 import 'package:snippets/pages/profile_page.dart';
 import 'package:snippets/pages/question_page.dart';
@@ -80,50 +82,93 @@ class WidgetData {
 AppDb localDb = AppDb();
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print("Snippets: Handling a background message: ${message.messageId}");
   // If you're going to use other Firebase services in the background, such as Firestore,
   // make sure you call `initializeApp` before using other Firebase services.
-  await Firebase.initializeApp();
+    await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
-  print("Handling a background message: ${message.messageId}");
   if(message.data["type"] == "widget-botw"){
+    
     Map<String, dynamic> data = WidgetData(message.data["blank"].split(" of")[0], answers: []).toJson();
-    print("NEW BOTW: $data");
+
       WidgetKit.setItem(
         'botwData',
         jsonEncode(data),
         'group.kazoom_snippets');
       WidgetKit.reloadAllTimelines();
+      await AppBadge.addBadge(1);
   } else if(message.data["type"] == "widget-question"){
+
+
     Map<String, dynamic> oldSnippets = json.decode(await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets'));
+
     List<String> questions = oldSnippets["questions"].cast<String>();
+
     List<String> ids = oldSnippets["ids"].cast<String>();
-    List<String> indexes = oldSnippets["indexes"].cast<String>();
+
+    List<bool> hasAnswereds = oldSnippets["hasAnswereds"].cast<bool>();
+
+    List<int> indexes = oldSnippets["indexes"].cast<int>();
+
     List<bool> isAnonymous = oldSnippets["isAnonymous"].cast<bool>();
-    int index = questions.indexOf(message.data["question"]);
+
+      dynamic indexData = message.data["index"];
+      if(indexData is String) {
+        indexData = int.parse(indexData);
+      } 
+    int index = indexes.indexOf(indexData);
+
     if(index == -1) {
+
       questions.add(message.data["question"]);
-      ids.add(message.data["id"]);
-      indexes.add(message.data["index"]);
+      ids.add(message.data["snippetId"]);
+      
+      indexes.add(indexData);
       isAnonymous.add(message.data["snippetType"] == "anonymous");
+      hasAnswereds.add(false);
+
     } else {
+      //Old question
+      String oldId = ids[index];
+      //Delete old responses
+      Map<String, dynamic> oldResponsesMap = json.decode(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets'));
+      List<String> oldResponses = oldResponsesMap["responses"].cast<String>();
+      List<String> newResponses = [];
+      for (var response in oldResponses) {
+        if(response.split("|")[3] == oldId) {
+          continue;
+        }
+        newResponses.add(response);
+      }
+      oldResponsesMap["responses"] = newResponses;
+      WidgetKit.setItem(
+        'snippetsResponsesData',
+        jsonEncode(oldResponsesMap),
+        'group.kazoom_snippets');
       questions[index] = message.data["question"];
-      ids[index] = message.data["id"];
-      indexes[index] = message.data["index"];
+      ids[index] = message.data["snippetId"];
+    
+      indexes[index] = indexData;
       isAnonymous[index] = message.data["snippetType"] == "anonymous";
+      hasAnswereds[index] = false;
     }
     Map<String, dynamic> snippetData = {
       "questions": questions,
       "ids": ids,
+      "hasAnswereds": hasAnswereds,
       "indexes": indexes,
       "isAnonymous": isAnonymous,
     };
+
 
     WidgetKit.setItem(
       'snippetsData',
       jsonEncode(snippetData),
       'group.kazoom_snippets');
     WidgetKit.reloadAllTimelines();
-
+    await AppBadge.addBadge(1);
 
   } else if(message.data["type"] == "widget-botw-answer"){
     Map<String, dynamic> oldBOTW = json.decode(await WidgetKit.getItem('botwData', 'group.kazoom_snippets'));
@@ -134,7 +179,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     };
     List<Map<String, dynamic>> oldAnswers = oldBOTW["answers"].cast<Map<String, dynamic>>();
     //Check if answer already exists
-    Map<String, dynamic>? oldAnswer = oldAnswers.firstWhere((element) => element["userId"] == message.data["uid"], orElse: () => {});
+    Map<String, dynamic>? oldAnswer = oldAnswers.firstWhere((element) => element["uid"] == message.data["uid"], orElse: () => {});
     if(oldAnswer.isEmpty) {
       oldAnswers.add(answer);
     } else {
@@ -167,19 +212,24 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       jsonEncode(oldResponses),
       'group.kazoom_snippets');
     WidgetKit.reloadAllTimelines();
+    await AppBadge.addBadge(1);
+  } else if(message.data["type"] == "notification") {
+    await AppBadge.addBadge(1);
+    
   }
 } 
 
 void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
 
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+
   
 
   runApp(const MainApp());
@@ -193,8 +243,7 @@ class MainApp extends StatefulWidget {
 }
 
 List<Map<String, dynamic>> createDiscussionUsersList(String discussionUsers) {
-    print("DISCUSSION USERS");
-    print(discussionUsers);
+
     List<Map<String, dynamic>> users = [];
     List<String> userStrings = discussionUsers.split("|");
     for (var user in userStrings) {
@@ -237,6 +286,12 @@ final router = GoRouter(
       }),
       GoRoute(path: '/welcome/:uid/:toProfile', builder: (_, __) {
         return WelcomePage(
+          uid: __.pathParameters['uid']!,
+          toProfile: __.pathParameters['toProfile'] == 'true',
+        );
+      }),
+      GoRoute(path: '/forgotPassword/:uid/:toProfile', builder: (_, __) {
+        return ForgotPasswordPage(
           uid: __.pathParameters['uid']!,
           toProfile: __.pathParameters['toProfile'] == 'true',
         );
@@ -306,7 +361,7 @@ final router = GoRouter(
                     response: state.uri.queryParameters['response']!,
                     userId: state.uri.queryParameters['userId']!,
                     snippetId: state.uri.queryParameters['snippetId']!,
-                    question: state.uri.queryParameters['snippetQuestion']!,
+                    question: state.uri.queryParameters['snippetQuestion']!.replaceAll("~", "?"),
                     theme: "blue",
 
                     isDisplayOnly: true,
@@ -327,13 +382,21 @@ final router = GoRouter(
             ),
           ),
           GoRoute(
-            path: 'widget/question',
+            path: 'question/widget',
             builder: (context, state) => QuestionPage(
               snippetId: state.uri.queryParameters['id']!,
               theme: "blue",
               question: state.uri.queryParameters['question']!.replaceAll("~", "?"),
               type: state.uri.queryParameters['type']!,
             ),
+          ),
+          GoRoute(
+            path: 'responses/widget',
+            builder: (context, state) => ResponsesPage(snippetId: state.uri.queryParameters['id']!,
+            theme: "blue",
+            question: state.uri.queryParameters['question']!,
+            isAnonymous: state.uri.queryParameters['type']! == "anonymous",),
+
           ),
           GoRoute(
             path: 'question/:id/:theme/:question/:type',
@@ -406,16 +469,16 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
   bool compareAnswerList(List<Map<String, dynamic>> l1, List<Map<String, dynamic>> l2) {
     if (l1.length != l2.length) {
-      print("Lengths are different");
+
       return false;
     }
     for (var i = 0; i < l1.length; i++) {
       if (l1[i]["answer"] != l2[i]["answer"] || l1[i]["userId"] != l2[i]["userId"] || l1[i]["displayName"] != l2[i]["displayName"]) {
-        print("Answers are different");
+
         return false;
       }
     }
-    print("Lists are the same");
+
     return true;
   }
 
@@ -449,16 +512,16 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
   bool compareResponsesList(List<String> l1, List<String> l2) {
     if (l1.length != l2.length) {
-      print("Lengths are different");
+
       return false;
     }
     for (var i = 0; i < l1.length; i++) {
       if (l1[i] != l2[i]) {
-        print("Answers are different");
+
         return false;
       }
     }
-    print("Lists are the same");
+
     return true;
   }
 
@@ -467,7 +530,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     switch (state) {
       case AppLifecycleState.resumed:
 
-        print("app in resumed");
+
         //Check if user is logged in
         bool status = await Auth().isUserLoggedIn();
         if(!status) {
@@ -486,7 +549,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         }
       }
         Map<String, dynamic> data = WidgetData(botwData["blank"].split(" of")[0], answers: answers).toJson();
-        print("NEW BOTW: $data");
+
         if(await WidgetKit.getItem('botwData', 'group.kazoom_snippets') == null) {
           WidgetKit.setItem(
             'botwData',
@@ -495,7 +558,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           WidgetKit.reloadAllTimelines();
         } else {
           Map<String,dynamic> oldBOTW = json.decode(await WidgetKit.getItem('botwData', 'group.kazoom_snippets'));
-          print("OLD BOTW: $oldBOTW");
+
           List<Map<String, dynamic>> newAnswers = [];
           for (var answer in data["answers"]) {
             newAnswers.add({
@@ -528,6 +591,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           "questions": snippets.map((e) => e["question"]).toList(),
           "ids": snippets.map((e) => e["snippetId"]).toList(),
           "indexes": snippets.map((e) => e["index"]).toList(),
+          "hasAnswereds": snippets.map((e) => e["answered"]).toList(),
           "isAnonymous": snippets.map((e) => e["type"] == "anonymous").toList(),
         };
         if(await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets') == null) {
@@ -563,7 +627,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             unansweredQuestions.add(response["snippetId"]);
           }
         }
-        print("RESPONSE STRINGS: $responseStrings");
+
         if(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets') == null) {
           WidgetKit.setItem(
             'snippetsResponsesData',
@@ -586,23 +650,12 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         
         
         await LocalDatabase().deleteOldResponse();
-        if (await FlutterAppBadgeControl.isAppBadgeSupported()) {
-         await  FlutterAppBadgeControl.removeBadge();
-        HttpsCallableResult result = await FirebaseFunctions.instance
-        .httpsCallable('setNotificationCount')
-        .call({
-          'count': 0,
-          'fcmToken': await PushNotifications().getDeviceToken(),
-        });
-          print(result.data);
-         print("badge removed");
-        }
+        await AppBadge.resetBadge();
 
         //Check if FCM token changed
         String deviceToken = await PushNotifications().getDeviceToken();
         Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-        print("DEVICE TOKEN: $deviceToken");
-        print("USER DATA Token: ${userData}");
+      
         if (userData['FCMToken'] != deviceToken) {
           //Update FCM token
           await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).updateUserFCMToken(deviceToken);
@@ -612,19 +665,19 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
         break;
       case AppLifecycleState.inactive:
-        print("app in inactive");
+
 
         break;
       case AppLifecycleState.paused:
-        print("app in paused");
+
 
         break;
       case AppLifecycleState.detached:
-        print("app in detached");
+
 
         break;
       case AppLifecycleState.hidden:
-        print("app in hidden");
+
 
         break;
     }

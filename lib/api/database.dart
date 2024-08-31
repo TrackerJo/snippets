@@ -7,20 +7,20 @@ import 'package:snippets/api/local_database.dart';
 class Database {
   Future<Stream<Map<String, dynamic>>> getBOTWStream(StreamController controller) async {
     DateTime? lastUpdated = (await LocalDatabase().getBOTW())["lastUpdated"];
-    print("Last updated: $lastUpdated");
+
     StreamController<Map<String, dynamic>> fbcontroller = StreamController();
     
-    print("Last updated: $lastUpdated");
+
     await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).getBlankOfTheWeek(fbcontroller, lastUpdated);
 
     fbcontroller.stream.listen((event) async{
       if(controller.isClosed) return;
-      print("Event: $event");
+
       
         
 
 
-        print("ADDDDD");
+
         await LocalDatabase().deleteBOTW();
         await LocalDatabase().addBOTW(event);
       
@@ -31,7 +31,7 @@ class Database {
 
   Future<Map<String, dynamic>> getBOTW() async {
     DateTime? lastUpdated = (await LocalDatabase().getBOTW())["lastUpdated"];
-    print("Last updated: $lastUpdated");
+
     Map<String, dynamic>? fbBotw = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).getBlankOfTheWeekData(lastUpdated);
     if(fbBotw != null){
       await LocalDatabase().deleteBOTW();
@@ -68,9 +68,7 @@ class Database {
     List<Map<String, dynamic>> responses = [];
     for (var i = 0; i < snippets.length; i++) {
       SnipResponse? latestResponse = await LocalDatabase().getLatestResponse(snippets[i]["snippetId"]);
-      print("Snippet: ${snippets[i]["snippetId"]}");
-      print("Question: ${snippets[i]["question"]}");
-      print("Latest response: $latestResponse");
+
       
       DateTime? lastUpdated = latestResponse?.lastUpdated;
       List<Map<String, dynamic>> response = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).getSnippetResponses(snippets[i]["snippetId"], lastUpdated, snippets[i]["snippetType"] == "anonymous");
@@ -83,5 +81,5 @@ class Database {
     return responses;
   }
 
-
+ 
 }

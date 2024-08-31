@@ -62,7 +62,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
     }
     await HelperFunctions.saveOpenedPageSF("discussion-${widget.responseTile.snippetId}-${widget.responseTile.userId}");
     Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-    print(userData);
+
     if (mounted) {
       setState(() {
         displayName = userData['fullname'];
@@ -80,7 +80,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
 
     Chat? latestChat = await LocalDatabase().getMostRecentChat("${widget.responseTile.snippetId}-${widget.responseTile.userId}");
     DateTime? latestChatDate = latestChat?.date;
-    print(latestChatDate);
+
     latestChatDate = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).loadDiscussion(widget.responseTile.snippetId, widget.responseTile.userId, latestChatDate);
     var discussion = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
         .getDiscussion(
@@ -89,14 +89,13 @@ class _DiscussionPageState extends State<DiscussionPage> {
       var localChats = await LocalDatabase().getChats("${widget.responseTile.snippetId}-${widget.responseTile.userId}");
       localChats.listen((event) {
         if(combinedChats.isClosed) return;
-        print("Local Chats");
-        print(event);
+
         
         combinedChats.add(event);
       });
       discussion.listen((event) async{
         if(combinedChats.isClosed) return;
-        print("Firebase Chats");
+
         
         if(event.docs.isNotEmpty){
           
@@ -105,7 +104,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
           for (var i = 0; i < event.docs.length; i++) {
             Map<String, dynamic> data = event.docs[i].data() as Map<String, dynamic>;
            
-            print("Adding chat to local database ${data['message']}  date: ${data['date'].toDate()}");
+
             Map<String, dynamic> chatMessageMap = {
                 "messageId": event.docs[i].id,
               "message": data['message'],
@@ -313,7 +312,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
     return StreamBuilder(
         stream: combinedChats.stream,
         builder: (context, AsyncSnapshot snapshot) {
-          // print(snapshot.data);
+
           // return Container();
           return snapshot.hasData
               ? ListView.builder(
@@ -322,13 +321,10 @@ class _DiscussionPageState extends State<DiscussionPage> {
                   scrollDirection: Axis.vertical,
                   reverse: true,
                   itemBuilder: (context, index) {
-                    print(snapshot
-                            .data[snapshot.data.length - index - 1].message);
-                             print(snapshot
-                            .data[snapshot.data.length - index - 1].date);
+
                     DateTime date = snapshot
                             .data[snapshot.data.length - index - 1].date;
-                    print("Date: $date");
+
 
                    if (snapshot.data[snapshot.data.length - index - 1].senderUsername != username && index == 0) {
                       if (!snapshot.data[snapshot.data.length - index - 1].readBy.split(',').contains(FirebaseAuth.instance.currentUser!.uid)) {
@@ -380,16 +376,16 @@ class _DiscussionPageState extends State<DiscussionPage> {
         "snippetId": widget.responseTile.snippetId
       };
 
-      print(discussionUsers);
+
       Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
       Map<String, dynamic> userMap = {
         "userId": displayTile.isAnonymous ? anonymousId : FirebaseAuth.instance.currentUser!.uid,
         "FCMToken": userData['FCMToken'],
       };
-      print(userMap);
+
       List<dynamic> users = discussionUsers;
       if (!isUserInDiscussion()) {
-        print("Adding user to discussion");
+
         users.add(userMap);
 
         await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
@@ -434,9 +430,9 @@ class _DiscussionPageState extends State<DiscussionPage> {
       var responseName = displayTile.isAnonymous ? "Anonymous" : widget.responseTile.displayName;
       var senderName = displayTile.isAnonymous ? "Anonymous" : displayName;
       var message = messageController.text;
-      print(users);
+
       var targetIds = getDiscussionUsersFCMToken(users);
-      print(targetIds);
+
       setState(() {
         messageController.clear();
       });
@@ -468,7 +464,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
 
   bool isUserInDiscussion() {
     bool isUserInDiscussion = false;
-    print(discussionUsers);
+
     for (Map<String, dynamic> element in discussionUsers) {
       if (element['userId'] as String ==
           FirebaseAuth.instance.currentUser!.uid) {

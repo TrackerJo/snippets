@@ -81,9 +81,7 @@ LazyDatabase _openConnection() {
     final file = File(p.join(dbFolder.path, 'db.sqlite'));
     if (true) {
       // await file.delete();
-      // print("Deleted old database");
-      // await LocalDatabase().deleteOldResponse();
-      // print("Deleted old responses");
+   
     }
     
 
@@ -122,8 +120,7 @@ class LocalDatabase {
     Map<String, dynamic> result = {};
     for (var item in split) {
       List<String> splitItem = item.split(":");
-      print("Split item");
-      print(splitItem);
+
       if(splitItem[0] == "voters"){
         if(splitItem.length < 2){
           result[splitItem[0]] = [];
@@ -154,14 +151,10 @@ class LocalDatabase {
   }
 
   Future<void> addBOTW(Map<String, dynamic> botw) async {
-    print("Adding BOTW");
-    print(botw);
-    print(botw['answers']);
-    print(answersToString(botw['answers']));
-    print(stringToAnswers(answersToString(botw['answers'])));
+
     var existingBOTW = await (localDb.select(localDb.botw)).get();
     if(existingBOTW.isNotEmpty) {
-      print("BOTW already exists");
+
       return;
     }
     await localDb.into(localDb.botw).insert(BOTWCompanion(
@@ -252,14 +245,16 @@ class LocalDatabase {
       //Check if snippet already exists
       Snippet? existingSnippet = await (localDb.select(localDb.snippets)..where((tbl) => tbl.snippetId.equals(snippet["snippetId"]))).get().then((value) => value.isNotEmpty ? value.first : null);
       if(existingSnippet != null) {
-        print("Snippet already exists");
+
         //Check if the snippets are the same
         if(existingSnippet.question == snippet["question"] && existingSnippet.theme == snippet["theme"] && existingSnippet.type == snippet["type"]) {
-          print("Snippet is the same");
+
           return;
         } else {
           await (localDb.delete(localDb.snippets)..where((tbl) => tbl.index.equals(snippet["index"]))).go();
         }
+      } else {
+         await (localDb.delete(localDb.snippets)..where((tbl) => tbl.index.equals(snippet["index"]))).go();
       }
 
       
@@ -333,7 +328,7 @@ class LocalDatabase {
   Future<void> addResponse(Map<String, dynamic> response) async {
     var existingResponse = await (localDb.select(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(response['snippetId']))..where((tbl) => tbl.uid.equals(response['uid']))).get();
     if(existingResponse.isNotEmpty) {
-      print("Response already exists");
+
       //Delete existing response
       await (localDb.delete(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(response['snippetId']))..where((tbl) => tbl.uid.equals(response['uid']))).go();
 
@@ -350,7 +345,7 @@ class LocalDatabase {
   }
 
   Future<Stream> getResponses(String snippetId, List<String> friendsList, bool isAnonymous) async {
-    print("Friends list: $friendsList");
+
     if(isAnonymous){
       return (localDb.select(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippetId))..orderBy([(u) => OrderingTerm.desc(u.date)])).watch();
 
@@ -374,11 +369,11 @@ class LocalDatabase {
     //Check if chat already exists
     var existingChat = await (localDb.select(localDb.chats)..where((tbl) => tbl.messageId.equals(chat['messageId']))).get();
     if(existingChat.isNotEmpty) {
-      print("Chat already exists");
+
       
       return;
     }
-    print("Inserting chat ${chat['message']} date ${chat['date']}"); 
+
 
     await localDb.into(localDb.chats).insert(ChatsCompanion(
       message: Value(chat['message']),

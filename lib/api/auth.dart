@@ -34,12 +34,22 @@ class Auth {
         case "user-not-found":
           return "No user found with that email.";
 
-        case "INVALID_LOGIN_CREDENTIALS":
+        case "invalid-credential":
           return "Incorrect email or password";
 
         default:
           return e.message;
       }
+    }
+  }
+
+  Future resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      return true;
+    } on FirebaseAuthException catch (e) {
+      print(e.code);
+      return e.message;
     }
   }
 
@@ -60,6 +70,7 @@ class Auth {
       await PushNotifications().subscribeToTopic("all");
       return true;
     } on FirebaseAuthException catch (e) {
+
       return e.message;
     }
   }
@@ -99,11 +110,11 @@ class Auth {
 
     _auth.authStateChanges().listen((User? user) {
       if (user == null) {
-        print("Cancelling");
+
         // router.pushReplacement("/login");
         stream.cancel();
       } else {
-        print("Starting");
+
         stream = FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
             .userDataStream(streamController);
       }

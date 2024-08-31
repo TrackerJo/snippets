@@ -12,11 +12,11 @@ import SwiftUI
 
 struct SnippetsProvider: TimelineProvider {
     func placeholder(in context: Context) -> SnippetsEntry {
-        SnippetsEntry(date: Date(), snippetsData: SnippetsData(questions: ["What's your favorite color?", "Pancakes or Waffles?"], ids: ["sdwd", "ss"], indexes: [0, 1], isAnonymous: [false, false]), index: 0)
+        SnippetsEntry(date: Date(), snippetsData: SnippetsData(questions: ["What's your favorite color?", "Pancakes or Waffles?"], ids: ["sdwd", "ss"], indexes: [0, 1], isAnonymous: [false, false], hasAnswereds: [false, false]), index: 0)
         }
 
         func getSnapshot(in context: Context, completion: @escaping (SnippetsEntry) -> ()) {
-            let entry = SnippetsEntry(date: Date(), snippetsData: SnippetsData(questions: ["What's your favorite color?", "Pancakes or Waffles?"], ids: ["sdwd", "ss"], indexes: [0, 1], isAnonymous: [false, false]), index: 0)
+            let entry = SnippetsEntry(date: Date(), snippetsData: SnippetsData(questions: ["What's your favorite color?", "Pancakes or Waffles?"], ids: ["sdwd", "ss"], indexes: [0, 1], isAnonymous: [false, false], hasAnswereds: [false, false]), index: 0)
             completion(entry)
         }
 
@@ -51,6 +51,7 @@ struct SnippetsData: Decodable, Hashable {
     let ids: [String]
     let indexes: [Int]
     let isAnonymous: [Bool]
+    let hasAnswereds: [Bool]
 }
 
 struct SnippetsEntry: TimelineEntry {
@@ -66,7 +67,28 @@ struct SnippetConfig: Decodable, Hashable {
 
 struct SnippetsEntryView : View {
     var entry: SnippetsProvider.Entry
-
+    
+    func answeredSnippet() -> some View {
+        let id: String = entry.snippetsData!.ids[entry.index]
+        let question: String = entry.snippetsData!.questions[entry.index].replacingOccurrences(of: "?", with: "~")
+        let isAnonymous: String = entry.snippetsData!.isAnonymous[entry.index] ? "anonymous" : "normal"
+        return Text(entry.snippetsData!.questions[entry.index])
+            .font(.system(size: 25, weight: .heavy))
+            .foregroundColor(.white.opacity(0.8))
+            .minimumScaleFactor(0.3)
+            .widgetURL(URL(string: "/home/responses/widget/?id=" + id + "&question=" + question + "&type=" + isAnonymous))
+    }
+    
+    func unansweredSnippet() -> some View {
+        let id: String = entry.snippetsData!.ids[entry.index]
+        let question: String = entry.snippetsData!.questions[entry.index].replacingOccurrences(of: "?", with: "~")
+        let isAnonymous: String = entry.snippetsData!.isAnonymous[entry.index] ? "anonymous" : "normal"
+        return Text(entry.snippetsData!.questions[entry.index])
+            .font(.system(size: 25, weight: .heavy))
+            .foregroundColor(.white.opacity(0.8))
+            .minimumScaleFactor(0.3)
+            .widgetURL(URL(string: "/home/question/widget/?id=" + id + "&question=" + question + "&type=" + isAnonymous))
+    }
     var body: some View {
         ZStack{
             if(entry.index == -1){
@@ -81,11 +103,11 @@ struct SnippetsEntryView : View {
             } else {
                 VStack {
                     
-                    Text(entry.snippetsData!.questions[entry.index])
-                        .font(.system(size: 25, weight: .heavy))
-                        .foregroundColor(.white.opacity(0.8))
-                        .minimumScaleFactor(0.3)
-                        .widgetURL(URL(string:"/home/widget/question/?id=" + entry.snippetsData!.ids[entry.index] + "&question=" + entry.snippetsData!.questions[entry.index].replacingOccurrences(of: "?", with: "~") + "&type=normal"))
+                    if(entry.snippetsData!.hasAnswereds[entry.index]){
+                        answeredSnippet()
+                    } else {
+                        unansweredSnippet()
+                    }
                    
                     
                 }
@@ -175,5 +197,5 @@ struct SnippetsWidget: Widget {
 #Preview(as: .systemSmall) {
     SnippetsWidget()
 } timeline: {
-    SnippetsEntry(date: Date(), snippetsData: SnippetsData(questions: ["What's your favorite color?", "Pancakes or Waffles?"], ids: ["sdwd", "ss"], indexes: [0, 1], isAnonymous: [false, false]), index: 0)
+    SnippetsEntry(date: Date(), snippetsData: SnippetsData(questions: ["What's your favorite color?", "Pancakes or Waffles?"], ids: ["sdwd", "ss"], indexes: [0, 1], isAnonymous: [false, false], hasAnswereds: [false, false]), index: 0)
 }

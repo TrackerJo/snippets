@@ -13,6 +13,7 @@ class HelperFunctions {
   static String anonymousIDKey = "ANONYMOUSIDKEY";
   static String seenAnonymousSnippetKey = "SEENANONYMOUSSNIPPETKEY";
   static String votedBeforeKey = "VOTEDBEFOREKEY";
+  static String appBadgeKey = "APPBADGEKEY";
 
   //Saving data to SF
   static Future<bool> saveUserDisplayNameSF(String userDisplayName) async {
@@ -38,6 +39,11 @@ class HelperFunctions {
   static Future<bool> saveOpenedPageSF(String openedPage) async {
     SharedPreferences sf = await SharedPreferences.getInstance();
     return await sf.setString(openedPageKey, openedPage);
+  }
+
+  static Future<bool> saveAppBadgeSF(int appBadge) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setInt(appBadgeKey, appBadge);
   }
 
   static Future<String> saveAnonymouseIDSF() async{
@@ -99,6 +105,11 @@ class HelperFunctions {
   static Future<String?> getAnonymousIDFromSF() async {
     SharedPreferences sf = await SharedPreferences.getInstance();
     return sf.getString(anonymousIDKey);
+  }
+
+  static Future<int> getAppBadgeFromSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getInt(appBadgeKey) ?? 0;
   }
 
   static Future<bool> checkIfSeenAnonymousSnippetSF() async {

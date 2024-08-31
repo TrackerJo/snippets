@@ -3,6 +3,7 @@ import 'package:snippets/templates/colorsSys.dart';
 
 var textInputDecoration = InputDecoration(
     labelStyle: const TextStyle(color: Colors.black),
+    errorStyle: const TextStyle(color: Color.fromARGB(255, 255, 102, 91),),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(20.0),
       borderSide: BorderSide(color: Colors.transparent)
@@ -12,6 +13,7 @@ var textInputDecoration = InputDecoration(
       borderSide: BorderSide(color: Colors.transparent)
 
                         ),
+    
     filled: true,
     fillColor: ColorSys.primary,
     floatingLabelBehavior: FloatingLabelBehavior.never);

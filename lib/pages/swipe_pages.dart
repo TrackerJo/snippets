@@ -432,7 +432,7 @@ class _SwipePagesState extends State<SwipePages> {
                                     children: [
                                       Text("Customize Widgets", style: TextStyle(color: ColorSys.primary, fontSize: 20),),
                                       const SizedBox(height: 20),
-                                      Text("Select a color for the BOTW Widget", style: TextStyle(color: Colors.white),),
+                                      Text("Select a color for the Snippet of the Week Widget", textAlign: TextAlign.center,style: TextStyle(color: Colors.white),),
                                       const SizedBox(height: 20),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,

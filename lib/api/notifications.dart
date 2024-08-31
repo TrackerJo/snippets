@@ -33,20 +33,23 @@ class PushNotifications {
   Future<void> initNotifications() async {
     await _firebaseMessaging.requestPermission();
     String? fcmToken = await _firebaseMessaging.getToken();
-    print("FCM Token: $fcmToken");
+
     initPushNotifications();
   }
 
   void handleInAppMessage(RemoteMessage? message) async {
-    print("Handling in app message");
+
     if (message == null) {
       return;
     }
+    if(message.data["type"] == "notification"){
+      return;
+    }
     if(message.data["type"].contains("widget-")) {
-      print("Widget message");
+
       if(message.data["type"] == "widget-botw"){
         Map<String, dynamic> data = WidgetData(message.data["blank"].split(" of")[0], answers: []).toJson();
-        print("NEW BOTW: $data");
+
           WidgetKit.setItem(
             'botwData',
             jsonEncode(data),
@@ -54,25 +57,56 @@ class PushNotifications {
           WidgetKit.reloadAllTimelines();
       } else if(message.data["type"] == "widget-question"){
         Map<String, dynamic> oldSnippets = json.decode(await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets'));
+
         List<String> questions = oldSnippets["questions"].cast<String>();
+
         List<String> ids = oldSnippets["ids"].cast<String>();
-        List<String> indexes = oldSnippets["indexes"].cast<String>();
+
+        List<bool> hasAnswereds = oldSnippets["hasAnswereds"].cast<bool>();
+
+        List<int> indexes = oldSnippets["indexes"].cast<int>();
+
         List<bool> isAnonymous = oldSnippets["isAnonymous"].cast<bool>();
-        int index = questions.indexOf(message.data["question"]);
+
+          dynamic indexData = message.data["index"];
+          if(indexData is String) {
+            indexData = int.parse(indexData);
+          } 
+        int index = indexes.indexOf(indexData);
         if(index == -1) {
           questions.add(message.data["question"]);
-          ids.add(message.data["id"]);
-          indexes.add(message.data["index"]);
+          ids.add(message.data["snippetId"]);
+          indexes.add(indexData);
           isAnonymous.add(message.data["snippetType"] == "anonymous");
+          hasAnswereds.add(false);
         } else {
+          //Old question
+          String oldId = ids[index];
+          //Delete old responses
+          Map<String, dynamic> oldResponsesMap = json.decode(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets'));
+          List<String> oldResponses = oldResponsesMap["responses"].cast<String>();
+          List<String> newResponses = [];
+          for (var response in oldResponses) {
+            if(response.split("|")[3] == oldId) {
+              continue;
+            }
+            newResponses.add(response);
+          }
+          oldResponsesMap["responses"] = newResponses;
+          WidgetKit.setItem(
+            'snippetsResponsesData',
+            jsonEncode(oldResponsesMap),
+            'group.kazoom_snippets');
           questions[index] = message.data["question"];
-          ids[index] = message.data["id"];
-          indexes[index] = message.data["index"];
+          ids[index] = message.data["snippetId"];
+          indexes[index] = indexData;
           isAnonymous[index] = message.data["snippetType"] == "anonymous";
+          hasAnswereds[index] = false;
         }
         Map<String, dynamic> snippetData = {
           "questions": questions,
           "ids": ids,
+          "hasAnswereds": hasAnswereds,
           "indexes": indexes,
           "isAnonymous": isAnonymous,
         };
@@ -109,7 +143,7 @@ class PushNotifications {
           oldAnswers[oldAnswers.indexOf(oldAnswer)] = answer;
         }
         oldBOTW["answers"] = oldAnswers;
-        print("NEW BOTW: $oldBOTW");
+
         WidgetKit.setItem(
           'botwData',
           jsonEncode(oldBOTW),
@@ -144,7 +178,7 @@ class PushNotifications {
       return;
     }
     String currentPage = (await HelperFunctions.getOpenedPageFromSF())!;
-    print("Current Page: $currentPage");
+
 
     if(message.data['type'] == "question" && currentPage == "snippets") {
       return;
@@ -190,7 +224,7 @@ class PushNotifications {
   }
 
   void handleMessage(RemoteMessage? message) async {
-    print("Handling message");
+
     if (message == null) {
       return;
     }
@@ -233,7 +267,7 @@ class PushNotifications {
  
         router.push("/home/question/${message.data['snippetId']}/${message.data['theme']}/${message.data['question'].replaceAll("?", "~")}/${message.data['snippetType']}");
       } else if (message.data['type'] == "discussion") {
-        print("Discussion");
+
 
       
         // navigatorKey.currentState?.push(
@@ -350,7 +384,7 @@ class PushNotifications {
 
   Future subscribeToTopic(String topic) async {
     await _firebaseMessaging.subscribeToTopic(topic);
-    print("Subscribed to $topic");
+
   }
 
   Future unsubscribeFromTopic(String topic) async {
@@ -387,10 +421,8 @@ class PushNotifications {
       {required String title,
       required String body,
       required List<String> targetIds,
-      required Map<String, dynamic> data}) async {
-        print("Sending notification");
-        print(data);
-        print(targetIds);
+      required Map<String, dynamic> data,}) async {
+
         if(data["type"] == "discussion") {
           data["discussionUsers"] = createDiscussionUsersString(data["discussionUsers"]);
         }
@@ -407,9 +439,7 @@ class PushNotifications {
   }
 
   Future sendTopicData(String topic, Map<String, dynamic> data) async{
-    print("Sending topic data");
-    print(data);
-    print(topic);
+
     await FirebaseFunctions.instance
         .httpsCallable('sendTopicData')
         .call({

@@ -107,7 +107,7 @@ struct SnippetResponsesEntryView : View {
                 .font(.system(size: 15, weight: .heavy))
                 .foregroundColor(.white.opacity(0.8))
                 .minimumScaleFactor(0.2)
-                .widgetURL(URL(string:"/home/widget/question/?id=" + entry.snippetsData!.responses[entry.index].split(separator:"|")[3] + "&question=" + entry.snippetsData!.responses[entry.index].split(separator:"|")[1].replacingOccurrences(of: "?", with: "~") + "&type=" + entry.snippetsData!.responses[entry.index].split(separator:"|")[5]))
+                .widgetURL(URL(string:"/home/question/widget/?id=" + entry.snippetsData!.responses[entry.index].split(separator:"|")[3] + "&question=" + entry.snippetsData!.responses[entry.index].split(separator:"|")[1].replacingOccurrences(of: "?", with: "~") + "&type=" + entry.snippetsData!.responses[entry.index].split(separator:"|")[5]))
             Spacer()
         }
     }

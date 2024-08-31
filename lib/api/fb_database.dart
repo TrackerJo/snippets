@@ -273,7 +273,7 @@ class FBDatabase {
       return querySnapshot;
     }
     if(getFriends && !isAnonymous) {
-      print("Getting friends $friendsToGet");
+
       Stream querySnapshot = currentSnippetsCollection
           .doc(snippetId)
           .collection("answers")
@@ -553,7 +553,6 @@ class FBDatabase {
       for (var element in snapshot.docs) {
          Map<String, dynamic> data = element.data() as Map<String, dynamic>;
            
-            print("Adding chat to local database ${data['message']}  date: ${data['date'].toDate()}");
             Map<String, dynamic> chatMessageMap = {
                 "messageId": element.id,
               "message": data['message'],
@@ -585,7 +584,7 @@ class FBDatabase {
       for (var element in snapshot.docs) {
          Map<String, dynamic> data = element.data() as Map<String, dynamic>;
            
-            print("Adding chat to local database ${data['message']}  date: ${data['date'].toDate()}");
+
             Map<String, dynamic> chatMessageMap = {
                 "messageId": element.id,
               "message": data['message'],
@@ -729,8 +728,7 @@ class FBDatabase {
       Stream snippetData = currentSnippetsCollection.doc(element["snippetId"]).collection("answers").doc(element["answerId"]).collection("discussion").orderBy("date", descending: true).limit(1).snapshots();
       snippetData.listen((event) async {
         Map<String, dynamic> answerData = answerDoc.data() as Map<String, dynamic>;
-        print("ANSWER DATA");
-        print(answerData);
+
         //Check if discussion is already in the list
         
         Map<String, dynamic> discussionsData = {};
@@ -759,9 +757,7 @@ class FBDatabase {
           "isAnonymous": element["isAnonymous"],
         };
         
-        
-        print("ADDING DISCUSSION");
-        print(discussionsData);
+
         discStream.add(discussionsData);
       });
       
@@ -789,11 +785,10 @@ class FBDatabase {
       //if user is logged out, end stream
       
       await HelperFunctions.saveUserDataSF(jsonEncode(event.data()));
-      print("Changed");
-      print(event.data());
+
       streamController.add(event.data());
     }, onDone: () {
-      print("No longer");
+
     });
     //On Auth State change end stream
     return streamListen;
@@ -1093,6 +1088,11 @@ class FBDatabase {
     }
     return responses;
   }
+
+   Future<void> addBacklog(Map<String, dynamic> snippet) async {
+    await FirebaseFirestore.instance.collection("backlog").add(snippet);
+  }
+
 
 
 }
