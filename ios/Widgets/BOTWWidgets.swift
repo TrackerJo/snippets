@@ -42,7 +42,7 @@ struct BOTWProvider: TimelineProvider {
                 entries.append(entry)
             }
             
-            let timeline = Timeline(entries: entries, policy: .after(currentDate.addingTimeInterval(30)))
+            let timeline = Timeline(entries: entries, policy: .after(currentDate.addingTimeInterval(15)))
 
             completion(timeline)
         }

@@ -41,7 +41,7 @@ struct SnippetsProvider: TimelineProvider {
                  entries.append(entry)
              }
              
-             let timeline = Timeline(entries: entries, policy: .after(currentDate.addingTimeInterval(60)))
+             let timeline = Timeline(entries: entries, policy: .after(currentDate.addingTimeInterval(15)))
             completion(timeline)
 
         }

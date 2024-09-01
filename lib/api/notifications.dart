@@ -323,7 +323,7 @@ class PushNotifications {
           // );
           router.push("/home/responses/${message.data['snippetId']}/${message.data['theme']}/${message.data['question']}/${message.data['snippetType']}");
         }
-        } else if(message.data['type'] == "botw") {
+        } else if(message.data['type'] == "botw" || message.data['type'] == "new-botw") {
           // navigatorKey.currentState?.pushAndRemoveUntil(
           //   CustomPageRoute(
           //     builder: (BuildContext context) {
@@ -438,25 +438,5 @@ class PushNotifications {
     return result.data;
   }
 
-  Future sendTopicData(String topic, Map<String, dynamic> data) async{
-
-    await FirebaseFunctions.instance
-        .httpsCallable('sendTopicData')
-        .call({
-      
-      "topic": topic,
-      "data": data,
-    });
-  }
-
-  Future sendTokenData(List<String> targetIds, Map<String, dynamic> data) async{
-    HttpsCallableResult result = await FirebaseFunctions.instance
-        .httpsCallable('sendTokenData')
-        .call({
-      
-      "targetIds": targetIds,
-      "data": data,
-    });
-    return result.data;
-  }
+  
 }

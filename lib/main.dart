@@ -80,144 +80,144 @@ class WidgetData {
 }
 
 AppDb localDb = AppDb();
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print("Snippets: Handling a background message: ${message.messageId}");
-  // If you're going to use other Firebase services in the background, such as Firestore,
-  // make sure you call `initializeApp` before using other Firebase services.
-    await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+// @pragma('vm:entry-point')
+// Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+//   // print("Snippets: Handling a background message: ${message.messageId}");
+//   // // If you're going to use other Firebase services in the background, such as Firestore,
+//   // // make sure you call `initializeApp` before using other Firebase services.
+//   //   await Firebase.initializeApp(
+//   //   options: DefaultFirebaseOptions.currentPlatform,
+//   // );
 
-  if(message.data["type"] == "widget-botw"){
+//   // if(message.data["type"] == "widget-botw"){
     
-    Map<String, dynamic> data = WidgetData(message.data["blank"].split(" of")[0], answers: []).toJson();
+//   //   Map<String, dynamic> data = WidgetData(message.data["blank"].split(" of")[0], answers: []).toJson();
 
-      WidgetKit.setItem(
-        'botwData',
-        jsonEncode(data),
-        'group.kazoom_snippets');
-      WidgetKit.reloadAllTimelines();
-      await AppBadge.addBadge(1);
-  } else if(message.data["type"] == "widget-question"){
+//   //     WidgetKit.setItem(
+//   //       'botwData',
+//   //       jsonEncode(data),
+//   //       'group.kazoom_snippets');
+//   //     WidgetKit.reloadAllTimelines();
+//   //     await AppBadge.addBadge(1);
+//   // } else if(message.data["type"] == "widget-question"){
 
 
-    Map<String, dynamic> oldSnippets = json.decode(await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets'));
+//   //   Map<String, dynamic> oldSnippets = json.decode(await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets'));
 
-    List<String> questions = oldSnippets["questions"].cast<String>();
+//   //   List<String> questions = oldSnippets["questions"].cast<String>();
 
-    List<String> ids = oldSnippets["ids"].cast<String>();
+//   //   List<String> ids = oldSnippets["ids"].cast<String>();
 
-    List<bool> hasAnswereds = oldSnippets["hasAnswereds"].cast<bool>();
+//   //   List<bool> hasAnswereds = oldSnippets["hasAnswereds"].cast<bool>();
 
-    List<int> indexes = oldSnippets["indexes"].cast<int>();
+//   //   List<int> indexes = oldSnippets["indexes"].cast<int>();
 
-    List<bool> isAnonymous = oldSnippets["isAnonymous"].cast<bool>();
+//   //   List<bool> isAnonymous = oldSnippets["isAnonymous"].cast<bool>();
 
-      dynamic indexData = message.data["index"];
-      if(indexData is String) {
-        indexData = int.parse(indexData);
-      } 
-    int index = indexes.indexOf(indexData);
+//   //     dynamic indexData = message.data["index"];
+//   //     if(indexData is String) {
+//   //       indexData = int.parse(indexData);
+//   //     } 
+//   //   int index = indexes.indexOf(indexData);
 
-    if(index == -1) {
+//   //   if(index == -1) {
 
-      questions.add(message.data["question"]);
-      ids.add(message.data["snippetId"]);
+//   //     questions.add(message.data["question"]);
+//   //     ids.add(message.data["snippetId"]);
       
-      indexes.add(indexData);
-      isAnonymous.add(message.data["snippetType"] == "anonymous");
-      hasAnswereds.add(false);
+//   //     indexes.add(indexData);
+//   //     isAnonymous.add(message.data["snippetType"] == "anonymous");
+//   //     hasAnswereds.add(false);
 
-    } else {
-      //Old question
-      String oldId = ids[index];
-      //Delete old responses
-      Map<String, dynamic> oldResponsesMap = json.decode(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets'));
-      List<String> oldResponses = oldResponsesMap["responses"].cast<String>();
-      List<String> newResponses = [];
-      for (var response in oldResponses) {
-        if(response.split("|")[3] == oldId) {
-          continue;
-        }
-        newResponses.add(response);
-      }
-      oldResponsesMap["responses"] = newResponses;
-      WidgetKit.setItem(
-        'snippetsResponsesData',
-        jsonEncode(oldResponsesMap),
-        'group.kazoom_snippets');
-      questions[index] = message.data["question"];
-      ids[index] = message.data["snippetId"];
+//   //   } else {
+//   //     //Old question
+//   //     String oldId = ids[index];
+//   //     //Delete old responses
+//   //     Map<String, dynamic> oldResponsesMap = json.decode(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets'));
+//   //     List<String> oldResponses = oldResponsesMap["responses"].cast<String>();
+//   //     List<String> newResponses = [];
+//   //     for (var response in oldResponses) {
+//   //       if(response.split("|")[3] == oldId) {
+//   //         continue;
+//   //       }
+//   //       newResponses.add(response);
+//   //     }
+//   //     oldResponsesMap["responses"] = newResponses;
+//   //     WidgetKit.setItem(
+//   //       'snippetsResponsesData',
+//   //       jsonEncode(oldResponsesMap),
+//   //       'group.kazoom_snippets');
+//   //     questions[index] = message.data["question"];
+//   //     ids[index] = message.data["snippetId"];
     
-      indexes[index] = indexData;
-      isAnonymous[index] = message.data["snippetType"] == "anonymous";
-      hasAnswereds[index] = false;
-    }
-    Map<String, dynamic> snippetData = {
-      "questions": questions,
-      "ids": ids,
-      "hasAnswereds": hasAnswereds,
-      "indexes": indexes,
-      "isAnonymous": isAnonymous,
-    };
+//   //     indexes[index] = indexData;
+//   //     isAnonymous[index] = message.data["snippetType"] == "anonymous";
+//   //     hasAnswereds[index] = false;
+//   //   }
+//   //   Map<String, dynamic> snippetData = {
+//   //     "questions": questions,
+//   //     "ids": ids,
+//   //     "hasAnswereds": hasAnswereds,
+//   //     "indexes": indexes,
+//   //     "isAnonymous": isAnonymous,
+//   //   };
 
 
-    WidgetKit.setItem(
-      'snippetsData',
-      jsonEncode(snippetData),
-      'group.kazoom_snippets');
-    WidgetKit.reloadAllTimelines();
-    await AppBadge.addBadge(1);
+//   //   WidgetKit.setItem(
+//   //     'snippetsData',
+//   //     jsonEncode(snippetData),
+//   //     'group.kazoom_snippets');
+//   //   WidgetKit.reloadAllTimelines();
+//   //   await AppBadge.addBadge(1);
 
-  } else if(message.data["type"] == "widget-botw-answer"){
-    Map<String, dynamic> oldBOTW = json.decode(await WidgetKit.getItem('botwData', 'group.kazoom_snippets'));
-    Map<String, dynamic> answer = {
-      "answer": message.data["answer"],
-      "uid": message.data["uid"],
-      "displayName": message.data["displayName"],
-    };
-    List<Map<String, dynamic>> oldAnswers = oldBOTW["answers"].cast<Map<String, dynamic>>();
-    //Check if answer already exists
-    Map<String, dynamic>? oldAnswer = oldAnswers.firstWhere((element) => element["uid"] == message.data["uid"], orElse: () => {});
-    if(oldAnswer.isEmpty) {
-      oldAnswers.add(answer);
-    } else {
-      oldAnswers[oldAnswers.indexOf(oldAnswer)] = answer;
-    }
-    oldBOTW["answers"] = oldAnswers;
-    WidgetKit.setItem(
-      'botwData',
-      jsonEncode(oldBOTW),
-      'group.kazoom_snippets');
-    WidgetKit.reloadAllTimelines();
+//   // } else if(message.data["type"] == "widget-botw-answer"){
+//   //   Map<String, dynamic> oldBOTW = json.decode(await WidgetKit.getItem('botwData', 'group.kazoom_snippets'));
+//   //   Map<String, dynamic> answer = {
+//   //     "answer": message.data["answer"],
+//   //     "uid": message.data["uid"],
+//   //     "displayName": message.data["displayName"],
+//   //   };
+//   //   List<Map<String, dynamic>> oldAnswers = oldBOTW["answers"].cast<Map<String, dynamic>>();
+//   //   //Check if answer already exists
+//   //   Map<String, dynamic>? oldAnswer = oldAnswers.firstWhere((element) => element["uid"] == message.data["uid"], orElse: () => {});
+//   //   if(oldAnswer.isEmpty) {
+//   //     oldAnswers.add(answer);
+//   //   } else {
+//   //     oldAnswers[oldAnswers.indexOf(oldAnswer)] = answer;
+//   //   }
+//   //   oldBOTW["answers"] = oldAnswers;
+//   //   WidgetKit.setItem(
+//   //     'botwData',
+//   //     jsonEncode(oldBOTW),
+//   //     'group.kazoom_snippets');
+//   //   WidgetKit.reloadAllTimelines();
     
 
-  } else if(message.data["type"] == "widget-snippet-response"){
-    Map<String, dynamic> oldResponsesMap = json.decode(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets'));
-    List<String> oldResponses = oldResponsesMap["responses"].cast<String>();
-    String responseString = "${message.data["displayName"]}|${message.data["question"]}|${message.data["response"]}|${message.data["snippetId"]}|${message.data["userId"]}|${message.data["snippetType"] == "anonymous"}|${message.data["answered"]}";
-    if(oldResponses.contains(responseString)) {
-      return;
-    }
-    //Check if other responses are unanswered
-    for(var response in oldResponses) {
-      if(response.split("|")[3] == message.data["snippetId"] && response.split("|")[6] == "false" ) {
-        oldResponses[oldResponses.indexOf(response)] = "${response.split("|")[0]}|${response.split("|")[1]}|${response.split("|")[2]}|${response.split("|")[3]}|${response.split("|")[4]}|${response.split("|")[5]}|true";
-      }
-    }
-    oldResponses.add(responseString);
-    WidgetKit.setItem(
-      'snippetsResponsesData',
-      jsonEncode(oldResponses),
-      'group.kazoom_snippets');
-    WidgetKit.reloadAllTimelines();
-    await AppBadge.addBadge(1);
-  } else if(message.data["type"] == "notification") {
-    await AppBadge.addBadge(1);
+//   // } else if(message.data["type"] == "widget-snippet-response"){
+//   //   Map<String, dynamic> oldResponsesMap = json.decode(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets'));
+//   //   List<String> oldResponses = oldResponsesMap["responses"].cast<String>();
+//   //   String responseString = "${message.data["displayName"]}|${message.data["question"]}|${message.data["response"]}|${message.data["snippetId"]}|${message.data["userId"]}|${message.data["snippetType"] == "anonymous"}|${message.data["answered"]}";
+//   //   if(oldResponses.contains(responseString)) {
+//   //     return;
+//   //   }
+//   //   //Check if other responses are unanswered
+//   //   for(var response in oldResponses) {
+//   //     if(response.split("|")[3] == message.data["snippetId"] && response.split("|")[6] == "false" ) {
+//   //       oldResponses[oldResponses.indexOf(response)] = "${response.split("|")[0]}|${response.split("|")[1]}|${response.split("|")[2]}|${response.split("|")[3]}|${response.split("|")[4]}|${response.split("|")[5]}|true";
+//   //     }
+//   //   }
+//   //   oldResponses.add(responseString);
+//   //   WidgetKit.setItem(
+//   //     'snippetsResponsesData',
+//   //     jsonEncode(oldResponses),
+//   //     'group.kazoom_snippets');
+//   //   WidgetKit.reloadAllTimelines();
+//   //   await AppBadge.addBadge(1);
+//   // } else if(message.data["type"] == "notification") {
+//   //   await AppBadge.addBadge(1);
     
-  }
-} 
+//   // }
+// } 
 
 void main() async {
 
@@ -225,7 +225,7 @@ void main() async {
     await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
 
 
@@ -650,7 +650,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         
         
         await LocalDatabase().deleteOldResponse();
-        await AppBadge.resetBadge();
+        // await AppBadge.resetBadge();
 
         //Check if FCM token changed
         String deviceToken = await PushNotifications().getDeviceToken();

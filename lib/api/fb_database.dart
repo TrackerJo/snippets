@@ -186,15 +186,6 @@ class FBDatabase {
           data: {
             "type": "snippetAnswered",
             "snippetId": snippetId,
-            "question": question,
-            "theme": theme,
-            "snippetType": id != null ? "anonymous" : "normal"
-          });
-          PushNotifications().sendTokenData( [
-              ...friendsFCMTokens,
-            ], {
-              "type": "widget-snippet-response",
-              "snippetId": snippetId,
               "question": question,
               "theme": "blue",
               "snippetType": id != null ? "anonymous" : "normal",
@@ -203,6 +194,7 @@ class FBDatabase {
               "response": answer,
               "answered": false,
           });
+         
           if(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets') == null) {
             // List<String> oldResponses = [];
             // String responseString = "${userData["fullname"]}|${question}|${answer}|${snippetId}|${id ?? uid}|${id != null}|${true}";

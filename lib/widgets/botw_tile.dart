@@ -104,12 +104,7 @@ class _BOTWTileState extends State<BOTWTile> {
                         });
                         widget.answer["answer"] = answerController.text;
                         await Database().updateUsersBOTWAnswer(widget.answer);
-                        PushNotifications().sendTopicData("all", {
-                          "type": "widget-botw-answer",
-                          "answer": widget.answer["answer"],
-                          "uid": FirebaseAuth.instance.currentUser!.uid,
-                          "displayName": widget.answer["displayName"],
-                        });
+                        
 
 
                        
