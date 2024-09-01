@@ -201,19 +201,21 @@ class FBDatabase {
               "displayName": userData["fullname"],
               "uid": userData["uid"],
               "response": answer,
+              "answered": false,
           });
           if(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets') == null) {
-            List<String> oldResponses = [];
-            String responseString = "${userData["fullname"]}|${question}|${answer}|${snippetId}|${id ?? uid}|${id != null}|${true}";
-            if(oldResponses.contains(responseString)) {
-              return;
-            }
-            oldResponses.add(responseString);
-            WidgetKit.setItem(
-              'snippetsResponsesData',
-              jsonEncode({"responses": oldResponses}),
-              'group.kazoom_snippets');
-            WidgetKit.reloadAllTimelines();
+            // List<String> oldResponses = [];
+            // String responseString = "${userData["fullname"]}|${question}|${answer}|${snippetId}|${id ?? uid}|${id != null}|${true}";
+            // if(oldResponses.contains(responseString)) {
+            //   return;
+            // }
+           
+            // oldResponses.add(responseString);
+            // WidgetKit.setItem(
+            //   'snippetsResponsesData',
+            //   jsonEncode({"responses": oldResponses}),
+            //   'group.kazoom_snippets');
+            // WidgetKit.reloadAllTimelines();
           } else {
  Map<String, dynamic> oldResponsesMap = json.decode(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets'));
     List<String> oldResponses = oldResponsesMap["responses"].cast<String>();
@@ -221,7 +223,15 @@ class FBDatabase {
             if(oldResponses.contains(responseString)) {
               return;
             }
-            oldResponses.add(responseString);
+            // oldResponses.add(responseString);
+             //Mark other responses from the same snippet as read
+            for (var element in oldResponses) {
+              List<String> response = element.split("|");
+              if(response[3] == snippetId) {
+                response[6] = "true";
+                oldResponses[oldResponses.indexOf(element)] = response.join("|");
+              }
+            }
             WidgetKit.setItem(
               'snippetsResponsesData',
               jsonEncode({"responses": oldResponses}),

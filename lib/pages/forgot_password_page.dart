@@ -1,6 +1,7 @@
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:snippets/api/auth.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/templates/colorsSys.dart';
@@ -27,6 +28,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         _isLoading = true;
       });
       //Send email
+      HapticFeedback.mediumImpact();
       Auth().resetPassword(email).then((val) {
         if (val == true) {
           router.pushReplacement("/welcome/${widget.uid}/${widget.toProfile}");
@@ -107,6 +109,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                 Icons.email,
                                 color: Theme.of(context).primaryColor,
                               )),
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                          },
                           onChanged: (val) {
                             setState(() {
                               email = val;
@@ -172,7 +177,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                       fontWeight: FontWeight.bold),
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
-
+                                      HapticFeedback.mediumImpact();
                                       router.pushReplacement("/welcome/${widget.uid}/${widget.toProfile}");
                                     })
                             )

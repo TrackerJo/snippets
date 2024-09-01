@@ -128,6 +128,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       const SizedBox(height: 50),
                       TextFormField(
                         controller: fullNameController,
+                        onTap: () {
+                            HapticFeedback.selectionClick();
+                          },
                         decoration: textInputDecoration.copyWith(
                             labelText: "Display Name",
                             fillColor: ColorSys.secondary,
@@ -151,6 +154,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: usernameController,
+                        onTap: () {
+                            HapticFeedback.selectionClick();
+                          },
                         decoration: textInputDecoration.copyWith(
                             labelText: "Username",
                             fillColor: ColorSys.secondary,
@@ -179,6 +185,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: emailController,
+                        onTap: () {
+                            HapticFeedback.selectionClick();
+                          },
                         decoration: textInputDecoration.copyWith(
                             labelText: "Email",
                             fillColor: ColorSys.secondary,
@@ -215,6 +224,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       TextFormField(
                         obscureText: true,
                         controller: passwordController,
+                        onTap: () {
+                            HapticFeedback.selectionClick();
+                          },
                         decoration: textInputDecoration.copyWith(
                           fillColor: ColorSys.secondary,
                             labelText: "Password",
@@ -266,6 +278,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                                     fontWeight: FontWeight.bold),
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
+                                    HapticFeedback.mediumImpact();
                                    router.pushReplacement("/welcome/${widget.uid}/${widget.toProfile}");
                                   })
                           ]))

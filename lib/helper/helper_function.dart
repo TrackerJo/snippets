@@ -13,7 +13,7 @@ class HelperFunctions {
   static String anonymousIDKey = "ANONYMOUSIDKEY";
   static String seenAnonymousSnippetKey = "SEENANONYMOUSSNIPPETKEY";
   static String votedBeforeKey = "VOTEDBEFOREKEY";
-  static String appBadgeKey = "APPBADGEKEY";
+  static String appBadgeKey = "appBadge";
 
   //Saving data to SF
   static Future<bool> saveUserDisplayNameSF(String userDisplayName) async {

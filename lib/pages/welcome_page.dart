@@ -108,6 +108,9 @@ class _WelcomePageState extends State<WelcomePage> {
                                 color: Colors.white)),
                         const SizedBox(height: 50),
                         TextFormField(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                          },
                           decoration: textInputDecoration.copyWith(
                               labelText: "Email",
                               fillColor: ColorSys.secondary,
@@ -133,6 +136,9 @@ class _WelcomePageState extends State<WelcomePage> {
                         const SizedBox(height: 10),
                         TextFormField(
                           obscureText: true,
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                          },
                           decoration: textInputDecoration.copyWith(
                               labelText: "Password",
                               fillColor: ColorSys.secondary,
@@ -157,6 +163,7 @@ class _WelcomePageState extends State<WelcomePage> {
                             alignment: Alignment.centerRight,
                             child: TextButton(
                                 onPressed: () {
+                                  HapticFeedback.mediumImpact();
                                   router.pushReplacement("/forgotPassword/${widget.uid}/${widget.toProfile}");
                                 },
                                 child: Text(
@@ -215,6 +222,7 @@ class _WelcomePageState extends State<WelcomePage> {
                                       fontWeight: FontWeight.bold),
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
+                                      HapticFeedback.mediumImpact();
                                       print("Register here");
                                       router.pushReplacement("/createAccount/${widget.uid}/${widget.toProfile}");
                                     })

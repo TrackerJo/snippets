@@ -22,8 +22,9 @@ struct SnippetsProvider: TimelineProvider {
 
         func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
             let sharedDefaults = UserDefaults.init(suiteName: "group.kazoom_snippets")
-            let flutterData = try? JSONDecoder().decode(SnippetsData.self, from: (sharedDefaults?
+            var flutterData = try? JSONDecoder().decode(SnippetsData.self, from: (sharedDefaults?
                 .string(forKey: "snippetsData")?.data(using: .utf8)) ?? Data())
+            
              let currentDate = Date()
              var entries: [SnippetsEntry] = []
              var entryCount = 1200
@@ -44,14 +45,33 @@ struct SnippetsProvider: TimelineProvider {
             completion(timeline)
 
         }
+    func decodeJSONToSnippetsData(jsonString: String) -> SnippetsData? {
+        let decoder = JSONDecoder()
+        if(jsonString == ""){
+            return nil
+        }
+        guard let jsonData = jsonString.data(using: .utf8) else {
+            print("Error converting string to Data")
+            return nil
+        }
+        
+        do {
+            let snippetsData = try decoder.decode(SnippetsData.self, from: jsonData)
+            print("JSONDATA: \(snippetsData)")
+            return snippetsData
+        } catch {
+            print("Error decoding JSON to SnippetsData: \(error)")
+            return nil
+        }
+    }
 }
 
-struct SnippetsData: Decodable, Hashable {
-    let questions: [String]
-    let ids: [String]
-    let indexes: [Int]
-    let isAnonymous: [Bool]
-    let hasAnswereds: [Bool]
+struct SnippetsData: Decodable, Hashable, Encodable {
+    var questions: [String]
+    var ids: [String]
+    var indexes: [Int]
+    var isAnonymous: [Bool]
+    var hasAnswereds: [Bool]
 }
 
 struct SnippetsEntry: TimelineEntry {

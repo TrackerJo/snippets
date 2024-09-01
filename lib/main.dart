@@ -202,7 +202,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     }
     //Check if other responses are unanswered
     for(var response in oldResponses) {
-      if(response.split("|")[3] == message.data["snippetId"] && response.split("|")[6] == "false") {
+      if(response.split("|")[3] == message.data["snippetId"] && response.split("|")[6] == "false" ) {
         oldResponses[oldResponses.indexOf(response)] = "${response.split("|")[0]}|${response.split("|")[1]}|${response.split("|")[2]}|${response.split("|")[3]}|${response.split("|")[4]}|${response.split("|")[5]}|true";
       }
     }
