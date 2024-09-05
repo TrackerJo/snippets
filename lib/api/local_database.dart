@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
+
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:snippets/main.dart';
@@ -80,7 +80,7 @@ LazyDatabase _openConnection() {
 
     final file = File(p.join(dbFolder.path, 'db.sqlite'));
     if (true) {
-      // await file.delete();
+      await file.delete();
    
     }
     
@@ -211,9 +211,16 @@ class LocalDatabase {
 
 
   Future<List<String>> getCachedResponsesIDs(String snippetId) async {
+    print("Snippet ID CACHED: $snippetId");
+    //Print all responses in db
+    var allResponses = await (localDb.select(localDb.snipResponses)..orderBy([(u) => OrderingTerm.desc(u.lastUpdated)])).get();
+    for (var item in allResponses) {
+      print("Response: ${item.uid}");
+    }
     var responses = await (localDb.select(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippetId))..orderBy([(u) => OrderingTerm.desc(u.lastUpdated)])).get();
     List<String> ids = [];
     for (var item in responses) {
+      print("Response: ${item.uid}");
       ids.add(item.uid);
     }
     return ids;
@@ -240,8 +247,7 @@ class LocalDatabase {
     //Check if index already exists
     var snippetIndex = await (localDb.select(localDb.snippets)..where((tbl) => tbl.index.equals(snippet["index"]))).get();
     if(snippetIndex.isNotEmpty){
-      await (localDb.delete(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippet["snippetId"]))).go();
-      await (localDb.delete(localDb.chats)..where((tbl) => tbl.snippetId.equals(snippet["snippetId"]))).go();
+      
       //Check if snippet already exists
       Snippet? existingSnippet = await (localDb.select(localDb.snippets)..where((tbl) => tbl.snippetId.equals(snippet["snippetId"]))).get().then((value) => value.isNotEmpty ? value.first : null);
       if(existingSnippet != null) {
@@ -251,9 +257,15 @@ class LocalDatabase {
 
           return;
         } else {
+          await (localDb.delete(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippet["snippetId"]))).go();
+          print("DELETING RESPONSES SNIP");
+          await (localDb.delete(localDb.chats)..where((tbl) => tbl.snippetId.equals(snippet["snippetId"]))).go();
           await (localDb.delete(localDb.snippets)..where((tbl) => tbl.index.equals(snippet["index"]))).go();
         }
       } else {
+        await (localDb.delete(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippet["snippetId"]))).go();
+        print("DELETING RESPONSES SNIP");
+        await (localDb.delete(localDb.chats)..where((tbl) => tbl.snippetId.equals(snippet["snippetId"]))).go();
          await (localDb.delete(localDb.snippets)..where((tbl) => tbl.index.equals(snippet["index"]))).go();
       }
 
@@ -277,6 +289,9 @@ class LocalDatabase {
   }
 
   Future<void> deleteSnippetById(String snippetId) async {
+     await (localDb.delete(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippetId))).go();
+     print("DELETING RESPONSES ID");
+      await (localDb.delete(localDb.chats)..where((tbl) => tbl.snippetId.equals(snippetId))).go();
     await (localDb.delete(localDb.snippets)..where((tbl) => tbl.snippetId.equals(snippetId))).go();
   }
 
@@ -299,6 +314,7 @@ class LocalDatabase {
     var snippets = await (localDb.select(localDb.snippets)..where((tbl) => tbl.uid.equals(uid))..orderBy([(u) => OrderingTerm.desc(u.index)])).get();
     List<Map<String, dynamic>> result = [];
     for (var item in snippets) {
+      
       result.add({
         "snippetId": item.snippetId,
         "lastRecieved": item.lastRecieved,
@@ -315,10 +331,12 @@ class LocalDatabase {
 
   Future<void> deleteOldResponse() async {
     //Delete all responses older than a day
-    await (localDb.delete(localDb.snipResponses)..where((tbl) => tbl.date.isSmallerThan(currentDate.modify(DateTimeModifier.days(-2))))).go();
+    await (localDb.delete(localDb.snipResponses)..where((tbl) => tbl.date.isSmallerThan(currentDate.modify(const DateTimeModifier.days(-2))))).go();
+    print("DELETING RESPONSES OLD");
   }
 
   Future<void> removeResponse(String snippetId,String userId) async{
+    print("Removing response");
     
     (localDb.delete(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippetId))..where((tbl) => tbl.uid.equals(userId))).go();
 
@@ -327,12 +345,15 @@ class LocalDatabase {
 
   Future<void> addResponse(Map<String, dynamic> response) async {
     var existingResponse = await (localDb.select(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(response['snippetId']))..where((tbl) => tbl.uid.equals(response['uid']))).get();
+    print("Adding response: $response");
     if(existingResponse.isNotEmpty) {
-
+      print("Response already exists");
+      return;
       //Delete existing response
       await (localDb.delete(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(response['snippetId']))..where((tbl) => tbl.uid.equals(response['uid']))).go();
 
     }
+    print("ADDING RESPONSE");
 
     await localDb.into(localDb.snipResponses).insert(SnipResponsesCompanion(
       answer: Value(response['answer']),
@@ -356,6 +377,7 @@ class LocalDatabase {
   }
 
   Future<SnipResponse?> getLatestResponse(String snippetId) async {
+
     return (localDb.select(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippetId))..orderBy([(u) => OrderingTerm.desc(u.date)])).get().then((value) => value.isNotEmpty ? value.first : null);
   }
 

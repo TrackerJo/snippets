@@ -138,7 +138,7 @@ class _ResponseTileState extends State<ResponseTile> {
                   children: [
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:Color.fromARGB(255, 180, 133, 242),
+                        backgroundColor:const Color.fromARGB(255, 180, 133, 242),
 
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(32.0),
@@ -154,7 +154,7 @@ class _ResponseTileState extends State<ResponseTile> {
                               theme: widget.theme,
                             ));
                       },
-                      child:  Text("Open Discussion", style: TextStyle(color: Colors.white)),
+                      child:  const Text("Open Discussion", style: TextStyle(color: Colors.white)),
                     ),
 
                     // IconButton(

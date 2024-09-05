@@ -1,15 +1,17 @@
 
 import 'dart:async';
-import 'dart:math';
+
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:drift/drift.dart' as drift;
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:snippets/api/database.dart';
 import 'package:snippets/api/local_database.dart';
 import 'package:snippets/api/notifications.dart';
 import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/main.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
@@ -57,6 +59,12 @@ class _DiscussionPageState extends State<DiscussionPage> {
   
 
   void getDiscussion() async {
+      List<Map<String, dynamic>> snippets = await Database().getSnippetsList();
+    bool snippetExists = snippets.any((e) => e["snippetId"] == widget.responseTile.snippetId);
+    if(!snippetExists){
+      router.pushReplacement("/");
+    }
+
     if(widget.responseTile.isAnonymous){
       anonymousId = await HelperFunctions.getAnonymousIDFromSF() ?? "";
     }

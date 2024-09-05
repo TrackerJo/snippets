@@ -59,7 +59,7 @@ class _SnippetTileState extends State<SnippetTile> {
             ColorSys.blackGradient
           
           :ColorSys.blueGreenGradient,
-
+  
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -67,7 +67,10 @@ class _SnippetTileState extends State<SnippetTile> {
         child: ListTile(
           onTap: () => {
             if (!widget.isAnswered)
-              {}
+              {
+                //Remove focus from textfield
+                FocusScope.of(context).unfocus(),
+              }
             else
               {
                 HapticFeedback.mediumImpact(),
@@ -100,15 +103,19 @@ class _SnippetTileState extends State<SnippetTile> {
                     String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
                     await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
                       .submitAnswer(widget.snippetId, answerController.text, widget.question, widget.theme,anonymousID);
+                      setState(() {
+                        answerController.clear();
+                      });
                   }
                   
                 } else {
                   await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
                     .submitAnswer(widget.snippetId, answerController.text, widget.question, widget.theme, null);
+                    setState(() {
+                      answerController.clear();
+                    });
                 }
-                setState(() {
-                  answerController.clear();
-                });
+                
                 // Navigator.of(context).pop();
                 //Go to responses page
                 
@@ -187,6 +194,7 @@ class _SnippetTileState extends State<SnippetTile> {
                 String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
                 await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
                   .submitAnswer(widget.snippetId, answerController.text, widget.question, widget.theme,anonymousID);
+                answerController.clear();
               },
               child: const Text("I understand"),
             ),

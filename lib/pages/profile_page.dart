@@ -3,20 +3,20 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
+
 import 'package:snippets/api/database.dart';
 import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/pages/botw_results_page.dart';
-import 'package:snippets/pages/swipe_pages.dart';
+
 import 'package:snippets/pages/voting_page.dart';
-import 'package:snippets/pages/welcome_page.dart';
+
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
 import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/botw_tile.dart';
-import 'package:snippets/widgets/custom_page_route.dart';
+
 import 'package:snippets/widgets/friend_tile.dart';
 import 'package:snippets/widgets/friends_count.dart';
 import 'package:snippets/widgets/helper_functions.dart';
@@ -77,8 +77,7 @@ class _ProfilePageState extends State<ProfilePage> {
     blankStreamSub = blankStream.listen((event) {
       if(botwStreamController.isClosed) return;
       Map<String, dynamic> data = event;
-      print("Blank of the Week Data");
-      print(data);
+
       if (data.isEmpty) {
         return;
       }
@@ -119,6 +118,21 @@ class _ProfilePageState extends State<ProfilePage> {
           profileData = event;
           numberOfFriends = profileData["friends"].length;
           userDisplayName = profileData["fullname"];
+          Map<String, dynamic> newBlankofTheWeek = blankOfTheWeek;
+          print(newBlankofTheWeek);
+          if (newBlankofTheWeek.isNotEmpty && newBlankofTheWeek["answers"].containsKey(profileData["uid"] )) {
+            newBlankofTheWeek["answers"][profileData["uid"]] = {
+              "answer": newBlankofTheWeek["answers"][profileData["uid"]]["answer"],
+              "displayName": profileData["fullname"],
+              "userId": profileData["uid"],
+              "votes": newBlankofTheWeek["answers"][profileData["uid"]]["votes"],
+              "voters": newBlankofTheWeek["answers"][profileData["uid"]]["voters"],
+              "FCMToken": profileData["FCMToken"]
+            };
+          }
+          blankOfTheWeek = newBlankofTheWeek;
+          
+
         });
       });
       userDisplayName = (await HelperFunctions.getUserDisplayNameFromSF())!;
@@ -153,7 +167,7 @@ class _ProfilePageState extends State<ProfilePage> {
       Stream viewerDataStream = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
           .getUserStream(widget.uid);
       userStreamSub = viewerDataStream.listen((event) async {
-        print("Viewer Data Changed");
+
         Map<String, dynamic> viewerData = event.data() as Map<String, dynamic>;
         setState(() {
           profileData = viewerData;
@@ -170,7 +184,7 @@ class _ProfilePageState extends State<ProfilePage> {
         if (event == null) {
           return;
         }
-          print("User Data Changed");
+
           Map<String, dynamic> userData = event as Map<String, dynamic>;
           List<dynamic> friendsList = userData["friends"];
           int mutualFriends = 0;
@@ -191,11 +205,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
           bool areFriends = false;
           for (dynamic friend in friendsList) {
-            String friendId = friend["userId"];
-            print("friend: $friendId , widget.uid: ${widget.uid}");
-            print(FirebaseAuth.instance.currentUser!.uid);
+
+
             if (friend["userId"] == widget.uid) {
-              print("are friends");
+
               areFriends = true;
               break;
             }
@@ -209,8 +222,7 @@ class _ProfilePageState extends State<ProfilePage> {
               isFriends = false;
             });
             List<dynamic> outgoingFriendRequests = userData["outgoingRequests"];
-            print("Outgoing Requests");
-            print(outgoingFriendRequests);
+
             bool friendRequest = false;
             for (dynamic request in outgoingFriendRequests) {
               if (request["userId"] == widget.uid) {
@@ -229,8 +241,7 @@ class _ProfilePageState extends State<ProfilePage> {
             }
 
             List<dynamic> friendRequests = userData["friendRequests"];
-            print("Friend Requests");
-            print(friendRequests);
+
             bool hasRequest = false;
             for (dynamic request in friendRequests) {
               if (request["userId"] == widget.uid) {
@@ -277,11 +288,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
       bool areFriends = false;
       for (dynamic friend in friendsList) {
-        String friendId = friend["userId"];
-        print("friend: $friendId , widget.uid: ${widget.uid}");
-        print(FirebaseAuth.instance.currentUser!.uid);
+
+
         if (friend["userId"] == widget.uid) {
-          print("are friends");
+
           areFriends = true;
           break;
         }
@@ -354,7 +364,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void logout() async {
     router.pushReplacement('/login');
-    print("Logging out");
+
     //Stop listening to the user stream
     userStreamSub.cancel();
     blankStreamSub.cancel();
@@ -515,11 +525,11 @@ class _ProfilePageState extends State<ProfilePage> {
           preferredSize: const Size.fromHeight(kToolbarHeight),
           child: CustomAppBar(
             fixRight: true,
-            title: isCurrentUser ? "Your Profile" : "$displayName",
+            title: isCurrentUser ? "Your Profile" : displayName,
             showBackButton: widget.showBackButton || widget.isFriendLink,
             onBackButtonPressed: () {
               HapticFeedback.mediumImpact();
-              print("Back Button Pressed");
+
               if (widget.isFriendLink) {
                 // Navigator.of(context).pop();
                 router.go('/home');
@@ -551,7 +561,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   child: ElevatedButton(
                                       onPressed: () {
                                         HapticFeedback.mediumImpact();
-                                        print("Log Out");
+
                                         logout();
                                       },
                                       style: ElevatedButton.styleFrom(
@@ -700,7 +710,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ElevatedButton(onPressed: () {
                       HapticFeedback.mediumImpact();
                       nextScreen(context, VotingPage(blank: blankOfTheWeek,));
-                    },style: elevatedButtonDecoration ,child: Text(
+                    },style: elevatedButtonDecoration ,child: const Text(
                       "Vote",
                       style: TextStyle(color: Colors.black, fontSize: 16),
                     )),
@@ -710,7 +720,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   if(blankOfTheWeek.isNotEmpty && blankOfTheWeek["status"] == "done" && isCurrentUser)
                     ElevatedButton(onPressed: () {
                       nextScreen(context, BotwResultsPage(answers: blankOfTheWeek["answers"]));
-                    },style: elevatedButtonDecoration ,child: Text(
+                    },style: elevatedButtonDecoration ,child: const Text(
                       "View Results",
                       style: TextStyle(color: Colors.black, fontSize: 16),
                     )),
@@ -755,7 +765,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     maxLines: 7,
                     decoration: textInputDecoration.copyWith(
                       hintText: 'Description',
-                      counterStyle: TextStyle(color: Colors.white),
+                      counterStyle: const TextStyle(color: Colors.white),
 
                     ),
                     onChanged: (value) => editDescription = value,

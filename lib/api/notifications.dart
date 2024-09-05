@@ -11,17 +11,8 @@ import 'package:snippets/api/auth.dart';
 import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
-import 'package:snippets/pages/discussion_page.dart';
-import 'package:snippets/pages/home_page.dart';
-import 'package:snippets/pages/profile_page.dart';
-import 'package:snippets/pages/question_page.dart';
-import 'package:snippets/pages/responses_page.dart';
-import 'package:snippets/pages/swipe_pages.dart';
-import 'package:snippets/pages/voting_page.dart';
-import 'package:snippets/pages/welcome_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
-import 'package:snippets/widgets/custom_page_route.dart';
-import 'package:snippets/widgets/response_tile.dart';
+
 
 class PushNotifications {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -32,7 +23,7 @@ class PushNotifications {
 
   Future<void> initNotifications() async {
     await _firebaseMessaging.requestPermission();
-    String? fcmToken = await _firebaseMessaging.getToken();
+    await _firebaseMessaging.getToken();
 
     initPushNotifications();
   }
@@ -214,13 +205,13 @@ class PushNotifications {
               title: Text(message.data['title']),
               subtitle: Text(message.data['body']),
               trailing: IconButton(
-                  icon: Icon(Icons.close),
+                  icon: const Icon(Icons.close),
                   onPressed: () {
                     OverlaySupportEntry.of(context)!.dismiss();
                   }),
             ),
           );
-        }, duration: Duration(milliseconds: 6000));
+        }, duration: const Duration(milliseconds: 6000));
   }
 
   void handleMessage(RemoteMessage? message) async {
@@ -427,6 +418,9 @@ class PushNotifications {
           data["discussionUsers"] = createDiscussionUsersString(data["discussionUsers"]);
         }
         
+        print("Sending notification");
+        print(data);
+        print(targetIds);
     HttpsCallableResult result = await FirebaseFunctions.instance
         .httpsCallable('sendNotifications')
         .call({

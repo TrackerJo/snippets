@@ -1,13 +1,13 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:snippets/api/fb_database.dart';
-import 'package:snippets/pages/profile_page.dart';
-import 'package:snippets/pages/responses_page.dart';
-import 'package:snippets/templates/colorsSys.dart';
-import 'package:snippets/templates/input_decoration.dart';
 
-import 'helper_functions.dart';
+import 'package:flutter/material.dart';
+
+
+import 'package:snippets/pages/profile_page.dart';
+
+import 'package:snippets/templates/colorsSys.dart';
+
+
+
 
 class BOTWResultTile extends StatefulWidget {
   // final bool isAnswered;

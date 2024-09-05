@@ -3,7 +3,10 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_widgetkit/flutter_widgetkit.dart';
+import 'package:intl/intl.dart';
 import 'package:phone_input/phone_input_package.dart';
+import 'package:snippets/api/auth.dart';
+import 'package:snippets/api/database.dart';
 import 'package:snippets/api/local_database.dart';
 
 import '../helper/helper_function.dart';
@@ -171,13 +174,15 @@ class FBDatabase {
 
 
     //Send notification to user's friends
-    if(id != null) {
-      return;
-    }
+    
 
-    List<dynamic> friendsList = userData["friends"];
+  
+    
+    if(id == null) {
+      print("Sending notification");
+      List<dynamic> friendsList = userData["friends"];
     List<dynamic> friendsFCMTokens = friendsList.map((e) => e["FCMToken"]).toList();
-     PushNotifications().sendNotification(
+     await PushNotifications().sendNotification(
           title: "${userData["fullname"]} just responded to a snippet!",
           body: "Tap here to view response",
           targetIds: [
@@ -186,37 +191,35 @@ class FBDatabase {
           data: {
             "type": "snippetAnswered",
             "snippetId": snippetId,
-              "question": question,
+              "question": question.replaceAll("?", "~"),
               "theme": "blue",
               "snippetType": id != null ? "anonymous" : "normal",
               "displayName": userData["fullname"],
               "uid": userData["uid"],
               "response": answer,
-              "answered": false,
+              "answered": "false"
           });
+    }
          
           if(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets') == null) {
-            // List<String> oldResponses = [];
-            // String responseString = "${userData["fullname"]}|${question}|${answer}|${snippetId}|${id ?? uid}|${id != null}|${true}";
-            // if(oldResponses.contains(responseString)) {
-            //   return;
-            // }
+            List<String> oldResponses = [];
+            String responseString = "${userData["fullname"]}|${question}|${answer}|${snippetId}|${id ?? uid}|${id != null ? "anonymous" : "normal"}|${true}";
+            if(!oldResponses.contains(responseString)) {
+               oldResponses.add(responseString);
+            WidgetKit.setItem(
+              'snippetsResponsesData',
+              jsonEncode({"responses": oldResponses}),
+              'group.kazoom_snippets');
+            WidgetKit.reloadAllTimelines();
+            }
            
-            // oldResponses.add(responseString);
-            // WidgetKit.setItem(
-            //   'snippetsResponsesData',
-            //   jsonEncode({"responses": oldResponses}),
-            //   'group.kazoom_snippets');
-            // WidgetKit.reloadAllTimelines();
+           
           } else {
  Map<String, dynamic> oldResponsesMap = json.decode(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets'));
     List<String> oldResponses = oldResponsesMap["responses"].cast<String>();
-            String responseString = "${userData["fullname"]}|${question}|${answer}|${snippetId}|${id ?? uid}|${id != null}|${true}";
-            if(oldResponses.contains(responseString)) {
-              return;
-            }
-            // oldResponses.add(responseString);
-             //Mark other responses from the same snippet as read
+            String responseString = "${userData["fullname"]}|${question}|${answer}|${snippetId}|${id ?? uid}|${id != null ? "anonymous" : "normal"}|${true}";
+            if(!oldResponses.contains(responseString)) {
+               //Mark other responses from the same snippet as read
             for (var element in oldResponses) {
               List<String> response = element.split("|");
               if(response[3] == snippetId) {
@@ -229,6 +232,9 @@ class FBDatabase {
               jsonEncode({"responses": oldResponses}),
               'group.kazoom_snippets');
             WidgetKit.reloadAllTimelines();
+            }
+            // oldResponses.add(responseString);
+            
           }
 
   }
@@ -247,7 +253,7 @@ class FBDatabase {
     return friendsList.cast<Map<String, dynamic>>();
   }
 
-  Future<Stream> getResponsesList(String snippetId, DateTime? date, bool getFriends, List<String> friendsToGet, bool isAnonymous) async {
+  Future<void> getResponsesList(String snippetId, DateTime? date, bool getFriends, List<String> friendsToGet, bool isAnonymous, StreamController controller) async {
     //Then the rest of the responses from friends
     List<String> friendsList = [];
     if(!isAnonymous){
@@ -256,7 +262,7 @@ class FBDatabase {
     }   
     if(date == null) {
       if(friendsList.isEmpty && !isAnonymous) {
-        return Stream.empty();
+        return;
       }
       Stream querySnapshot;
       if(isAnonymous){
@@ -272,9 +278,13 @@ class FBDatabase {
           .snapshots();
       }
 
-      return querySnapshot;
+      querySnapshot.listen((event) {
+        if(controller.isClosed) return;
+        controller.add(event);
+      });
     }
     if(getFriends && !isAnonymous) {
+      print("Getting friends responses");
 
       Stream querySnapshot = currentSnippetsCollection
           .doc(snippetId)
@@ -282,7 +292,10 @@ class FBDatabase {
           .where("uid", whereIn: friendsToGet)
           .snapshots();
 
-      return querySnapshot;
+      querySnapshot.listen((event) {
+        if(controller.isClosed) return;
+        controller.add(event);
+      });
     }
      Stream querySnapshot;
     if(isAnonymous) {
@@ -302,7 +315,10 @@ class FBDatabase {
     
 
 
-    return querySnapshot;
+    querySnapshot.listen((event) {
+      if(controller.isClosed) return;
+      controller.add(event);
+    });
   }
 
   Future<Map<String, dynamic>> getUserResponse(String snippetId) async {
@@ -1093,6 +1109,119 @@ class FBDatabase {
 
    Future<void> addBacklog(Map<String, dynamic> snippet) async {
     await FirebaseFirestore.instance.collection("backlog").add(snippet);
+  }
+
+  Future<String> changeUserEmail(String oldEmail, String newEmail, String password) async {
+    String res = await Auth().changeEmail(oldEmail, newEmail, password);
+    if(res != "Done") {
+      return res;
+    }
+    await userCollection.doc(uid).update({
+      "email": newEmail,
+    });
+   return res;
+  }
+
+  Future<void> changeUserDisplayNameAndOrUserName(String? displayName, String? username) async {
+   
+    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+
+    await userCollection.doc(uid).update({
+      "fullname": displayName ?? userData["fullname"],
+      "username": username ?? userData["username"],
+      "searchKey": displayName != null ? displayName.toLowerCase() : userData["searchKey"],
+    });
+
+    //Update BOTW answers
+    DocumentSnapshot botwSnapshot = await botwCollection.doc("currentBlank").get();
+    Map<String, dynamic> botwData = botwSnapshot.data() as Map<String, dynamic>;
+    if(botwData["answers"].containsKey(uid)) {
+      botwData["answers"][uid]["displayName"] = displayName ?? userData["fullname"];
+      botwData["answers"][uid]["username"] = username ?? userData["username"];
+      await botwCollection.doc("currentBlank").set({
+        "answers": botwData["answers"],
+        "lastUpdated": DateTime.now(),
+      }, SetOptions(merge: true));
+    }
+
+
+
+    List<dynamic> friends = userData["friends"];
+    List<String> friendsIds = friends.map((e) => e["userId"].toString()).toList();
+    for (var id in friendsIds) {
+      await userCollection.doc(id).update({
+        "friends": FieldValue.arrayRemove([
+          {
+            "userId": uid,
+            "displayName": userData["fullname"],
+            "username": userData["username"],
+            "FCMToken": userData["FCMToken"],
+          }
+        ]),
+      });
+      await userCollection.doc(id).update({
+        "friends": FieldValue.arrayUnion([
+          {
+            "userId": uid,
+            "displayName": displayName ?? userData["fullname"],
+            "username": username ?? userData["username"],
+            "FCMToken": userData["FCMToken"],
+          }
+        ]),
+      });
+      
+    }
+    List<dynamic> friendRequests = userData["friendRequests"];
+    List<String> friendRequestsIds = friendRequests.map((e) => e["userId"].toString()).toList();
+    for (var id in friendRequestsIds) {
+      await userCollection.doc(id).update({
+        "friendRequests": FieldValue.arrayRemove([
+          {
+            "userId": uid,
+            "displayName": userData["fullname"],
+            "username": userData["username"],
+            "FCMToken": userData["FCMToken"],
+          }
+        ]),
+      });
+      await userCollection.doc(id).update({
+        "friendRequests": FieldValue.arrayUnion([
+          {
+            "userId": uid,
+            "displayName": displayName ?? userData["fullname"],
+            "username": username ?? userData["username"],
+            "FCMToken": userData["FCMToken"],
+          }
+        ]),
+      });
+      
+    }
+    List<dynamic> outgoingRequests = userData["outgoingRequests"];
+    List<String> outgoingRequestsIds = outgoingRequests.map((e) => e["userId"].toString()).toList();
+    for (var id in outgoingRequestsIds) {
+      await userCollection.doc(id).update({
+        "outgoingRequests": FieldValue.arrayRemove([
+          {
+            "userId": uid,
+            "displayName": userData["fullname"],
+            "username": userData["username"],
+            "FCMToken": userData["FCMToken"],
+          }
+        ]),
+      });
+      await userCollection.doc(id).update({
+        "outgoingRequests": FieldValue.arrayUnion([
+          {
+            "userId": uid,
+            "displayName": displayName ?? userData["fullname"],
+            "username": username ?? userData["username"],
+            "FCMToken": userData["FCMToken"],
+          }
+        ]),
+      });
+      
+    }
+   
   }
 
 

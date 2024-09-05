@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_widgetkit/flutter_widgetkit.dart';
 import 'package:phone_input/phone_input_package.dart';
 import 'package:snippets/api/notifications.dart';
-import 'package:snippets/main.dart';
+
 
 import '../helper/helper_function.dart';
 import 'fb_database.dart';
@@ -29,7 +29,7 @@ class Auth {
 
       return true;
     } on FirebaseAuthException catch (e) {
-      print(e.code);
+
       switch (e.code) {
         case "user-not-found":
           return "No user found with that email.";
@@ -48,7 +48,7 @@ class Auth {
       await _auth.sendPasswordResetEmail(email: email);
       return true;
     } on FirebaseAuthException catch (e) {
-      print(e.code);
+
       return e.message;
     }
   }
@@ -119,5 +119,34 @@ class Auth {
             .userDataStream(streamController);
       }
     });
+  }
+
+  Future<String> changePassword(String email, String oldPassword, String newPassword) async {
+    //First reauthenticate the user
+    try {
+      await FirebaseAuth.instance.currentUser!
+          .reauthenticateWithCredential(EmailAuthProvider.credential(email: email, password: oldPassword));
+    } on FirebaseAuthException catch (e) {
+      if (e.code == "wrong-password") {
+        return "Incorrect password";
+      }
+      return e.message ?? "An error occurred";
+    }
+    await FirebaseAuth.instance.currentUser!.updatePassword(newPassword);
+    return "Done";
+  }
+
+  Future<String> changeEmail(String oldEmail,String newEmail, String currentPassword) async {
+    try {
+      await FirebaseAuth.instance.currentUser!
+          .reauthenticateWithCredential(EmailAuthProvider.credential(email: oldEmail, password: currentPassword));
+    } on FirebaseAuthException catch (e) {
+      if (e.code == "wrong-password") {
+        return "Incorrect password";
+      }
+      return e.message ?? "An error occurred";
+    }
+    await FirebaseAuth.instance.currentUser!.verifyBeforeUpdateEmail(newEmail);
+    return "Done";
   }
 }

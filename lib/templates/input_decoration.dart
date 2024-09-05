@@ -6,32 +6,32 @@ var textInputDecoration = InputDecoration(
     errorStyle: const TextStyle(color: Color.fromARGB(255, 255, 102, 91),),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(20.0),
-      borderSide: BorderSide(color: Colors.transparent)
+      borderSide: const BorderSide(color: Colors.transparent)
     ),
     enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20.0),
-      borderSide: BorderSide(color: Colors.transparent)
+      borderSide: const BorderSide(color: Colors.transparent)
 
                         ),
-    
     filled: true,
+    
     fillColor: ColorSys.primary,
     floatingLabelBehavior: FloatingLabelBehavior.never);
 
 var elevatedButtonDecoration =  ElevatedButton.styleFrom(
                         elevation: 10,
-                        shadowColor: ColorSys.primary,
+                        shadowColor: ColorSys.purpleBlueGradient.colors[1],
                         minimumSize: const Size(100, 50),
-                        backgroundColor: Color.fromARGB(255, 183, 128, 255),
+                        backgroundColor: const Color.fromARGB(255, 183, 128, 255),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20.0),
                         )
                       );
 var elevatedButtonDecorationBlue =  ElevatedButton.styleFrom(
                         elevation: 10,
-                        shadowColor: Color.fromARGB(223, 119, 214, 255),
+                        shadowColor: const Color.fromARGB(223, 119, 214, 255),
                         minimumSize: const Size(100, 50),
-                        backgroundColor: Color.fromARGB(223, 119, 214, 255),
+                        backgroundColor: const Color.fromARGB(223, 119, 214, 255),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20.0),
                         )

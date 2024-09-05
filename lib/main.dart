@@ -1,16 +1,17 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_app_badge_control/flutter_app_badge_control.dart';
+
+
 import 'package:flutter_widgetkit/flutter_widgetkit.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:provider/provider.dart';
 import 'package:snippets/api/auth.dart';
@@ -19,6 +20,7 @@ import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/api/local_database.dart';
 import 'package:snippets/api/notifications.dart';
 import 'package:snippets/helper/app_badge.dart';
+
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/pages/botw_results_page.dart';
 import 'package:snippets/pages/create_account_page.dart';
@@ -32,7 +34,7 @@ import 'package:snippets/pages/swipe_pages.dart';
 import 'package:snippets/pages/voting_page.dart';
 import 'package:snippets/pages/welcome_page.dart';
 import 'package:snippets/providers/card_provider.dart';
-import 'package:snippets/widgets/helper_functions.dart';
+
 import 'package:snippets/widgets/response_tile.dart';
 
 import 'firebase_options.dart';
@@ -587,12 +589,33 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         }
 
         List<Map<String, dynamic>> snippets = await Database().getSnippetsList();
+        List<Map<String, dynamic>> removedSnippets = [];
+        DateTime? anonymousRemovalDate;
+        for(var snippet in snippets){
+
+          if(snippet["type"] == "anonymous"){
+            DateTime now = DateTime.now();
+            DateTime lastRecieved = snippet["lastRecieved"];
+            anonymousRemovalDate = lastRecieved.add(const Duration(days: 1));
+            if(now.isAfter(lastRecieved.add(const Duration(days: 1)))){
+              removedSnippets.add(snippet);
+            }
+
+          }
+        }
+        for(var rSnippet in removedSnippets){
+          snippets.remove(rSnippet);
+          await LocalDatabase().deleteSnippetById(rSnippet["snippetId"]);
+        }
+
         Map<String, dynamic> snippetData = {
           "questions": snippets.map((e) => e["question"]).toList(),
           "ids": snippets.map((e) => e["snippetId"]).toList(),
           "indexes": snippets.map((e) => e["index"]).toList(),
           "hasAnswereds": snippets.map((e) => e["answered"]).toList(),
           "isAnonymous": snippets.map((e) => e["type"] == "anonymous").toList(),
+          "anonymousRemovalDate":anonymousRemovalDate != null ? DateFormat("yyyy-MM-dd HH:mm:ss").format(anonymousRemovalDate) : ""
+
         };
         if(await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets') == null) {
           WidgetKit.setItem(
@@ -615,14 +638,20 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         List<Map<String, dynamic>> snippetResponses = await Database().getSnippetsResponses();
         List<String> responseStrings = [];
         List<String> unansweredQuestions = [];
-
+        DateTime? anonymousRemovalDateRes;
         for (var response in snippetResponses) {
           if(unansweredQuestions.contains(response["snippetId"])) {
             continue;
           }
+          if(snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["type"] == "anonymous"){
+
+            DateTime lastRecieved = snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["lastRecieved"];
+            anonymousRemovalDateRes = lastRecieved.add(const Duration(days: 1));
+
+          }
          
 
-          responseStrings.add("${response["displayName"]}|${snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["question"]}|${response["answer"]}|${response["snippetId"]}|${response["uid"]}|${snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["type"] == "anonymous"}|${snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["answered"]}");
+          responseStrings.add("${response["displayName"]}|${snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["question"]}|${response["answer"]}|${response["snippetId"]}|${response["uid"]}|${snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["type"]}|${snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["answered"]}");
           if(snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["answered"] == false) {
             unansweredQuestions.add(response["snippetId"]);
           }
@@ -631,7 +660,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         if(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets') == null) {
           WidgetKit.setItem(
             'snippetsResponsesData',
-            jsonEncode({"responses": responseStrings}),
+            jsonEncode({"responses": responseStrings, "anonymousRemovalDate":anonymousRemovalDateRes != null ? DateFormat("yyyy-MM-dd HH:mm:ss").format(anonymousRemovalDateRes) : ""}),
             'group.kazoom_snippets');
           WidgetKit.reloadAllTimelines();
         } else {
@@ -640,7 +669,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           if(!compareResponsesList(oldResponses, responseStrings)) {
             WidgetKit.setItem(
               'snippetsResponsesData',
-              jsonEncode({"responses": responseStrings}),
+              jsonEncode({"responses": responseStrings, "anonymousRemovalDate":anonymousRemovalDateRes != null ? DateFormat("yyyy-MM-dd HH:mm:ss").format(anonymousRemovalDateRes) : ""}),
               'group.kazoom_snippets');
             WidgetKit.reloadAllTimelines();
           }
@@ -651,6 +680,11 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         
         await LocalDatabase().deleteOldResponse();
         // await AppBadge.resetBadge();
+        //Check if on IOS
+        if(Platform.isIOS){
+          AppBadge.resetBadge();
+          WidgetKit.setItem("badgeCount", 0, 'group.kazoom_snippets');
+        }
 
         //Check if FCM token changed
         String deviceToken = await PushNotifications().getDeviceToken();

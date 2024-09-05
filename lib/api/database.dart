@@ -81,5 +81,52 @@ class Database {
     return responses;
   }
 
+  Future getSnippetResponses(StreamController controller, String snippetId, bool isAnonymous, bool getFriends, List<String> friendsToGet, List<String> friends) async {
+    SnipResponse? latestResponse = await LocalDatabase().getLatestResponse(snippetId);
+    DateTime? lastUpdated = latestResponse?.date;
+    print("Last updated FIRST: $lastUpdated");
+    StreamController fbcontroller = StreamController();
+    List<Map<String, dynamic>> responses = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).getSnippetResponses(snippetId, lastUpdated, isAnonymous);
+    for (var response in responses) {
+      print("Adding response to local db");
+      response["snippetId"] = snippetId;
+
+      await LocalDatabase().addResponse(response);
+    }
+    latestResponse = await LocalDatabase().getLatestResponse(snippetId);
+    lastUpdated = latestResponse?.date;
+    print("Last updated SECOND: $lastUpdated");
+    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+            .getResponsesList(snippetId, lastUpdated, getFriends, friendsToGet, isAnonymous, fbcontroller);
+
+    fbcontroller.stream.listen((event) async{
+      if(controller.isClosed) return;
+      print("Event: $event");
+      for (var element in event.docs) {
+        Map<String, dynamic> data = element.data() as Map<String, dynamic>;
+           
+
+        Map<String, dynamic> responseMap = {
+          "snippetId": snippetId,
+          "uid": data["uid"],
+          "displayName": data["displayName"],
+          "answer": data["answer"],
+          "date": data["date"].toDate(),
+          "lastUpdated": data["lastUpdated"].toDate()
+          
+          
+        };
+        LocalDatabase().addResponse(responseMap);
+      }
+    });
+    Stream<dynamic> responsesStream = await LocalDatabase().getResponses(snippetId, friends, isAnonymous);
+    responsesStream.listen((event) {
+      if(controller.isClosed) return;
+      controller.add(event);
+    });
+
+
+  }
+
  
 }

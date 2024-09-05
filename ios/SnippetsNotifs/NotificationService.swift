@@ -69,7 +69,7 @@ class NotificationService: UNNotificationServiceExtension {
                   var flutterData = try? JSONDecoder().decode(SnippetsData.self, from: (sharedDefaults?
                       .string(forKey: "snippetsData")?.data(using: .utf8)) ?? Data())
                   if(flutterData == nil ){
-                      flutterData = SnippetsData(questions: [], ids: [], indexes: [], isAnonymous: [], hasAnswereds: [])
+                      flutterData = SnippetsData(questions: [], ids: [], indexes: [], isAnonymous: [], hasAnswereds: [], anonymousRemovalDate: "")
                   }
     
     
@@ -116,7 +116,9 @@ class NotificationService: UNNotificationServiceExtension {
                 }
     
     
-    
+                  if(userInfo["snippetType"] as! String == "anonymous"){
+                      flutterData!.anonymousRemovalDate = userInfo["anonymousRemovalDate"] as! String
+                  }
     
                   sharedDefaults?.set(encodeSnippetsDataToJSON(snippetsData: flutterData!), forKey: "snippetsData")
     
@@ -149,7 +151,7 @@ class NotificationService: UNNotificationServiceExtension {
                   var flutterData = try? JSONDecoder().decode(SnippetsRData.self, from: (sharedDefaults?
                       .string(forKey: "snippetsResponsesData")?.data(using: .utf8)) ?? Data())
                   var oldResponses = flutterData!.responses
-                  let responseString = "\(userInfo["displayName"] ?? "")|\(userInfo["question"] ?? "")|\(userInfo["response"] ?? "")|\(userInfo["snippetId"] ?? "")|\(userInfo["uid"] ?? "")|\(userInfo["snippetType"] as! String == "anonymous")|\(userInfo["answered"] ?? "")";
+                  let responseString = "\(userInfo["displayName"] ?? "")|\(userInfo["question"] ?? "")|\(userInfo["response"] ?? "")|\(userInfo["snippetId"] ?? "")|\(userInfo["uid"] ?? "")|\(userInfo["snippetType"] ?? "")|\(userInfo["answered"] ?? "")";
                   if(!oldResponses.contains(responseString)) {
                       var answeredSnippets: [String] = []
                       oldResponses.append(responseString);
@@ -172,6 +174,7 @@ class NotificationService: UNNotificationServiceExtension {
         
                       flutterData!.responses = oldResponses
                       print("RESPONSES: \(oldResponses)")
+                      
         
                       sharedDefaults?.set(encodeSnippetRDataToJSON(snippetsRData: flutterData!), forKey: "snippetsResponsesData")
                           WidgetCenter.shared.reloadAllTimelines()
@@ -325,6 +328,7 @@ class NotificationService: UNNotificationServiceExtension {
      struct SnippetsRData: Decodable, Hashable, Encodable {
          var responses: [String]
          
+         
       
          
      }
@@ -347,6 +351,7 @@ class NotificationService: UNNotificationServiceExtension {
         var indexes: [Int]
         var isAnonymous: [Bool]
         var hasAnswereds: [Bool]
+        var anonymousRemovalDate: String
     }
 
 }

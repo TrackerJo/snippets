@@ -1,16 +1,18 @@
 import 'dart:async';
-import 'dart:math';
+
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:snippets/api/database.dart';
 import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/api/local_database.dart';
 import 'package:snippets/helper/helper_function.dart';
-import 'package:snippets/pages/discussion_page.dart';
+import 'package:snippets/main.dart';
+
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
-import 'package:snippets/widgets/custom_page_route.dart';
+
 import 'package:snippets/widgets/response_tile.dart';
 
 class ResponsesPage extends StatefulWidget {
@@ -34,7 +36,7 @@ class ResponsesPage extends StatefulWidget {
 }
 
 class _ResponsesPageState extends State<ResponsesPage> {
-  Stream? responsesListStream;
+
   String userDisplayName = "";
   String userResponse = "";
   List<dynamic> discussionUsers = [];
@@ -62,9 +64,13 @@ class _ResponsesPageState extends State<ResponsesPage> {
 
   void getResponsesList() async {
     await HelperFunctions.saveOpenedPageSF("responses-${widget.snippetId}");
-    SnipResponse? latestResponse = await LocalDatabase().getLatestResponse(widget.snippetId);
-    DateTime? latestResDate = latestResponse?.date;
-    print("Latest response date: $latestResDate");
+      List<Map<String, dynamic>> snippets = await Database().getSnippetsList();
+      bool snippetExists = snippets.any((e) => e["snippetId"] == widget.snippetId);
+      if(!snippetExists){
+        router.pushReplacement("/");
+      }
+
+
     List<String> newFriends = [];
     List<String> removedFriends = [];
     List<String> friends = [];
@@ -72,7 +78,8 @@ class _ResponsesPageState extends State<ResponsesPage> {
       Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
       friends = toStringList(userData["friends"]);
       List<String> responsesIDs = await LocalDatabase().getCachedResponsesIDs(widget.snippetId);
-      
+      print("Friends: $friends");
+      print("Responses: $responsesIDs");
   
       if(!compareLists(friends, responsesIDs)){
         for (var item in friends) {
@@ -93,51 +100,16 @@ class _ResponsesPageState extends State<ResponsesPage> {
 
       }
     }
-     var responsesList =
-        await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-            .getResponsesList(widget.snippetId, latestResDate, newFriends.isNotEmpty, newFriends, widget.isAnonymous);
-    var localResponses = await LocalDatabase().getResponses(widget.snippetId, friends, widget.isAnonymous);
+    StreamController responsesList = StreamController();
+    await Database().getSnippetResponses(responsesList, widget.snippetId, widget.isAnonymous, newFriends.isNotEmpty, newFriends, friends);
 
-    localResponses.listen((event) {
+    responsesList.stream.listen((event) {
       if(responsesStream.isClosed) return;
+      print("Local Responses: $event");
       responsesStream.add(event);
     });
-    responsesList.listen((event) {
-      if(responsesStream.isClosed) return;
-      print("Firebase response");
-      print(event);
-      print(event.docs.length);
-
-        if(event.docs.isNotEmpty){
-
-
-          //Go through each chat and add to local database
-          for (var i = 0; i < event.docs.length; i++) {
-            Map<String, dynamic> data = event.docs[i].data() as Map<String, dynamic>;
-           
-            print("Adding chat to local database ${data['answer']} ");
-            Map<String, dynamic> responseMap = {
-              "snippetId": widget.snippetId,
-              "uid": data["uid"],
-              "displayName": data["displayName"],
-              "answer": data["answer"],
-              "date": data["date"].toDate(),
-              "lastUpdated": data["lastUpdated"].toDate()
-              
-              
-            };
-            LocalDatabase().addResponse(responseMap);
-            
-          }
-         
-
-        }
-    });
-    if (mounted) {
-      setState(() {
-        responsesListStream = responsesList;
-      });
-    }
+    
+    
   }
 
   void getUserDisplayName() async {
@@ -241,10 +213,10 @@ class _ResponsesPageState extends State<ResponsesPage> {
                       clipBehavior: Clip.none,
                       itemCount: snapshot.data.length + 1,
                       itemBuilder: (context, index) {
-                        print("INDEX $index");
+
                         if (index == 0 ) {
                           if(widget.isAnonymous){
-                            return SizedBox();
+                            return const SizedBox();
                           }
                           // return the header
                           return Padding(

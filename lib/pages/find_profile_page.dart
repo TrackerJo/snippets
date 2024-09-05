@@ -3,10 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:snippets/api/auth.dart';
 import 'package:snippets/api/fb_database.dart';
-import 'package:snippets/helper/helper_function.dart';
-import 'package:snippets/main.dart';
 import 'package:snippets/templates/input_decoration.dart';
 import 'package:snippets/widgets/profile_tile.dart';
 
@@ -30,8 +27,6 @@ class _FindProfilePageState extends State<FindProfilePage> {
     
 
     List<Map<String, dynamic>> mutual = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).getSuggestedFriends();
-    print("mutual");
-    print(mutual);
     if(!mounted) return;
     setState(() {
       if(!mounted) return;
@@ -56,7 +51,7 @@ class _FindProfilePageState extends State<FindProfilePage> {
       super.didUpdateWidget(oldWidget);
       if(!mounted) return;
       if(widget.index != 3) return;
-      print("INDEX CHANGED to ${widget.index}");
+
       getData();
     }
 

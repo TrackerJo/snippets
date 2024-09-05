@@ -8,7 +8,6 @@ import 'package:snippets/api/notifications.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/providers/card_provider.dart';
 import 'package:snippets/templates/colorsSys.dart';
-import 'package:snippets/templates/input_decoration.dart';
 import 'package:snippets/widgets/botw_voting_card.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
 
@@ -67,7 +66,7 @@ class _VotingPageState extends State<VotingPage> {
     Map<String, dynamic> nblank = {};
     if(widget.blank.isEmpty){
       nblank = await Database().getBOTW();
-      print("Blank: $nblank");
+
       setState(() {
         blank = nblank;
       });
@@ -81,7 +80,7 @@ class _VotingPageState extends State<VotingPage> {
     
     Map<String, dynamic> data = await HelperFunctions.getUserDataFromSF();
     final provider = Provider.of<CardProvider>(context, listen: false);
-    print(nblank);
+
 
     provider.setAnswers(getAnswers(nblank["answers"], data));
     provider.setOnLike(voteForAnswer);
@@ -120,7 +119,7 @@ class _VotingPageState extends State<VotingPage> {
       }
      
       
-      print(votedAnswers);
+
     });
  await Future.delayed(const Duration(milliseconds: 400));
     setState(() {
@@ -136,7 +135,7 @@ class _VotingPageState extends State<VotingPage> {
      
 
 
-      print(movedAnswers);
+
     });
   }
 
@@ -186,7 +185,7 @@ class _VotingPageState extends State<VotingPage> {
             children:[ 
               const SizedBox(height: 20),
               Text("Best ${blank["blank"]}", style: const TextStyle(color: Colors.white, fontSize: 26)  ),
-              Text("Vote for the best three answers", style: const TextStyle(color: Colors.white, fontSize: 16)),
+              const Text("Vote for the best three answers", style: TextStyle(color: Colors.white, fontSize: 16)),
              const SizedBox(height: 10),
               Text("Votes left: $votesLeft", style: const TextStyle(color: Colors.white, fontSize: 20)),
               const SizedBox(height: 20),
@@ -214,13 +213,13 @@ class _VotingPageState extends State<VotingPage> {
                       final provider = Provider.of<CardProvider>(context, listen: false);
                       provider.goBack(movedAnswers.last);
                       setState(() {
-                        if(votedAnswers.contains(movedAnswers.last)) {votedAnswers.removeLast(); votesLeft++;};
+                        if(votedAnswers.contains(movedAnswers.last)) {votedAnswers.removeLast(); votesLeft++;}
                         answers.add(movedAnswers.last);
                         movedAnswers.removeLast();
 
                       });
                     
-                    }, splashColor: ColorSys.primary,icon: Icon(Icons.rotate_left, color: Colors.white, size: 30)),
+                    }, splashColor: ColorSys.primary,icon: const Icon(Icons.rotate_left, color: Colors.white, size: 30)),
                   ),
                   const SizedBox(width: 20),
                   Container(
@@ -248,13 +247,13 @@ class _VotingPageState extends State<VotingPage> {
                       provider.like();
                      
                     
-                    }, splashColor: ColorSys.primary,icon: Icon(Icons.check, color: Colors.white, size: 30)),
+                    }, splashColor: ColorSys.primary,icon: const Icon(Icons.check, color: Colors.white, size: 30)),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
               
-              Text("Answers Voted For", style: const TextStyle(color: Colors.white, fontSize: 20)),
+              const Text("Answers Voted For", style: TextStyle(color: Colors.white, fontSize: 20)),
               const SizedBox(height: 10),
               Expanded(
                 child: ListView.builder(
@@ -290,7 +289,7 @@ class _VotingPageState extends State<VotingPage> {
                             votedAnswers.removeAt(index);
                             votesLeft++;
                           });
-                        }, splashColor: ColorSys.primary, icon: Icon(Icons.delete, color: Colors.white, size: 30)),
+                        }, splashColor: ColorSys.primary, icon: const Icon(Icons.delete, color: Colors.white, size: 30)),
 
                       )
                             )
@@ -362,7 +361,7 @@ class _VotingPageState extends State<VotingPage> {
     }).toList()
    ) :  Container(
      
-      child: Column(
+      child: const Column(
         children: [
           
           Text("No more answers", style: TextStyle(color: Colors.white, fontSize: 20)),

@@ -15,12 +15,14 @@ import WidgetKit
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
       ) -> Bool {
         GeneratedPluginRegistrant.register(with: self)
-          BGTaskScheduler.shared.register(forTaskWithIdentifier: "com.kazoom.snippet.refreshWidgets", using: nil) { task in
-               self.handleWidgetRefresh(task: task as! BGProcessingTask)
-          }
-          
+         
+          if #available(iOS 16.0, *) {
+              UNUserNotificationCenter.current().setBadgeCount(0)
+          } else {
               var badgeManager = AppAlertBadgeManager(application: UIApplication.shared)
               badgeManager.resetAlertBadgeNumber()
+              
+          }
           UserDefaults.init(suiteName: "group.kazoom_snippets")?.set(0, forKey: "badgeCount")
           
        
@@ -28,152 +30,7 @@ import WidgetKit
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
       }
     
-    func handleWidgetRefresh(task: BGProcessingTask) {
-      
-        let sharedDefaults = UserDefaults.init(suiteName: "group.kazoom_snippets")
-        
-       print("recieved notif")
-        
-       
-            // Modify the notification content here...
-//            bestAttemptContent.title = "\(bestAttemptContent.title) [modified]"
     
-        let userInfo = try? JSONDecoder().decode(CodableDictionary.self, from: (sharedDefaults?.string(forKey: "userInfo")?.data(using: .utf8))!)
-            print("modif title")
-        if(userInfo!.data["type"]?.value as! String == "new-botw"){
-                var total: String = userInfo!.data["blank"]?.value as! String
-                if(total == "") {return}
-                total = total.replacingOccurrences(of: " of", with: "|")
-                var blank = total.split(separator: "|")[0]
-               var data = BOTWData(
-                text: String(blank),
-                answers: []
-               )
-                sharedDefaults?.set(encodeBOTWToJSON(botwData: data), forKey: "botwData")
-                WidgetCenter.shared.reloadAllTimelines()
-               
-              } else if(userInfo!.data["type"]?.value as! String == "question"){
-    
-    
-                  var flutterData = try? JSONDecoder().decode(SnippetsData.self, from: (sharedDefaults?
-                      .string(forKey: "snippetsData")?.data(using: .utf8)) ?? Data())
-                  if(flutterData == nil ){
-                      flutterData = SnippetsData(questions: [], ids: [], indexes: [], isAnonymous: [], hasAnswereds: [])
-                  }
-    
-    
-    
-                  var indexData = Int(userInfo!.data["index"]?.value as! String);
-    
-                  var index = flutterData!.indexes.firstIndex(of: indexData!)
-                  if(index == nil){
-                      index = -1
-                  }
-    
-                if(index == -1) {
-    
-                    flutterData!.questions.append(userInfo!.data["question"]?.value as! String);
-                    flutterData!.ids.append(userInfo!.data["snippetId"]?.value as! String);
-    
-                flutterData!.indexes.append(indexData!);
-                    flutterData!.isAnonymous.append(userInfo!.data["snippetType"]?.value as! String == "anonymous");
-                    flutterData!.hasAnswereds.append(false);
-    
-                } else {
-                  //Old question
-                    var oldId = flutterData!.ids[index!];
-                  //Delete old responses
-                    var oldResponses = try? JSONDecoder().decode(SnippetsRData.self, from: (sharedDefaults?
-                        .string(forKey: "snippetsResponsesData")?.data(using: .utf8)) ?? Data())
-    
-                    var newResponses: [String] = [];
-                    for response in oldResponses!.responses {
-                        if(response.split(separator: "|")[3] == oldId) {
-                      continue;
-                    }
-                    newResponses.append(response);
-                  }
-                    oldResponses!.responses = newResponses;
-    
-                    sharedDefaults?.set(encodeSnippetRDataToJSON(snippetsRData: oldResponses!), forKey: "snippetsResponsesData")
-                    flutterData!.questions[index!] = userInfo!.data["question"]?.value as! String;
-                    flutterData!.ids[index!] = userInfo!.data["snippetId"]?.value as! String;
-    
-                    flutterData!.indexes[index!] = indexData!;
-                    flutterData!.isAnonymous[index!] = userInfo!.data["snippetType"]?.value as! String == "anonymous";
-                    flutterData!.hasAnswereds[index!] = false;
-                }
-    
-    
-    
-    
-                  sharedDefaults?.set(encodeSnippetsDataToJSON(snippetsData: flutterData!), forKey: "snippetsData")
-    
-               
-    
-              } else if(userInfo!.data["type"]?.value as! String == "widget-botw-answer"){
-                  var flutterData = try? JSONDecoder().decode(BOTWData.self, from: (sharedDefaults?
-                      .string(forKey: "botwData")?.data(using: .utf8)) ?? Data())
-    
-                  let answer = Answer(uid: userInfo!.data["uid"]?.value as! String, answer: userInfo!.data["answer"]?.value as! String, displayName: userInfo!.data["displayName"]?.value as! String)
-    
-                  var oldAnswers = flutterData!.answers
-                //Check if answer already exists
-                 var oldAnswer = oldAnswers.first(where: {$0.uid == userInfo!.data["uid"]?.value as! String})
-                if(oldAnswer == nil) {
-                  oldAnswers.append(answer);
-                } else {
-                    if let i = oldAnswers.firstIndex(of: oldAnswer!) {
-                        oldAnswers[i] = answer
-                    }
-    
-                }
-                  flutterData!.answers = oldAnswers;
-    
-                  sharedDefaults?.set(encodeBOTWToJSON(botwData: flutterData!), forKey: "botwData")
-                  WidgetCenter.shared.reloadAllTimelines()
-    
-    
-              } else if(userInfo!.data["type"]?.value as! String == "snippetAnswered"){
-                  var flutterData = try? JSONDecoder().decode(SnippetsRData.self, from: (sharedDefaults?
-                      .string(forKey: "snippetsResponsesData")?.data(using: .utf8)) ?? Data())
-                  var oldResponses = flutterData!.responses
-                  let responseString = "\(userInfo!.data["displayName"]?.value ?? "")|\(userInfo!.data["question"]?.value ?? "")|\(userInfo!.data["response"]?.value ?? "")|\(userInfo!.data["snippetId"]?.value ?? "")|\(userInfo!.data["uid"]?.value ?? "")|\(userInfo!.data["snippetType"]?.value as! String == "anonymous")|\(userInfo!.data["answered"]?.value ?? "")";
-                  if(oldResponses.contains(responseString)) {
-                      return;
-                    }
-                  var answeredSnippets: [String] = []
-                  oldResponses.append(responseString);
-                  for response in oldResponses {
-                      var splitR = response.split(separator: "|")
-                      if(splitR[6] == "true" && !answeredSnippets.contains(String(splitR[3]))) {
-                          answeredSnippets.append(String(splitR[3]))
-    
-                      }
-                  }
-                  for response in oldResponses {
-                      var splitR = response.split(separator: "|")
-                      if(splitR[6] != "true" && answeredSnippets.contains(String(splitR[3]))) {
-                          splitR[6] = "true"
-                          oldResponses[oldResponses.firstIndex(of: response)!] = splitR.joined(separator: "|")
-    
-                      }
-                  }
-    
-    
-                  flutterData!.responses = oldResponses
-                  print("RESPONSES: \(oldResponses)")
-    
-                  sharedDefaults?.set(encodeSnippetRDataToJSON(snippetsRData: flutterData!), forKey: "snippetsResponsesData")
-                      WidgetCenter.shared.reloadAllTimelines()
-    
-                      // Fallback on earlier versions
-    
-                
-              }
-          task.setTaskCompleted(success: true)
-       
-     }
     
     struct AnyCodable: Codable {
         let value: Any

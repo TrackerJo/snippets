@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:snippets/api/database.dart';
-import 'package:snippets/api/fb_database.dart';
+
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/widgets/botw_result_tile.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
@@ -73,7 +73,7 @@ class _BotwResultsPageState extends State<BotwResultsPage> {
             
             children:[ 
               const SizedBox(height: 20),
-              if(results.length > 0)
+              if(results.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: BOTWResultTile(displayName: results[0]["displayName"], answer: results[0]["answer"], votes: results[0]["votes"], ranking: 1, userId: results[0]["userId"]),

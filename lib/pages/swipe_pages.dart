@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
+
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -9,24 +9,27 @@ import 'package:flutter_widgetkit/flutter_widgetkit.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:snippets/api/auth.dart';
 import 'package:snippets/api/fb_database.dart';
-import 'package:snippets/api/notifications.dart';
+
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/pages/discussions_page.dart';
 import 'package:snippets/pages/find_profile_page.dart';
 import 'package:snippets/pages/friends_page.dart';
 import 'package:snippets/pages/home_page.dart';
+import 'package:snippets/pages/modify_profile_page.dart';
 import 'package:snippets/pages/profile_page.dart';
-import 'package:snippets/pages/welcome_page.dart';
+
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
 import 'package:snippets/widgets/custom_nav_bar.dart';
 import 'package:snippets/widgets/custom_page_route.dart';
+import 'package:snippets/widgets/helper_functions.dart';
 import 'package:snippets/widgets/widget_gradient_tile.dart';
 
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:url_launcher/url_launcher.dart';
 
 class SwipePages extends StatefulWidget {
   final int initialIndex;
@@ -51,7 +54,7 @@ class _SwipePagesState extends State<SwipePages> {
   void getData()async{
 
     bool status = await Auth().isUserLoggedIn();
-    print(status);
+
     if(!status){
       router.pushReplacement("/login");
       return;
@@ -82,7 +85,7 @@ class _SwipePagesState extends State<SwipePages> {
       setState(() {
         userData = event;
         hasFriendRequests = userData["friendRequests"].length > 0;
-        print("${mondayString == userData["botwStatus"]["date"]}" );
+
         if(userData["botwStatus"]["hasAnswered"] && userData["botwStatus"]["date"] == mondayString && now.weekday < 6){
           //Check if date is sat or sun
           hasAnsweredBOTW = true;
@@ -189,83 +192,6 @@ class _SwipePagesState extends State<SwipePages> {
     
   }
 
-  showDiscriptionPopup(BuildContext context) {
-    return showDialog(
-      context: context,
-
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-
-      return GestureDetector(
-         onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-        child: SingleChildScrollView(
-          
-          child: AlertDialog(
-            backgroundColor: ColorSys.background,
-            
-            title: Text("Profile's Description",
-                style: TextStyle(color: ColorSys.primary)),
-            content: SizedBox(
-              width: 300,
-              height: 300,
-              child: Column(
-                children: [
-                  const Text(
-                      "Enter a short description about yourself. This will be visible to other users.",
-                      style: TextStyle(color: Colors.white)),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  TextFormField(
-                    onTap: () => HapticFeedback.selectionClick(),
-                    initialValue: editDescription,
-                    maxLines: 6,
-                    decoration: textInputDecoration.copyWith(
-                      hintText: 'Description',
-                      counterStyle: TextStyle(color: Colors.white),
-                      // counter: Text("Characters: ${editDescription.length}/125", style: TextStyle(color: Colors.white, fontSize: 11)),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        print(value);
-                        editDescription = value;
-                      });
-                    },
-                    maxLength: 125,
-                    maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text("Cancel"),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorSys.primary,
-                ),
-                onPressed: () async {
-                  setState(() {
-                    userData["description"] = editDescription;
-                  });
-          
-                  await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-                      .updateUserDescription(editDescription);
-                  Navigator.of(context).pop();
-                },
-                child: const Text("Save", style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
-        ),
-      );
-      }
-    );
-  }
 
   void onSettingsButtonPressed() {
   HapticFeedback.mediumImpact();
@@ -281,7 +207,7 @@ class _SwipePagesState extends State<SwipePages> {
                   ),
                   builder: (BuildContext context) {
                     return SizedBox(
-                        height: 425,
+                        height: 525,
                         child: Padding(
                             padding: const EdgeInsets.all(32.0),
                             child: Column(
@@ -291,7 +217,7 @@ class _SwipePagesState extends State<SwipePages> {
                                   child: ElevatedButton(
                                       onPressed: () {
                                         HapticFeedback.mediumImpact();
-                                        print("Log Out");
+
                                         logout();
                                       },
                                       style: ElevatedButton.styleFrom(
@@ -311,9 +237,7 @@ class _SwipePagesState extends State<SwipePages> {
                                   child: ElevatedButton(
                                       onPressed: () {
                                         HapticFeedback.mediumImpact();
-                                        editDescription =
-                                            userData["description"];
-                                        showDiscriptionPopup(context);
+                                        nextScreen(context, const ModifyProfilePage());
                                       },
                                       style: ElevatedButton.styleFrom(
                                           backgroundColor: ColorSys.purpleBtn,
@@ -322,7 +246,7 @@ class _SwipePagesState extends State<SwipePages> {
                                               borderRadius:
                                                   BorderRadius.circular(12)),
                                           shadowColor: ColorSys.primaryDark),
-                                      child: const Text("Edit Description",
+                                      child: const Text("Modify Profile",
                                           style: TextStyle(
                                               color: Colors.white, fontSize: 15))),
                                 ),
@@ -365,7 +289,7 @@ class _SwipePagesState extends State<SwipePages> {
                                           style: TextStyle(
                                               color: Colors.white, fontSize: 15))),
                                 ),
-                                 const SizedBox(height: 20),
+                                   const SizedBox(height: 20),
                                 SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton(
@@ -385,10 +309,156 @@ class _SwipePagesState extends State<SwipePages> {
                                           style: TextStyle(
                                               color: Colors.white, fontSize: 15))),
                                 ),
+                                 const SizedBox(height: 20),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                      onPressed: () async {
+                                        HapticFeedback.mediumImpact();
+                                          Uri sms = Uri.parse('mailto:kazoom.apps@gmail.com?subject=Snippet%20App%20Support');
+                                          if (await launchUrl(sms)) {
+                                              
+                                          }else{
+                                            showDialog(
+                                                context: context,
+                                                builder: (BuildContext context) {
+                                                  return AlertDialog(
+                                                    title: const Text("Unable to open messaging app"),
+                                                    content: const Text("Please try again later."),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(context).pop();
+                                                        },
+                                                        child: const Text("Okay"),
+                                                      ),
+                                                    ],
+                                                  );
+                                                }
+                                            );
+                                          }
+                                        
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: ColorSys.purpleBtn,
+                                          elevation: 10,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12)),
+                                          shadowColor: ColorSys.primaryDark),
+                                      child: const Text("Contact Support",
+                                          style: TextStyle(
+                                              color: Colors.white, fontSize: 15))),
+                                ),
+                                const SizedBox(height: 20),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                      onPressed: () {
+                                        HapticFeedback.mediumImpact();
+                                        showAboutTheDeveloperSheet(context);
+                                        
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: ColorSys.purpleBtn,
+                                          elevation: 10,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12)),
+                                          shadowColor: ColorSys.primaryDark),
+                                      child: const Text("About the Developer",
+                                          style: TextStyle(
+                                              color: Colors.white, fontSize: 15))),
+                                ),
                               ],
                             )));
                   });
             
+  }
+
+  void showAboutTheDeveloperSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+                  context: context,
+                  backgroundColor: ColorSys.background,
+                  isScrollControlled: true,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(23),
+                      topRight: Radius.circular(23),
+                    ),
+                  ),
+                  builder: (BuildContext context) {
+                    return SizedBox(
+                        height: MediaQuery.of(context).size.height - 90,
+                        child: Padding(
+                            padding: const EdgeInsets.all(32.0),
+                            child: Column(
+                              children: [
+                                //  Text("About the Developer", style: TextStyle(color: ColorSys.primary, fontSize: 30),),
+                                // const SizedBox(height: 20),
+                               Text("Hi! I'm Nathaniel Kemme Nash", style: TextStyle(color: ColorSys.primary, fontSize: 30, fontWeight: FontWeight.bold),),
+                                const SizedBox(height: 20),
+                                const Text("I'm a self taught programmer, who made Snippets in high school", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w500),),
+                                const SizedBox(height: 10),
+                                const Text("My passion is making websites and apps that help people, even if it's just one person", style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),),
+                                const SizedBox(height: 10),
+                                const Text("I've been coding for about 7 years, and in that time I've made a few small video games, a programming language, an e-commerce store for a school, and so much more! I've even co-founded a company!", style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),),
+                                const SizedBox(height: 10),
+
+                                ElevatedButton(onPressed: () async {
+                                  HapticFeedback.mediumImpact();
+                                  Uri sms = Uri.parse('https://github.com/TrackerJo');
+                                  if (await launchUrl(sms)) {
+                                      
+                                  }else{
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: const Text("Unable to open messaging app"),
+                                            content: const Text("Please try again later."),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child: const Text("Okay"),
+                                              ),
+                                            ],
+                                          );
+                                        }
+                                    );
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  elevation: 10,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: BorderSide(color: ColorSys.primaryDark, width: 2)
+                                    
+
+                                  ),
+                                  surfaceTintColor: ColorSys.primaryDark,
+
+                                  // shadowColor: ColorSys.primaryDark,
+                                  // Change the shadow position
+
+                                ) 
+                                ,child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                   Image.asset("assets/github.png", width: 20, height: 20,),
+                                    const SizedBox(width: 10),
+                                    const Text("View My Github", style: TextStyle(color: Colors.white),),
+                                    
+                                  ],
+                                )),
+                               
+                              ],
+                            )));
+                  });
+    
   }
 
    void widgetCustomization() async {
@@ -432,7 +502,7 @@ class _SwipePagesState extends State<SwipePages> {
                                     children: [
                                       Text("Customize Widgets", style: TextStyle(color: ColorSys.primary, fontSize: 20),),
                                       const SizedBox(height: 20),
-                                      Text("Select a color for the Snippet of the Week Widget", textAlign: TextAlign.center,style: TextStyle(color: Colors.white),),
+                                      const Text("Select a color for the Snippet of the Week Widget", textAlign: TextAlign.center,style: TextStyle(color: Colors.white),),
                                       const SizedBox(height: 20),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -511,7 +581,7 @@ class _SwipePagesState extends State<SwipePages> {
                                         ],
                                       ),
                                       const SizedBox(height: 20),
-                                      Text("Select a color for the Current Snippet Widget", style: TextStyle(color: Colors.white),),
+                                      const Text("Select a color for the Current Snippet Widget", style: TextStyle(color: Colors.white),),
                                       const SizedBox(height: 20),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -589,7 +659,7 @@ class _SwipePagesState extends State<SwipePages> {
                                         ],
                                       ),
                                       const SizedBox(height: 20),
-                                      Text("Select a color for the Responses Widget", style: TextStyle(color: Colors.white),),
+                                      const Text("Select a color for the Responses Widget", style: TextStyle(color: Colors.white),),
                                       const SizedBox(height: 20),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -701,12 +771,13 @@ class _SwipePagesState extends State<SwipePages> {
                   maxLines: 6,
                   decoration: textInputDecoration.copyWith(
                     hintText: 'Feedback',
-                    counterStyle: TextStyle(color: Colors.white),
+                    counterStyle: const TextStyle(color: Colors.white),
+                    fillColor: ColorSys.primaryInput,
                     // counter: Text("Characters: ${editDescription.length}/125", style: TextStyle(color: Colors.white, fontSize: 11)),
                   ),
                   onChanged: (value) {
                     setState(() {
-                      print(value);
+
                       editDescription = value;
                     });
                   },
@@ -726,7 +797,7 @@ class _SwipePagesState extends State<SwipePages> {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: ColorSys.primary,
+                backgroundColor: ColorSys.primaryDark,
               ),
               onPressed: () async {
                 HapticFeedback.mediumImpact();
@@ -781,7 +852,7 @@ class _SwipePagesState extends State<SwipePages> {
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: CustomNavBar(pageIndex: selectedIndex, pageController: pageController, hasAnsweredBOTW: hasAnsweredBOTW),
       ),
-      body: !loggedIn ? Center(child: CircularProgressIndicator(),) :
+      body: !loggedIn ? const Center(child: CircularProgressIndicator(),) :
       PageView(
         controller: pageController,
         allowImplicitScrolling: true,
@@ -799,15 +870,15 @@ class _SwipePagesState extends State<SwipePages> {
           }
           setState(() {
             selectedIndex = index;
-            print(selectedIndex);
+
           });
         },
         children: <Widget>[
-          ProfilePage(
+          const ProfilePage(
             showNavBar: false,
             showAppBar: false,
           ),
-          HomePage(),
+          const HomePage(),
           DiscussionsPage(
             index: selectedIndex,
           ),

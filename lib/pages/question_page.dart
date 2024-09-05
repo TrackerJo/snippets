@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:snippets/api/database.dart';
 import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/main.dart';
 import 'package:snippets/pages/responses_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
@@ -31,6 +33,12 @@ class _QuestionPageState extends State<QuestionPage> {
 
   void savePage() async {
     await HelperFunctions.saveOpenedPageSF("question-${widget.snippetId}");
+    List<Map<String, dynamic>> snippets = await Database().getSnippetsList();
+    bool snippetExists = snippets.any((e) => e["snippetId"] == widget.snippetId);
+    if(!snippetExists){
+      router.pushReplacement("/");
+    }
+
   }
 
   @override
@@ -71,7 +79,7 @@ class _QuestionPageState extends State<QuestionPage> {
 
   void submitAnswer() async {
     if(widget.type == "anonymous") {
-      bool hasSeenAnonymouse = (await HelperFunctions.checkIfSeenAnonymousSnippetSF())!;
+      bool hasSeenAnonymouse = (await HelperFunctions.checkIfSeenAnonymousSnippetSF());
       if(!hasSeenAnonymouse) {
         await HelperFunctions.saveSeenAnonymousSnippetSF();
         showAnonymousInfoDialog(context);

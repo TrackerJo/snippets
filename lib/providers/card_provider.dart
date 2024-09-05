@@ -93,7 +93,7 @@ class CardProvider extends ChangeNotifier {
   Future _nextCard() async {
     if (_answers.isEmpty) return;
 
-    await Future.delayed(Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 200));
     Map<String, dynamic> lastCard = _answers.last;
     _answers.removeLast();
     // _answers.insert(0, lastCard);

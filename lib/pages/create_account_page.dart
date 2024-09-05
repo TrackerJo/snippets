@@ -1,20 +1,15 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:phone_input/phone_input_package.dart';
 import 'package:snippets/api/auth.dart';
 import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 
-import 'package:snippets/pages/onboarding_page.dart';
-import 'package:snippets/pages/welcome_page.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
 
-import '../widgets/custom_page_route.dart';
 
 class CreateAccountPage extends StatefulWidget {
   final bool toProfile;

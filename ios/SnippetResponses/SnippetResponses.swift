@@ -21,23 +21,25 @@ struct Provider: TimelineProvider {
     
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
         let sharedDefaults = UserDefaults.init(suiteName: "group.kazoom_snippets")
-        let flutterData = try? JSONDecoder().decode(SnippetsData.self, from: (sharedDefaults?
+        var flutterData = try? JSONDecoder().decode(SnippetsData.self, from: (sharedDefaults?
             .string(forKey: "snippetsResponsesData")?.data(using: .utf8)) ?? Data())
          let currentDate = Date()
          var entries: [SnippetsEntry] = []
          var entryCount = 1200
          if(flutterData != nil){
+             
              if(flutterData!.responses.count == 0){
                  let entryDate = Calendar.current.date(byAdding: .hour, value: 24, to: Date())!
                  let entry = SnippetsEntry(date: entryDate, snippetsData: flutterData, responses: [], index: -2)
                  entries.append(entry)
              } else {
+                 
                  for secondOffset in 0..<entryCount {
                      let entryDate = Calendar.current.date(byAdding: .second, value: secondOffset * 3, to: currentDate)!
                      let index = secondOffset % (flutterData!.responses.count)
                      var responses: [Response] = []
                      for response in 0..<flutterData!.responses.count {
-                         responses.append(parseResponse(response: flutterData!.responses[response], index: index))
+                         responses.append(parseResponse(response: flutterData!.responses[response]))
                      }
                      let entry = SnippetsEntry(date: entryDate,snippetsData: flutterData, responses: responses, index: index)
                      entries.append(entry)
@@ -54,15 +56,14 @@ struct Provider: TimelineProvider {
         completion(timeline)
     }
     
-    func parseResponse(response: String, index: Int) -> Response {
+    func parseResponse(response: String) -> Response {
         var split = response.split(separator:"|")
         return Response(displayName: String(split[0]), question: String(split[1]), response: String(split[2]), snippetId: String(split[3]), snippetType:String(split[5]), isAnswered: split[6] == "true", userId: String(split[4]))
     }
 }
 
 struct SnippetsData: Decodable, Hashable {
-    let responses: [String]
-    
+    var responses: [String]
  
     
 }
@@ -93,6 +94,7 @@ struct SnippetResponsesEntryView : View {
             Text("Open Snippets")
                 .font(.system(size: 25, weight: .heavy))
                 .foregroundColor(.white.opacity(0.8))
+                .widgetURL(URL(string:"/"))
         }
     }
     
@@ -141,6 +143,7 @@ struct SnippetResponsesEntryView : View {
                 Text("No Responses")
                     .font(.system(size: 25, weight: .heavy))
                     .foregroundColor(.white.opacity(0.8))
+                    .widgetURL(URL(string:"/"))
                 
             }
         }else if(entry.snippetsData!.responses[entry.index].split(separator:"|")[6] == "false"){

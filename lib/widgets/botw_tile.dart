@@ -84,6 +84,7 @@ class _BOTWTileState extends State<BOTWTile> {
                           HapticFeedback.selectionClick();
                         },
                           controller: answerController,
+                          maxLines: 2,
                           decoration: textInputDecoration.copyWith(
                             hintText: "Enter submission here",
                             fillColor: ColorSys.primaryInput
@@ -109,7 +110,7 @@ class _BOTWTileState extends State<BOTWTile> {
 
                        
                       },
-                      style: elevatedButtonDecoration,
+                      style: elevatedButtonDecorationBlue,
                       child: Text(isEditting ? "Save" : "Submit",
                           style: TextStyle(fontSize: 16, color: Colors.black)),
                     ),
@@ -134,7 +135,7 @@ class _BOTWTileState extends State<BOTWTile> {
                         isEditting = true;
                         answerController.text = widget.answer["answer"];
                       });
-                    }, style: elevatedButtonDecoration, child: const Text("Edit", style: TextStyle(color: Colors.black, fontSize: 16)) ),
+                    }, style: elevatedButtonDecorationBlue, child: const Text("Edit", style: TextStyle(color: Colors.black, fontSize: 16)) ),
                   if(widget.status == "voting" && widget.isCurrentUser)
                     Text("Votes: ${widget.answer["votes"]}", style: const TextStyle(color: Colors.black, fontSize: 16)) 
                 ],

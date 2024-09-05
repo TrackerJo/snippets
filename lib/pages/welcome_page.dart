@@ -1,17 +1,15 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_signin_button/flutter_signin_button.dart';
+
 import 'package:snippets/api/auth.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
-import 'package:snippets/pages/create_account_page.dart';
-import 'package:snippets/pages/home_page.dart';
-import 'package:snippets/pages/swipe_pages.dart';
+
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
 
-import '../widgets/custom_page_route.dart';
+
 
 class WelcomePage extends StatefulWidget {
   final bool? toProfile;
@@ -30,8 +28,8 @@ class _WelcomePageState extends State<WelcomePage> {
   Auth authService = Auth();
 
   void login() {
-    print("Logging in");
-    print(widget.toProfile);
+
+
     if (formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
@@ -223,7 +221,7 @@ class _WelcomePageState extends State<WelcomePage> {
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
                                       HapticFeedback.mediumImpact();
-                                      print("Register here");
+
                                       router.pushReplacement("/createAccount/${widget.uid}/${widget.toProfile}");
                                     })
                             ]))

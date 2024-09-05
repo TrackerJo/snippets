@@ -12,23 +12,83 @@ import SwiftUI
 
 struct SnippetsProvider: TimelineProvider {
     func placeholder(in context: Context) -> SnippetsEntry {
-        SnippetsEntry(date: Date(), snippetsData: SnippetsData(questions: ["What's your favorite color?", "Pancakes or Waffles?"], ids: ["sdwd", "ss"], indexes: [0, 1], isAnonymous: [false, false], hasAnswereds: [false, false]), index: 0)
+        SnippetsEntry(date: Date(), snippetsData: SnippetsData(questions: ["What's your favorite color?", "Pancakes or Waffles?"], ids: ["sdwd", "ss"], indexes: [0, 1], isAnonymous: [false, false], hasAnswereds: [false, false], anonymousRemovalDate: ""), index: 0)
         }
 
         func getSnapshot(in context: Context, completion: @escaping (SnippetsEntry) -> ()) {
-            let entry = SnippetsEntry(date: Date(), snippetsData: SnippetsData(questions: ["What's your favorite color?", "Pancakes or Waffles?"], ids: ["sdwd", "ss"], indexes: [0, 1], isAnonymous: [false, false], hasAnswereds: [false, false]), index: 0)
+            let entry = SnippetsEntry(date: Date(), snippetsData: SnippetsData(questions: ["What's your favorite color?", "Pancakes or Waffles?"], ids: ["sdwd", "ss"], indexes: [0, 1], isAnonymous: [false, false], hasAnswereds: [false, false],anonymousRemovalDate: ""), index: 0)
             completion(entry)
         }
-
+    func parseResponse(response: String) -> Response {
+        var split = response.split(separator:"|")
+        return Response(displayName: String(split[0]), question: String(split[1]), response: String(split[2]), snippetId: String(split[3]), snippetType:String(split[5]), isAnswered: split[6] == "true", userId: String(split[4]))
+    }
+    
+    func encodeSnippetRDataToJSON(snippetsRData: SnippetsRData) -> String? {
+        let encoder = JSONEncoder()
+        
+        do {
+            let jsonData = try encoder.encode(snippetsRData)
+            print("SNIPPETRDATA: \(String(data: jsonData, encoding: .utf8) ?? "")")
+            
+            return String(data: jsonData, encoding: .utf8)
+        } catch {
+            print("Error encoding SnippetsData: \(error)")
+            return nil
+        }
+    }
+    func encodeSnippetsDataToJSON(snippetsData: SnippetsData) -> String? {
+        let encoder = JSONEncoder()
+        
+        do {
+            let jsonData = try encoder.encode(snippetsData)
+            
+            return String(data: jsonData, encoding: .utf8)
+        } catch {
+            print("Error encoding SnippetsData: \(error)")
+            return nil
+        }
+    }
         func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
             let sharedDefaults = UserDefaults.init(suiteName: "group.kazoom_snippets")
             var flutterData = try? JSONDecoder().decode(SnippetsData.self, from: (sharedDefaults?
                 .string(forKey: "snippetsData")?.data(using: .utf8)) ?? Data())
             
+            
              let currentDate = Date()
              var entries: [SnippetsEntry] = []
              var entryCount = 1200
              if(flutterData != nil){
+                 if(flutterData!.anonymousRemovalDate != ""){
+                     var dateFormatter = DateFormatter()
+                     dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+                     
+                     var AremovalDate = dateFormatter.date(from: flutterData!.anonymousRemovalDate)
+                     if(currentDate >= AremovalDate!){
+                         var indexOfAnonymous = flutterData!.isAnonymous.firstIndex(of: true)
+                         flutterData!.questions.remove(at: indexOfAnonymous!)
+                         flutterData!.ids.remove(at: indexOfAnonymous!)
+                         flutterData!.hasAnswereds.remove(at: indexOfAnonymous!)
+                         flutterData!.isAnonymous.remove(at: indexOfAnonymous!)
+                         var resData = try? JSONDecoder().decode(SnippetsRData.self, from: (sharedDefaults?
+                             .string(forKey: "snippetsResponsesData")?.data(using: .utf8)) ?? Data())
+                         if(resData != nil){
+                             var responsesList = resData!.responses
+                             for response in responsesList {
+                                 var responseObj = parseResponse(response: response)
+                                 if(responseObj.snippetType == "anonymous"){
+                                     resData!.responses.remove(at: responsesList.firstIndex(of: response)!)
+                                 }
+                             }
+                             sharedDefaults?.set(encodeSnippetRDataToJSON(snippetsRData: resData!), forKey: "snippetsResponsesData")
+                         }
+                         flutterData!.anonymousRemovalDate = ""
+                         sharedDefaults?.set(encodeSnippetsDataToJSON(snippetsData: flutterData!), forKey: "snippetsData")
+                         
+                         
+                         
+                     }
+                 }
                  for secondOffset in 0..<entryCount {
                      let entryDate = Calendar.current.date(byAdding: .second, value: secondOffset * 3, to: currentDate)!
                      let index = secondOffset % (flutterData!.questions.count)
@@ -72,6 +132,25 @@ struct SnippetsData: Decodable, Hashable, Encodable {
     var indexes: [Int]
     var isAnonymous: [Bool]
     var hasAnswereds: [Bool]
+    var anonymousRemovalDate: String
+}
+
+struct SnippetsRData: Decodable, Hashable, Encodable {
+    var responses: [String]
+    
+    
+ 
+    
+}
+
+struct Response: Decodable, Hashable {
+    let displayName: String
+    let question: String
+    let response: String
+    let snippetId: String
+    let snippetType: String
+    let isAnswered: Bool
+    let userId: String
 }
 
 struct SnippetsEntry: TimelineEntry {
@@ -217,5 +296,5 @@ struct SnippetsWidget: Widget {
 #Preview(as: .systemSmall) {
     SnippetsWidget()
 } timeline: {
-    SnippetsEntry(date: Date(), snippetsData: SnippetsData(questions: ["What's your favorite color?", "Pancakes or Waffles?"], ids: ["sdwd", "ss"], indexes: [0, 1], isAnonymous: [false, false], hasAnswereds: [false, false]), index: 0)
+    SnippetsEntry(date: Date(), snippetsData: SnippetsData(questions: ["What's your favorite color?", "Pancakes or Waffles?"], ids: ["sdwd", "ss"], indexes: [0, 1], isAnonymous: [false, false], hasAnswereds: [false, false], anonymousRemovalDate: ""), index: 0)
 }

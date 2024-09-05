@@ -5,13 +5,13 @@ import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/api/notifications.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
-import 'package:snippets/pages/home_page.dart';
+
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
-import 'package:snippets/pages/swipe_pages.dart';
+
 
 import '../widgets/custom_app_bar.dart';
-import '../widgets/custom_page_route.dart';
+
 
 class OnBoardingPage extends StatefulWidget {
   final bool? toProfile;
@@ -51,7 +51,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
+        preferredSize: const Size.fromHeight(kToolbarHeight),
         child: CustomAppBar(title: 'Welcome to Snippets', showBackButton: widget.alreadyOnboarded == true ? true : false, onBackButtonPressed: () {
           HapticFeedback.mediumImpact();
           Navigator.of(context).pop();
@@ -141,7 +141,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
             if (lastPage)
               ElevatedButton(
                 onPressed: () {
-                  print("Already Onboarded: ${widget.alreadyOnboarded}");
+
                   if(widget.alreadyOnboarded == true){
                     // router.pushReplacement("/home");
                     HapticFeedback.mediumImpact();
@@ -165,7 +165,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                 child: Text(
                   widget.alreadyOnboarded == true ? 'Back to Home' :
                   'Get Started',
-                  style: TextStyle(color: Colors.white, fontSize: 15),
+                  style: const TextStyle(color: Colors.white, fontSize: 15),
                 ),
               ),
           ]),
@@ -219,7 +219,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                     maxLines: 7,
                     decoration: textInputDecoration.copyWith(
                       hintText: 'Description',
-                      counterStyle: TextStyle(color: Colors.white),
+                      counterStyle: const TextStyle(color: Colors.white),
 
                     ),
                     onChanged: (value) => editDescription = value,

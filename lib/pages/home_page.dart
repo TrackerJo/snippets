@@ -3,11 +3,11 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:snippets/api/auth.dart';
+
+
 import 'package:snippets/api/local_database.dart';
 import 'package:snippets/helper/helper_function.dart';
-import 'package:snippets/main.dart';
+
 import 'package:snippets/widgets/snippet_tile.dart';
 
 import '../api/fb_database.dart';
@@ -34,7 +34,7 @@ class _HomePageState extends State<HomePage> {
     Snippet? latestSnippet = await LocalDatabase().getMostRecentSnippet();
     DateTime? latestSnippetDate = latestSnippet?.lastRecieved;
     
-    print(latestSnippetDate);
+
     await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
             .getCurrentSnippets(latestSnippetDate, firebaseController, snippetsStreamController);
 
@@ -42,7 +42,7 @@ class _HomePageState extends State<HomePage> {
     await LocalDatabase().getSnippets(localController, snippetsStreamController);
     localController.stream.listen((event) async {
       if(snippetsStreamController.isClosed) return;
-      print("Local Snippets");
+
       //Check for duplicates
       List<Snippet> localSnippets = event as List<Snippet>;
       List<String> read = [];
@@ -59,7 +59,7 @@ class _HomePageState extends State<HomePage> {
           }
         }
         if(read.contains(element.snippetId)){
-          print("Duplicate found");
+
           await LocalDatabase().deleteSnippetById(element.snippetId);
           duplicates.add(element.snippetId); // Collect duplicate IDs
         } else {
@@ -74,7 +74,7 @@ class _HomePageState extends State<HomePage> {
     });
     firebaseController.stream.listen((event) async {
       if(snippetsStreamController.isClosed) return;
-      print("Firebase Chats");
+
       
       if(event.docs.isNotEmpty){
         
@@ -85,10 +85,10 @@ class _HomePageState extends State<HomePage> {
           String id = userData["uid"];
           if(data["type"] == "anonymous"){
             id = await HelperFunctions.getAnonymousIDFromSF() ?? "";
-            print(id);
+
           }
           
-          print("Adding snippet to local database ${data['question']}");
+
           Map<String, dynamic> snippetMap = {
             "snippetId": event.docs[i].id,
             "lastRecieved":  data["lastRecieved"].toDate(),
