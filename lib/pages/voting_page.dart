@@ -184,7 +184,10 @@ class _VotingPageState extends State<VotingPage> {
             
             children:[ 
               const SizedBox(height: 20),
-              Text("Best ${blank["blank"]}", style: const TextStyle(color: Colors.white, fontSize: 26)  ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text("Best ${blank["blank"]}", style: const TextStyle(color: Colors.white, fontSize: 26), textAlign: TextAlign.center,  ),
+              ),
               const Text("Vote for the best three answers", style: TextStyle(color: Colors.white, fontSize: 16)),
              const SizedBox(height: 10),
               Text("Votes left: $votesLeft", style: const TextStyle(color: Colors.white, fontSize: 20)),
@@ -275,8 +278,8 @@ class _VotingPageState extends State<VotingPage> {
                                 ),
                               ), 
                               child: ListTile(
-                        title: Text(votedAnswers[index]["answer"], style: const TextStyle(color: Colors.white, fontSize: 16)),
-                        subtitle: Text(votedAnswers[index]["displayName"], style: const TextStyle(color: Colors.white, fontSize: 14)),
+                        title: Text(votedAnswers[index]["answer"], style: const TextStyle(color: Colors.black, fontSize: 16)),
+                        subtitle: Text(votedAnswers[index]["displayName"], style: const TextStyle(color: Colors.black, fontSize: 14)),
                         trailing: IconButton(onPressed: () {
                           HapticFeedback.mediumImpact();
                           setState(() {

@@ -12,16 +12,21 @@ import SwiftUI
 
 struct SnippetsProvider: TimelineProvider {
     func placeholder(in context: Context) -> SnippetsEntry {
-        SnippetsEntry(date: Date(), snippetsData: SnippetsData(questions: ["What's your favorite color?", "Pancakes or Waffles?"], ids: ["sdwd", "ss"], indexes: [0, 1], isAnonymous: [false, false], hasAnswereds: [false, false], anonymousRemovalDate: ""), index: 0)
+        SnippetsEntry(date: Date(), snippetsData: SnippetsData(snippets: ["What's your favorite color?"] ), snippets: [Snippet(question: "What's your favorite Color", id: "SDS", index: 0, isAnonymous: false, hasAnswered: false, removalDate: "")],index: 0)
         }
 
         func getSnapshot(in context: Context, completion: @escaping (SnippetsEntry) -> ()) {
-            let entry = SnippetsEntry(date: Date(), snippetsData: SnippetsData(questions: ["What's your favorite color?", "Pancakes or Waffles?"], ids: ["sdwd", "ss"], indexes: [0, 1], isAnonymous: [false, false], hasAnswereds: [false, false],anonymousRemovalDate: ""), index: 0)
+            let entry = SnippetsEntry(date: Date(), snippetsData: SnippetsData(snippets: ["What's your favorite color?", "Pancakes or Waffles?"]), snippets: [Snippet(question: "What's your favorite Color", id: "SDS", index: 0, isAnonymous: false, hasAnswered: false, removalDate: "")], index: 0)
             completion(entry)
         }
     func parseResponse(response: String) -> Response {
         var split = response.split(separator:"|")
         return Response(displayName: String(split[0]), question: String(split[1]), response: String(split[2]), snippetId: String(split[3]), snippetType:String(split[5]), isAnswered: split[6] == "true", userId: String(split[4]))
+    }
+    
+    func parseSnippet(snippet: String) -> Snippet {
+        var split = snippet.split(separator:"|")
+        return Snippet(question: String(split[0]), id: String(split[1]), index: Int(split[2]) ?? 0, isAnonymous: split[3] == "anonymous", hasAnswered: split[4] == "true", removalDate: String(split[5]))
     }
     
     func encodeSnippetRDataToJSON(snippetsRData: SnippetsRData) -> String? {
@@ -51,53 +56,59 @@ struct SnippetsProvider: TimelineProvider {
     }
         func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> ()) {
             let sharedDefaults = UserDefaults.init(suiteName: "group.kazoom_snippets")
-            var flutterData = try? JSONDecoder().decode(SnippetsData.self, from: (sharedDefaults?
-                .string(forKey: "snippetsData")?.data(using: .utf8)) ?? Data())
+            var flutterData =  loadSnippetsDataFromUserDefaults()
             
             
              let currentDate = Date()
              var entries: [SnippetsEntry] = []
              var entryCount = 1200
              if(flutterData != nil){
-                 if(flutterData!.anonymousRemovalDate != ""){
-                     var dateFormatter = DateFormatter()
-                     dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-                     
-                     var AremovalDate = dateFormatter.date(from: flutterData!.anonymousRemovalDate)
-                     if(currentDate >= AremovalDate!){
-                         var indexOfAnonymous = flutterData!.isAnonymous.firstIndex(of: true)
-                         flutterData!.questions.remove(at: indexOfAnonymous!)
-                         flutterData!.ids.remove(at: indexOfAnonymous!)
-                         flutterData!.hasAnswereds.remove(at: indexOfAnonymous!)
-                         flutterData!.isAnonymous.remove(at: indexOfAnonymous!)
-                         var resData = try? JSONDecoder().decode(SnippetsRData.self, from: (sharedDefaults?
-                             .string(forKey: "snippetsResponsesData")?.data(using: .utf8)) ?? Data())
-                         if(resData != nil){
-                             var responsesList = resData!.responses
-                             for response in responsesList {
-                                 var responseObj = parseResponse(response: response)
-                                 if(responseObj.snippetType == "anonymous"){
-                                     resData!.responses.remove(at: responsesList.firstIndex(of: response)!)
+                 for snipString in flutterData!.snippets{
+                     var snippet = parseSnippet(snippet: snipString)
+                     if(snippet.removalDate != "None") {
+                         var dateFormatter = DateFormatter()
+                         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+                         
+                         var AremovalDate = dateFormatter.date(from: snippet.removalDate)
+                         if(currentDate >= AremovalDate!){
+                             
+                             flutterData!.snippets.remove(at: flutterData!.snippets.firstIndex(of: snipString)!)
+                             
+                             var resData = try? JSONDecoder().decode(SnippetsRData.self, from: (sharedDefaults?
+                                .string(forKey: "snippetsResponsesData")?.data(using: .utf8)) ?? Data())
+                             if(resData != nil){
+                                 var responsesList = resData!.responses
+                                 for response in responsesList {
+                                     var responseObj = parseResponse(response: response)
+                                     if(responseObj.snippetId == snippet.id){
+                                         resData!.responses.remove(at: responsesList.firstIndex(of: response)!)
+                                     }
                                  }
+                                 sharedDefaults?.set(encodeSnippetRDataToJSON(snippetsRData: resData!), forKey: "snippetsResponsesData")
                              }
-                             sharedDefaults?.set(encodeSnippetRDataToJSON(snippetsRData: resData!), forKey: "snippetsResponsesData")
+                             
+                             sharedDefaults?.set(encodeSnippetsDataToJSON(snippetsData: flutterData!), forKey: "snippetsData")
+                             
+                             
+                             
                          }
-                         flutterData!.anonymousRemovalDate = ""
-                         sharedDefaults?.set(encodeSnippetsDataToJSON(snippetsData: flutterData!), forKey: "snippetsData")
-                         
-                         
-                         
                      }
                  }
+                 
+                 
                  for secondOffset in 0..<entryCount {
                      let entryDate = Calendar.current.date(byAdding: .second, value: secondOffset * 3, to: currentDate)!
-                     let index = secondOffset % (flutterData!.questions.count)
-                     let entry = SnippetsEntry(date: entryDate,snippetsData: flutterData, index: index)
+                     let index = secondOffset % (flutterData!.snippets.count)
+                     var snippets: [Snippet] = []
+                     for snipString in flutterData!.snippets {
+                         snippets.append(parseSnippet(snippet: snipString))
+                     }
+                     let entry = SnippetsEntry(date: entryDate,snippetsData: flutterData ,snippets: snippets,index: index)
                      entries.append(entry)
                  }
              } else {
                  let entryDate = Calendar.current.date(byAdding: .hour, value: 24, to: Date())!
-                 let entry = SnippetsEntry(date: entryDate, snippetsData: flutterData, index: -1)
+                 let entry = SnippetsEntry(date: entryDate, snippetsData: flutterData, snippets: [],  index: -1)
                  entries.append(entry)
              }
              
@@ -127,12 +138,17 @@ struct SnippetsProvider: TimelineProvider {
 }
 
 struct SnippetsData: Decodable, Hashable, Encodable {
-    var questions: [String]
-    var ids: [String]
-    var indexes: [Int]
-    var isAnonymous: [Bool]
-    var hasAnswereds: [Bool]
-    var anonymousRemovalDate: String
+    var snippets: [String]
+}
+
+struct Snippet: Decodable, Hashable {
+    var question: String
+    var id: String
+    var index: Int
+    var isAnonymous: Bool
+    var hasAnswered: Bool
+    var removalDate: String
+    
 }
 
 struct SnippetsRData: Decodable, Hashable, Encodable {
@@ -156,6 +172,7 @@ struct Response: Decodable, Hashable {
 struct SnippetsEntry: TimelineEntry {
     let date: Date
     let snippetsData: SnippetsData?
+    let snippets: [Snippet]
     let index: Int
 }
 
@@ -168,10 +185,10 @@ struct SnippetsEntryView : View {
     var entry: SnippetsProvider.Entry
     
     func answeredSnippet() -> some View {
-        let id: String = entry.snippetsData!.ids[entry.index]
-        let question: String = entry.snippetsData!.questions[entry.index].replacingOccurrences(of: "?", with: "~")
-        let isAnonymous: String = entry.snippetsData!.isAnonymous[entry.index] ? "anonymous" : "normal"
-        return Text(entry.snippetsData!.questions[entry.index])
+        let id: String = entry.snippets[entry.index].id
+        let question: String = entry.snippets[entry.index].question.replacingOccurrences(of: "?", with: "~")
+        let isAnonymous: String = entry.snippets[entry.index].isAnonymous ? "anonymous" : "normal"
+        return Text(entry.snippets[entry.index].question)
             .font(.system(size: 25, weight: .heavy))
             .foregroundColor(.white.opacity(0.8))
             .minimumScaleFactor(0.3)
@@ -179,10 +196,10 @@ struct SnippetsEntryView : View {
     }
     
     func unansweredSnippet() -> some View {
-        let id: String = entry.snippetsData!.ids[entry.index]
-        let question: String = entry.snippetsData!.questions[entry.index].replacingOccurrences(of: "?", with: "~")
-        let isAnonymous: String = entry.snippetsData!.isAnonymous[entry.index] ? "anonymous" : "normal"
-        return Text(entry.snippetsData!.questions[entry.index])
+        let id: String = entry.snippets[entry.index].id
+        let question: String = entry.snippets[entry.index].question.replacingOccurrences(of: "?", with: "~")
+        let isAnonymous: String = entry.snippets[entry.index].isAnonymous ? "anonymous" : "normal"
+        return Text(entry.snippets[entry.index].question)
             .font(.system(size: 25, weight: .heavy))
             .foregroundColor(.white.opacity(0.8))
             .minimumScaleFactor(0.3)
@@ -193,7 +210,7 @@ struct SnippetsEntryView : View {
             if(entry.index == -1){
                 VStack {
                     
-                    Text("Open Snippets")
+                    Text("Open Snippets NOW")
                         .font(.system(size: 25, weight: .heavy))
                         .foregroundColor(.white.opacity(0.8))
                    
@@ -202,7 +219,7 @@ struct SnippetsEntryView : View {
             } else {
                 VStack {
                     
-                    if(entry.snippetsData!.hasAnswereds[entry.index]){
+                    if(entry.snippets[entry.index].hasAnswered){
                         answeredSnippet()
                     } else {
                         unansweredSnippet()
@@ -262,7 +279,7 @@ struct SnippetsWidget: Widget {
     
     func getGradient(entry: SnippetsEntry) -> Gradient {
         if(entry.snippetsData != nil){
-            if(entry.snippetsData!.isAnonymous[entry.index]){
+            if(entry.snippets[entry.index].isAnonymous){
                 return gradientStyleA
             }
         }
@@ -293,8 +310,29 @@ struct SnippetsWidget: Widget {
     }
 }
 
+func loadSnippetsDataFromUserDefaults() -> SnippetsData? {
+    let sharedDefaults = UserDefaults.init(suiteName: "group.kazoom_snippets")
+    
+    // Retrieve JSON string from UserDefaults
+    if let jsonString = sharedDefaults!.string(forKey: "snippetsData") {
+        // Convert JSON string to Data
+        if let jsonData = jsonString.data(using: .utf8) {
+            let decoder = JSONDecoder()
+            do {
+                // Decode the JSON data into SnippetsData struct
+                let snippetsData = try decoder.decode(SnippetsData.self, from: jsonData)
+                return snippetsData
+            } catch {
+                print("Error decoding JSON: \(error)")
+            }
+        }
+    }
+    
+    return nil
+}
+
 #Preview(as: .systemSmall) {
     SnippetsWidget()
 } timeline: {
-    SnippetsEntry(date: Date(), snippetsData: SnippetsData(questions: ["What's your favorite color?", "Pancakes or Waffles?"], ids: ["sdwd", "ss"], indexes: [0, 1], isAnonymous: [false, false], hasAnswereds: [false, false], anonymousRemovalDate: ""), index: 0)
+    SnippetsEntry(date: Date(), snippetsData: SnippetsData(snippets: ["What's your favorite color?", "Pancakes or Waffles?"]), snippets: [], index: 0)
 }

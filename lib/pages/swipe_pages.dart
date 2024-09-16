@@ -131,7 +131,9 @@ class _SwipePagesState extends State<SwipePages> {
       var estLocation = tz.getLocation('America/New_York');
       // Get the current time in EST
       var nowInEst = tz.TZDateTime.now(estLocation);
+      if(!mounted) return;
     setState(() {
+      if(!mounted) return;
 
         hasFriendRequests = userData["friendRequests"].length > 0;
        if(userData["botwStatus"]["hasAnswered"] && userData["botwStatus"]["date"] == mondayString && now.weekday < 6){

@@ -410,10 +410,16 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                               //Save changes
                              
                               if(oldFullName != fullNameController.text || oldUsername != usernameController.text){
-                                await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).changeUserDisplayNameAndOrUserName(oldFullName != fullNameController.text ? fullNameController.text : null, oldUsername != usernameController.text ? usernameController.text : null);
-                                //Update shared preferences
-                                //Show snackbar
+                                
+                                bool success = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).changeUserDisplayNameAndOrUserName(oldFullName != fullNameController.text ? fullNameController.text : null, oldUsername != usernameController.text ? usernameController.text : null);
+                                if(!success){
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text("Username already exists")));
+                                } else{
+                                 //Show snackbar
                                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text("Profile updated successfully, changes in snippets will be reflected in the next 24 hours")));
+                                }
+
+                                
                               }
                               if(oldDescription != descriptionController.text){
                                 await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).updateUserDescription(descriptionController.text);

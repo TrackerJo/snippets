@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/api/local_database.dart';
+import 'package:snippets/helper/helper_function.dart';
 
 class Database {
   Future<Stream<Map<String, dynamic>>> getBOTWStream(StreamController controller) async {
@@ -42,6 +43,9 @@ class Database {
   }
 
   Future<void> updateUsersBOTWAnswer(Map<String, dynamic> answer) async {
+    //Get user data 
+    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    answer["displayName"] = userData["displayName"];
     await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).updateUsersBOTWAnswer(answer);
     await LocalDatabase().updateUsersBOTWAnswer(answer);
   }
@@ -77,8 +81,20 @@ class Database {
         await LocalDatabase().addResponse(response[j]);
       }
       responses.addAll(await LocalDatabase().getSnippetResponses(snippets[i]["snippetId"]));
+      
     }
-    return responses;
+    //Delete duplicates
+    List<String> responseIDs = [];
+    List<Map<String, dynamic>> newResponses = [];
+    for (var item in responses) {
+      if (!responseIDs.contains(item["uid"])) {
+        newResponses.add(item);
+        responseIDs.add(item["uid"]);
+      } else {
+        LocalDatabase().removeResponse(item["snippetId"], item["uid"]);
+      }
+    }
+    return newResponses;
   }
 
   Future getSnippetResponses(StreamController controller, String snippetId, bool isAnonymous, bool getFriends, List<String> friendsToGet, List<String> friends) async {
@@ -119,10 +135,22 @@ class Database {
         LocalDatabase().addResponse(responseMap);
       }
     });
-    Stream<dynamic> responsesStream = await LocalDatabase().getResponses(snippetId, friends, isAnonymous);
+    Stream<List<SnipResponse>> responsesStream = await LocalDatabase().getResponses(snippetId, friends, isAnonymous);
     responsesStream.listen((event) {
       if(controller.isClosed) return;
-      controller.add(event);
+      //Remove duplicates
+      List<SnipResponse> newResponses = [];
+      List<String> responsesIDs = [];
+      for (var item in event) {
+        if (!responsesIDs.contains(item.uid)) {
+          newResponses.add(item);
+          responsesIDs.add(item.uid);
+        } else {
+          LocalDatabase().removeResponse(snippetId, item.uid);
+        }
+      } 
+
+      controller.add(newResponses);
     });
 
 

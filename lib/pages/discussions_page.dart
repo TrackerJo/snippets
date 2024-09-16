@@ -25,7 +25,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
 
   void getDiscussions() async {
 
-    
+    if(!mounted) return;
     setState(() {
       isLoading = true;
     });
@@ -33,6 +33,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
     
     await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
         .getDiscussions(FirebaseAuth.instance.currentUser!.uid, discStream);
+        if(!mounted) return;
       setState(() {
         discussions = [];
       });
@@ -55,10 +56,10 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
         discussions.add(discussionsMap);
         //Sort by last message
         discussions.sort((a, b) {
-          var aTime = a["lastMessage"]["date"];
-          var bTime = b["lastMessage"]["date"];
+          var aTime = a["lastMessage"]["date"].toDate();
+          var bTime = b["lastMessage"]["date"].toDate();
           return bTime.compareTo(aTime);
-      });
+        });
       });
     }
     });

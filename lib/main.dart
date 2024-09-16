@@ -3,14 +3,17 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 
 import 'package:flutter_widgetkit/flutter_widgetkit.dart';
 import 'package:go_router/go_router.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:intl/intl.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:provider/provider.dart';
@@ -26,6 +29,7 @@ import 'package:snippets/pages/botw_results_page.dart';
 import 'package:snippets/pages/create_account_page.dart';
 import 'package:snippets/pages/discussion_page.dart';
 import 'package:snippets/pages/forgot_password_page.dart';
+import 'package:snippets/pages/no_wifi_page.dart';
 import 'package:snippets/pages/onboarding_page.dart';
 import 'package:snippets/pages/profile_page.dart';
 import 'package:snippets/pages/question_page.dart';
@@ -42,6 +46,7 @@ const String appGroupId = 'group.kazoom_snippets';
 const String iOSWidgetName = 'Snippets_Widgets';
 // final navigatorKey = GlobalKey<NavigatorState>();
 final userStreamController = StreamController.broadcast();
+
 
 class Answer {
   final String answer;
@@ -283,6 +288,12 @@ final router = GoRouter(
         
         
       ),
+      GoRoute(
+        path: '/nowifi',
+        builder: (_, __) {
+          return NoWifiPage( );
+        },
+      ),
       GoRoute(path:"/login", builder: (_, __) {
         return const WelcomePage();
       }),
@@ -325,7 +336,7 @@ final router = GoRouter(
                     response: state.uri.queryParameters['response']!,
                     userId: state.uri.queryParameters['userId']!,
                     snippetId: state.uri.queryParameters['snippetId']!,
-                    question: state.uri.queryParameters['snippetQuestion']!,
+                    question: state.uri.queryParameters['snippetQuestion']!.replaceAll("~", "?"),
                     theme: state.uri.queryParameters['theme']!,
 
                     isDisplayOnly: state.uri.queryParameters['isDisplayOnly'] == 'true',
@@ -441,7 +452,12 @@ final router = GoRouter(
 );
 
 class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
-  
+    final connectionChecker = InternetConnectionChecker();
+    late StreamSubscription<InternetConnectionStatus> subscription;
+
+
+
+
   bool isSignedIn = false;
   getUserLoggedInState() async {
     
@@ -465,6 +481,29 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   void initState() {
     // TODO: implement initState
     super.initState();
+
+   subscription = connectionChecker.onStatusChange.listen(
+      (InternetConnectionStatus status) async {
+        if (status == InternetConnectionStatus.connected) {
+           //Check if on /nowifi
+          String? currentPage = await HelperFunctions.getOpenedPageFromSF();
+          if(currentPage == "nowifi"){
+            bool status = await Auth().isUserLoggedIn();
+            if(!status){
+               router.go('/login');
+
+            } else {
+                 router.go('/');
+            }
+          }
+        } else {
+         
+        router.replace("/nowifi");
+
+
+        }
+      },
+    );
     getUserLoggedInState();
     WidgetsBinding.instance.addObserver(this);
   }
@@ -485,26 +524,13 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   }
 
   bool compareQuestionsAndIDs(Map<String,dynamic> oldData, Map<String,dynamic> newData) {
-    if(oldData["questions"].length != newData["questions"].length) {
+    if(oldData["snippets"].length != newData["snippets"].length) {
       return false;
     }
-    if(oldData["ids"].length != newData["ids"].length) {
-      return false;
-    }
-    if(oldData["indexes"].length != newData["indexes"].length) {
-      return false;
-    }
-    if(oldData["isAnonymous"].length != newData["isAnonymous"].length) {
-      return false;
-    }
-    for (var i = 0; i < oldData["questions"].length; i++) {
-      if (oldData["questions"][i] != newData["questions"][i] || oldData["ids"][i] != newData["ids"][i]) {
-        return false;
-      }
-      if(oldData["indexes"][i] != newData["indexes"][i]) {
-        return false;
-      }
-      if(oldData["isAnonymous"][i] != newData["isAnonymous"][i]) {
+   
+    for (var i = 0; i < oldData["snippets"].length; i++) {
+      
+      if(oldData["snippets"][i] != newData["snippets"][i]) {
         return false;
       }
       
@@ -527,12 +553,29 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     return true;
   }
 
+
    @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     switch (state) {
       case AppLifecycleState.resumed:
-
-
+         bool isConnected = await InternetConnectionChecker().hasConnection;
+        if (isConnected) {
+          //Check if on /nowifi
+          String? currentPage = await HelperFunctions.getOpenedPageFromSF();
+          if(currentPage == "nowifi"){
+            bool status = await Auth().isUserLoggedIn();
+            if(!status){
+               router.go('/login');
+               return;
+            } else {
+                 router.go('/');
+            }
+          }
+          
+        } else {
+          router.replace("/nowifi");
+          return;
+        }
         //Check if user is logged in
         bool status = await Auth().isUserLoggedIn();
         if(!status) {
@@ -550,6 +593,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           answers.add(Answer(answer["answer"], answer["userId"], answer["displayName"]));
         }
       }
+      print(botwData);
         Map<String, dynamic> data = WidgetData(botwData["blank"].split(" of")[0], answers: answers).toJson();
 
         if(await WidgetKit.getItem('botwData', 'group.kazoom_snippets') == null) {
@@ -590,46 +634,60 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
         List<Map<String, dynamic>> snippets = await Database().getSnippetsList();
         List<Map<String, dynamic>> removedSnippets = [];
-        DateTime? anonymousRemovalDate;
         for(var snippet in snippets){
-
+          int index = snippets.indexOf(snippet);
           if(snippet["type"] == "anonymous"){
             DateTime now = DateTime.now();
             DateTime lastRecieved = snippet["lastRecieved"];
-            anonymousRemovalDate = lastRecieved.add(const Duration(days: 1));
+            snippets[index]["removalDate"] = DateFormat("yyyy-MM-dd HH:mm:ss").format(lastRecieved.add(const Duration(days: 1)));
             if(now.isAfter(lastRecieved.add(const Duration(days: 1)))){
               removedSnippets.add(snippet);
             }
 
+          } else if(snippet["type"] == "custom") {
+            DateTime now = DateTime.now();
+            DateTime lastRecieved = snippet["lastRecieved"];
+            snippets[index]["removalDate"] = DateFormat("yyyy-MM-dd HH:mm:ss").format(lastRecieved.add(const Duration(days: 1)));
+            if(now.isAfter(lastRecieved.add(const Duration(days: 1)))){
+              removedSnippets.add(snippet);
+            }
+          } else {
+            snippets[index]["removalDate"] = "None";
           }
         }
         for(var rSnippet in removedSnippets){
           snippets.remove(rSnippet);
           await LocalDatabase().deleteSnippetById(rSnippet["snippetId"]);
         }
+        List<String> snippetStrings = [];
+        for (var snippet in snippets) {
+          snippetStrings.add("${snippet["question"]}|${snippet["snippetId"]}|${snippet["index"]}|${snippet["type"]}|${snippet["answered"] ? "true" : "false"}|${snippet["removalDate"]}");
+        }
 
-        Map<String, dynamic> snippetData = {
-          "questions": snippets.map((e) => e["question"]).toList(),
-          "ids": snippets.map((e) => e["snippetId"]).toList(),
-          "indexes": snippets.map((e) => e["index"]).toList(),
-          "hasAnswereds": snippets.map((e) => e["answered"]).toList(),
-          "isAnonymous": snippets.map((e) => e["type"] == "anonymous").toList(),
-          "anonymousRemovalDate":anonymousRemovalDate != null ? DateFormat("yyyy-MM-dd HH:mm:ss").format(anonymousRemovalDate) : ""
-
-        };
         if(await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets') == null) {
+
+            print("NULL SNIPPETS");
+          
           WidgetKit.setItem(
             'snippetsData',
-            jsonEncode(snippetData),
+            jsonEncode({
+              "snippets": snippetStrings,
+            }),
             'group.kazoom_snippets');
           WidgetKit.reloadAllTimelines();
         } else {
           Map<String, dynamic> oldSnippets = json.decode(await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets'));
-          if(!compareQuestionsAndIDs(oldSnippets, snippetData)) {
+          print("SNIPPETS");
+          print(oldSnippets);
+          if(!compareQuestionsAndIDs(oldSnippets, {
+                "snippets": snippetStrings,
+              })) {
 
             WidgetKit.setItem(
               'snippetsData',
-              jsonEncode(snippetData),
+              jsonEncode({
+                "snippets": snippetStrings,
+              }),
               'group.kazoom_snippets');
             WidgetKit.reloadAllTimelines();
           }
@@ -701,6 +759,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       case AppLifecycleState.inactive:
 
 
+
         break;
       case AppLifecycleState.paused:
 
@@ -721,6 +780,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   void dispose() {
     // TODO: implement dispose
     WidgetsBinding.instance.removeObserver(this);
+     subscription.cancel();
     super.dispose();
   }
 

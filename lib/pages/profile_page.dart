@@ -135,10 +135,11 @@ class _ProfilePageState extends State<ProfilePage> {
 
         });
       });
-      userDisplayName = (await HelperFunctions.getUserDisplayNameFromSF())!;
+
       currentUser = true;
       Map<String, dynamic> viewerData =
           (await HelperFunctions.getUserDataFromSF());
+      userDisplayName = viewerData["fullname"];
       setState(() {
         profileData = viewerData;
         numberOfFriends = viewerData["friends"].length;

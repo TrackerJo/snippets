@@ -42,7 +42,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
     isAnonymous: false,
   );
 
-  bool showResponseTile = false;
+  bool showResponseTile = true;
 
   final ScrollController _scrollController = ScrollController();
   Stream<QuerySnapshot>? chats;

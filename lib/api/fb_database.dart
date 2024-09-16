@@ -141,7 +141,7 @@ class FBDatabase {
         .doc(id ?? uid)
         .set({
       "answer": answer,
-      "displayName": id == null ? await HelperFunctions.getUserDisplayNameFromSF() : "Anonymous",
+      "displayName": id == null ? userData["fullname"] : "Anonymous",
       "uid": id ?? uid,
       "discussionUsers": [
 
@@ -880,6 +880,7 @@ class FBDatabase {
         "votesLeft": 3,
       });
     } 
+    answer["displayName"] = userData["fullname"];
 
     await botwCollection.doc("currentBlank").set({
       "answers": {
@@ -891,6 +892,9 @@ class FBDatabase {
   }
 
   Future updateBOTWAnswer(Map<String, dynamic> answer) async {
+    //Get user data
+    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    answer["displayName"] = userData["fullname"];
     
 
     await botwCollection.doc("currentBlank").set({
@@ -1119,10 +1123,21 @@ class FBDatabase {
     await userCollection.doc(uid).update({
       "email": newEmail,
     });
+    //Update local user data
+    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    userData["email"] = newEmail;
+    await HelperFunctions.saveUserDataSF(jsonEncode(userData));
+
    return res;
   }
 
-  Future<void> changeUserDisplayNameAndOrUserName(String? displayName, String? username) async {
+  Future<bool> changeUserDisplayNameAndOrUserName(String? displayName, String? username) async {
+    if(username != null) {
+      bool usernameExists = await checkUsername(username);
+      if(usernameExists) {
+        return false;
+      }
+    }
    
     Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
 
@@ -1131,6 +1146,16 @@ class FBDatabase {
       "username": username ?? userData["username"],
       "searchKey": displayName != null ? displayName.toLowerCase() : userData["searchKey"],
     });
+
+    String oldUsername = userData["username"];
+    String oldDisplayName = userData["fullname"];
+
+    //Update local user data
+    userData["fullname"] = displayName ?? userData["fullname"];
+    userData["username"] = username ?? userData["username"];
+    await HelperFunctions.saveUserDataSF(jsonEncode(userData));
+
+
 
     //Update BOTW answers
     DocumentSnapshot botwSnapshot = await botwCollection.doc("currentBlank").get();
@@ -1153,8 +1178,8 @@ class FBDatabase {
         "friends": FieldValue.arrayRemove([
           {
             "userId": uid,
-            "displayName": userData["fullname"],
-            "username": userData["username"],
+            "displayName": oldDisplayName,
+            "username": oldUsername,
             "FCMToken": userData["FCMToken"],
           }
         ]),
@@ -1178,8 +1203,8 @@ class FBDatabase {
         "friendRequests": FieldValue.arrayRemove([
           {
             "userId": uid,
-            "displayName": userData["fullname"],
-            "username": userData["username"],
+            "displayName": oldDisplayName,
+            "username": oldUsername,
             "FCMToken": userData["FCMToken"],
           }
         ]),
@@ -1203,8 +1228,8 @@ class FBDatabase {
         "outgoingRequests": FieldValue.arrayRemove([
           {
             "userId": uid,
-            "displayName": userData["fullname"],
-            "username": userData["username"],
+            "displayName": oldDisplayName,
+            "username": oldUsername,
             "FCMToken": userData["FCMToken"],
           }
         ]),
@@ -1221,6 +1246,7 @@ class FBDatabase {
       });
       
     }
+    return true;
    
   }
 

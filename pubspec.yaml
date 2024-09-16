@@ -1,7 +1,7 @@
 name: snippets
 description: A new social media.
 publish_to: 'none'
-version: 0.9.21
+version: 0.9.26
 
 environment:
   sdk: '>=3.0.6 <4.0.0'
@@ -37,6 +37,7 @@ dependencies:
   flutter_native_splash: ^2.4.1
   flutter_widgetkit: ^1.0.3
   url_launcher: ^6.3.0
+  internet_connection_checker: ^2.0.0
 
 dev_dependencies:
   flutter_test:

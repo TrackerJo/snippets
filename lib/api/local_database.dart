@@ -80,7 +80,7 @@ LazyDatabase _openConnection() {
 
     final file = File(p.join(dbFolder.path, 'db.sqlite'));
     if (true) {
-      await file.delete();
+      // await file.delete();
    
     }
     
@@ -365,7 +365,7 @@ class LocalDatabase {
     ));
   }
 
-  Future<Stream> getResponses(String snippetId, List<String> friendsList, bool isAnonymous) async {
+  Future<Stream<List<SnipResponse>>> getResponses(String snippetId, List<String> friendsList, bool isAnonymous) async {
 
     if(isAnonymous){
       return (localDb.select(localDb.snipResponses)..where((tbl) => tbl.snippetId.equals(snippetId))..orderBy([(u) => OrderingTerm.desc(u.date)])).watch();

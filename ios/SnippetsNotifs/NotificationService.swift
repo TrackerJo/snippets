@@ -69,30 +69,30 @@ class NotificationService: UNNotificationServiceExtension {
                   var flutterData = try? JSONDecoder().decode(SnippetsData.self, from: (sharedDefaults?
                       .string(forKey: "snippetsData")?.data(using: .utf8)) ?? Data())
                   if(flutterData == nil ){
-                      flutterData = SnippetsData(questions: [], ids: [], indexes: [], isAnonymous: [], hasAnswereds: [], anonymousRemovalDate: "")
+                      flutterData = SnippetsData(snippets: [])
+                  }
+                  var snippets: [Snippet] = []
+                  for snipString in flutterData!.snippets {
+                      snippets.append(parseSnippet(snippet: snipString))
                   }
     
     
     
                   var indexData = Int(userInfo["index"] as! String);
     
-                  var index = flutterData!.indexes.firstIndex(of: indexData!)
+                  var index = snippets.firstIndex(where: { $0.index == indexData })
                   if(index == nil){
                       index = -1
                   }
     
                 if(index == -1) {
+                    snippets.append(Snippet(question: userInfo["question"] as! String, id: userInfo["snippetId"] as! String, index: indexData!, isAnonymous: userInfo["snippetType"] as! String == "anonymous", hasAnswered: false, removalDate: userInfo["removalDate"] as! String))
     
-                    flutterData!.questions.append(userInfo["question"] as! String);
-                    flutterData!.ids.append(userInfo["snippetId"] as! String);
-    
-                flutterData!.indexes.append(indexData!);
-                    flutterData!.isAnonymous.append(userInfo["snippetType"] as! String == "anonymous");
-                    flutterData!.hasAnswereds.append(false);
+                
     
                 } else {
                   //Old question
-                    var oldId = flutterData!.ids[index!];
+                    var oldId = snippets[index!].id;
                   //Delete old responses
                     var oldResponses = try? JSONDecoder().decode(SnippetsRData.self, from: (sharedDefaults?
                         .string(forKey: "snippetsResponsesData")?.data(using: .utf8)) ?? Data())
@@ -107,18 +107,20 @@ class NotificationService: UNNotificationServiceExtension {
                     oldResponses!.responses = newResponses;
     
                     sharedDefaults?.set(encodeSnippetRDataToJSON(snippetsRData: oldResponses!), forKey: "snippetsResponsesData")
-                    flutterData!.questions[index!] = userInfo["question"] as! String;
-                    flutterData!.ids[index!] = userInfo["snippetId"] as! String;
-    
-                    flutterData!.indexes[index!] = indexData!;
-                    flutterData!.isAnonymous[index!] = userInfo["snippetType"] as! String == "anonymous";
-                    flutterData!.hasAnswereds[index!] = false;
+                    snippets[index!] = Snippet(question: userInfo["question"] as! String, id: userInfo["snippetId"] as! String, index: indexData!, isAnonymous: userInfo["snippetType"] as! String == "anonymous", hasAnswered: false, removalDate: userInfo["removalDate"] as! String)
+                    
+                    
                 }
-    
-    
-                  if(userInfo["snippetType"] as! String == "anonymous"){
-                      flutterData!.anonymousRemovalDate = userInfo["anonymousRemovalDate"] as! String
+                  
+                  var newSnippets: [String] = []
+                  
+                  for snippet in snippets {
+                      newSnippets.append(snipToString(snippet: snippet))
                   }
+                  flutterData!.snippets = newSnippets
+    
+    
+                  
     
                   sharedDefaults?.set(encodeSnippetsDataToJSON(snippetsData: flutterData!), forKey: "snippetsData")
     
@@ -325,6 +327,16 @@ class NotificationService: UNNotificationServiceExtension {
         }
     }
     
+    func parseSnippet(snippet: String) -> Snippet {
+        var split = snippet.split(separator:"|")
+        return Snippet(question: String(split[0]), id: String(split[1]), index: Int(split[2]) ?? 0, isAnonymous: split[3] == "anonymous", hasAnswered: split[4] == "true", removalDate: String(split[5]))
+    }
+    
+    func snipToString(snippet: Snippet) -> String {
+        return "\(snippet.question)|\(snippet.id)|\(snippet.index)|\(snippet.isAnonymous ? "anonymous" : "normal")|\(snippet.hasAnswered)|\(snippet.removalDate)"
+    }
+    
+    
      struct SnippetsRData: Decodable, Hashable, Encodable {
          var responses: [String]
          
@@ -346,12 +358,17 @@ class NotificationService: UNNotificationServiceExtension {
     }
     
     struct SnippetsData: Decodable, Hashable, Encodable {
-        var questions: [String]
-        var ids: [String]
-        var indexes: [Int]
-        var isAnonymous: [Bool]
-        var hasAnswereds: [Bool]
-        var anonymousRemovalDate: String
+        var snippets: [String]
+    }
+
+    struct Snippet: Decodable, Hashable {
+        var question: String
+        var id: String
+        var index: Int
+        var isAnonymous: Bool
+        var hasAnswered: Bool
+        var removalDate: String
+        
     }
 
 }
