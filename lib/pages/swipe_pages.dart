@@ -194,6 +194,108 @@ class _SwipePagesState extends State<SwipePages> {
     
   }
 
+  Future deleteAccount() async {
+    TextEditingController email = TextEditingController();
+    TextEditingController password = TextEditingController();
+    bool isLoadingAccount = false;
+    //Show Login Dialog
+    showDialog(
+      context: context,
+      builder: (context) {
+        return SizedBox(
+          width: MediaQuery.of(context).size.width * 0.8,
+          child: SingleChildScrollView(
+            child: AlertDialog(
+              backgroundColor: ColorSys.primaryInput,
+              title: const Text("Account Verification Before Deletion", style: TextStyle(color: Colors.white)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                    TextFormField(
+                    onTap: () {
+                        HapticFeedback.selectionClick();
+                      },
+                    decoration: textInputDecoration.copyWith(
+                        labelText: "Email",
+                        fillColor: ColorSys.secondary,
+                        prefixIcon: Icon(
+                          Icons.email,
+                          color: Theme.of(context).primaryColor,
+                        )),
+                        controller: email,
+                    
+                    //Check email validation
+                    validator: (val) {
+                      return RegExp(
+                                  r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+                              .hasMatch(val!)
+                          ? null
+                          : "Please enter a valid email";
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    obscureText: true,
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                    },
+                    decoration: textInputDecoration.copyWith(
+                        labelText: "Password",
+                        fillColor: ColorSys.secondary,
+                        prefixIcon: Icon(
+                          Icons.lock,
+                          color: Theme.of(context).primaryColor,
+                        )),
+                        controller: password,
+                    validator: (val) {
+                      if (val!.length < 6) {
+                        return "Password must be at least 6 characters";
+                      } else {
+                        return null;
+                      }
+                    },
+                  ),
+                  
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("Cancel", style: TextStyle(color: Colors.white)),
+                ),
+                isLoadingAccount ? CircularProgressIndicator(color: ColorSys.secondary,) : ElevatedButton(
+                  onPressed: () async {
+                    HapticFeedback.mediumImpact();
+                    setState(() {
+                      isLoadingAccount = true;
+                    });
+            
+                    //Change password
+                    String? res = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).deleteAccount(email.text, password.text);
+                    if(res != null){
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res)));
+                    } else{
+
+                      router.pushReplacement("/login");
+                    }
+                    setState(() {
+                      isLoadingAccount = false;
+                    });
+                  },
+                  style: elevatedButtonDecorationBlue,
+                  child: const Text("Delete Account", style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
 
   void onSettingsButtonPressed() {
   HapticFeedback.mediumImpact();
@@ -209,7 +311,7 @@ class _SwipePagesState extends State<SwipePages> {
                   ),
                   builder: (BuildContext context) {
                     return SizedBox(
-                        height: 525,
+                        height: 600,
                         child: Padding(
                             padding: const EdgeInsets.all(32.0),
                             child: Column(
@@ -369,6 +471,26 @@ class _SwipePagesState extends State<SwipePages> {
                                                   BorderRadius.circular(12)),
                                           shadowColor: ColorSys.primaryDark),
                                       child: const Text("About the Developer",
+                                          style: TextStyle(
+                                              color: Colors.white, fontSize: 15))),
+                                ),
+                                const SizedBox(height: 20),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                      onPressed: () {
+                                        HapticFeedback.mediumImpact();
+                                        deleteAccount();
+                                        
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: ColorSys.purpleBtn,
+                                          elevation: 10,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12)),
+                                          shadowColor: ColorSys.primaryDark),
+                                      child: const Text("Delete Account",
                                           style: TextStyle(
                                               color: Colors.white, fontSize: 15))),
                                 ),

@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 
 import 'package:snippets/api/local_database.dart';
 import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/pages/profile_page.dart';
+import 'package:snippets/widgets/helper_functions.dart';
 
 import 'package:snippets/widgets/snippet_tile.dart';
 
@@ -158,6 +160,7 @@ class _HomePageState extends State<HomePage> {
                 // mainAxisSize: MainAxisSize.max,
                 children: [
                   const SizedBox(height: 20),
+                  
                   // ElevatedButton(
                   //   onPressed: () async {
                   //     var url = Uri.https(

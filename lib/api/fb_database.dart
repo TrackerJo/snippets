@@ -81,8 +81,11 @@ class FBDatabase {
     });
   }
 
-  Future<Map<String, dynamic>> getUserData(String uid) async {
+  Future<Map<String, dynamic>?> getUserData(String uid) async {
     DocumentSnapshot snapshot = await userCollection.doc(uid).get();
+    if (!snapshot.exists) {
+      return null;
+    }
     return snapshot.data() as Map<String, dynamic>;
   }
 
@@ -96,9 +99,19 @@ class FBDatabase {
     }
   }
 
-  Future<Stream> getUserStream(String userId) async {
-    Stream snapshot = userCollection.doc(userId).snapshots();
-    return snapshot;
+  Future<Stream?> getUserStream(String userId) async {
+    //Check if doc exists
+    
+    try {
+      Stream snapshot = userCollection.doc(userId).snapshots();
+      return snapshot;
+
+    } on FirebaseException catch (_, e){
+      //Check if doc doesn't exist
+      return null;
+
+    }
+     
   }
 
   Future updateUserData(Map<String, dynamic> updatedData) async {
@@ -549,11 +562,12 @@ class FBDatabase {
     });
   }
 
-  Future<Stream> searchUsers(String search) async {
+  Future<Stream> searchUsers(String search, int maxResults) async {
     Stream snapshot = userCollection
         .where("searchKey", isGreaterThanOrEqualTo: search.toLowerCase())
         .where("searchKey",
             isLessThanOrEqualTo: "${search.toLowerCase()}\uf8ff")
+        .limit(maxResults)
         .snapshots();
 
     return snapshot;
@@ -920,7 +934,7 @@ class FBDatabase {
     List<String> friendsIds = friendsList.map((e) => e["userId"].toString()).toList();
     List<dynamic> mutualFriends = [];
     for (var element in friendsList) {
-      Map<String, dynamic> friendData = await getUserData(element["userId"]);
+      Map<String, dynamic> friendData = (await getUserData(element["userId"]))!;
       List<dynamic> friendFriends = friendData["friends"];
       //get list where friendsFriends in friendsList
 
@@ -1137,6 +1151,7 @@ class FBDatabase {
       if(usernameExists) {
         return false;
       }
+     
     }
    
     Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
@@ -1149,6 +1164,17 @@ class FBDatabase {
 
     String oldUsername = userData["username"];
     String oldDisplayName = userData["fullname"];
+    if(username != null) {
+      
+      //Delete old username from usernames collection
+      await publicCollection.doc("usernames").update({
+        "usernames": FieldValue.arrayRemove([oldUsername]),
+      });
+      //Add new username to usernames collection
+      await publicCollection.doc("usernames").update({
+        "usernames": FieldValue.arrayUnion([username]),
+      });
+    }
 
     //Update local user data
     userData["fullname"] = displayName ?? userData["fullname"];
@@ -1249,6 +1275,113 @@ class FBDatabase {
     return true;
    
   }
+
+
+  Future<String?> deleteAccount(String email, String password) async {
+    print("deleting account");
+    String? res = await Auth().reauthenticateUser(email, password);
+    if(res != null){
+      return res;
+    }
+    print("past auth");
+    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+
+    List<dynamic> friends = userData["friends"];
+    List<String> friendsIds = friends.map((e) => e["userId"].toString()).toList();
+    for (var id in friendsIds) {
+      await userCollection.doc(id).update({
+        "friends": FieldValue.arrayRemove([
+          {
+            "userId": uid,
+            "displayName": userData["fullname"],
+            "username": userData["username"],
+            "FCMToken": userData["FCMToken"],
+          }
+        ]),
+      });
+     
+      
+    }
+    List<dynamic> friendRequests = userData["friendRequests"];
+    List<String> friendRequestsIds = friendRequests.map((e) => e["userId"].toString()).toList();
+    for (var id in friendRequestsIds) {
+      await userCollection.doc(id).update({
+        "friendRequests": FieldValue.arrayRemove([
+          {
+            "userId": uid,
+            "displayName": userData["fullname"],
+            "username": userData["username"],
+            "FCMToken": userData["FCMToken"],
+          }
+        ]),
+      });
+      
+      
+    }
+    List<dynamic> outgoingRequests = userData["outgoingRequests"];
+    List<String> outgoingRequestsIds = outgoingRequests.map((e) => e["userId"].toString()).toList();
+    for (var id in outgoingRequestsIds) {
+      await userCollection.doc(id).update({
+        "outgoingRequests": FieldValue.arrayRemove([
+          {
+            "userId": uid,
+            "displayName": userData["fullname"],
+            "username": userData["username"],
+            "FCMToken": userData["FCMToken"],
+          }
+        ]),
+      });
+      
+    }
+    //Get current snippets where user answered
+    QuerySnapshot snapshot = await currentSnippetsCollection.where("answered", arrayContains: userData["uid"]).get();
+    //For each, delete discussion chats and then answer
+    for (var doc in snapshot.docs) {
+      QuerySnapshot chats = await doc.reference.collection("answers").doc(uid!).collection("discussion").get();
+      for (var chat in chats.docs){
+        await chat.reference.delete();
+      }
+      await doc.reference.collection("answers").doc(uid!).delete();
+      
+    }
+    //Delete doc
+    await userCollection.doc(uid!).delete();
+    await Auth().deleteAccount();
+    return null;
+  }
+
+  Future<void> removeOutgoingFriendRequest(Map<String, dynamic> request, Map<String, dynamic> userData) async {
+    await userCollection.doc(uid).update({
+      "outgoingRequests": FieldValue.arrayRemove([request]),
+    });
+    await userCollection.doc(request["userId"]).update({
+      "friendRequests": FieldValue.arrayRemove([
+        {
+          "userId": uid,
+          "displayName": userData["fullname"],
+          "username": userData["username"],
+          "FCMToken": userData["FCMToken"],
+        }
+      ]),
+    });
+  }
+
+  Future<void> removeFriendRequest(Map<String, dynamic> request, Map<String, dynamic> userData) async {
+    await userCollection.doc(uid).update({
+      "friendRequests": FieldValue.arrayRemove([request]),
+    });
+    await userCollection.doc(request["userId"]).update({
+      "outgoingRequests": FieldValue.arrayRemove([
+        {
+          "userId": uid,
+          "displayName": userData["fullname"],
+          "username": userData["username"],
+          "FCMToken": userData["FCMToken"],
+        }
+      ]),
+    });
+  }
+
 
 
 

@@ -38,7 +38,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         _isLoading = true;
       });
       HapticFeedback.mediumImpact();
-      bool isUsernameTaken = await FBDatabase().checkUsername(usernameController.text);
+      bool isUsernameTaken = await FBDatabase().checkUsername(usernameController.text.toLowerCase());
       if (isUsernameTaken) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -55,7 +55,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
       authService
           .registerUserWithEmailandPassword(
-               fullNameController.text, emailController.text, passwordController.text,usernameController.text,  phoneNumber)
+               fullNameController.text, emailController.text, passwordController.text,usernameController.text.toLowerCase(),  phoneNumber)
           .then((val) {
         if (val == true) {
 

@@ -59,7 +59,7 @@ class Database {
     DateTime? lastUpdated = (await LocalDatabase().getMostRecentSnippet())?.lastRecieved;
     List<Map<String, dynamic>> snippets = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).getSnippetsList(lastUpdated);
     for (var i = 0; i < snippets.length; i++) {
-      
+      print("Adding snippet to local db");
       await LocalDatabase().addSnippet(snippets[i]);
       
     }

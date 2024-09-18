@@ -102,7 +102,7 @@ class _ResponsesPageState extends State<ResponsesPage> {
     }
     StreamController responsesList = StreamController();
     await Database().getSnippetResponses(responsesList, widget.snippetId, widget.isAnonymous, newFriends.isNotEmpty, newFriends, friends);
-
+    
     responsesList.stream.listen((event) {
       if(responsesStream.isClosed) return;
       print("Local Responses: $event");

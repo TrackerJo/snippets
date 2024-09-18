@@ -54,6 +54,7 @@ class _BotwResultsPageState extends State<BotwResultsPage> {
           preferredSize: const Size.fromHeight(kToolbarHeight),
           child: CustomAppBar(
             title: "Results",
+
            
             showBackButton: true,
 

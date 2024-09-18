@@ -264,8 +264,8 @@ class _FriendsPageState extends State<FriendsPage> {
                 ],
               ),
             ),
-            SizedBox(
-              height: MediaQuery.of(context).size.height - 200,
+            Expanded(
+              
               child: friendsView == "friends"
                   ? friendsList()
                   : friendsView == "friendRequests"

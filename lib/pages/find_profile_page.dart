@@ -21,6 +21,8 @@ class _FindProfilePageState extends State<FindProfilePage> {
   Stream? profileStream;
 
   List<Map<String, dynamic>> suggestedFriends = [];
+  int maxResults = 1;
+  int numberOfResults = 0;
 
 
   void getData() async {
@@ -95,7 +97,7 @@ class _FindProfilePageState extends State<FindProfilePage> {
                         }
                         var stream = await FBDatabase(
                           uid: FirebaseAuth.instance.currentUser!.uid)
-                      .searchUsers(value);
+                      .searchUsers(value, maxResults);
                         setState(() {
                           profileName = value;
                           profileStream = stream;
@@ -122,6 +124,24 @@ class _FindProfilePageState extends State<FindProfilePage> {
             const SizedBox(height: 20),
              if( profileName == "")
             Expanded(child: suggestedFriendsList()),
+            if( profileName != "")
+            const SizedBox(height: 20),
+            if( profileName != "" && maxResults = numberOfResults)
+            TextButton(
+              onPressed: () {
+                
+                var stream = await FBDatabase(
+                        uid: FirebaseAuth.instance.currentUser!.uid)
+                .searchUsers(value, maxResults + 3);
+                  setState(() {
+                    profileStream = stream;
+                  });
+                  setState(() {
+                  maxResults += 3;
+                });
+              },
+              child: const Text("View More"),
+            ),
           ],
         ),
       ),
@@ -139,6 +159,9 @@ class _FindProfilePageState extends State<FindProfilePage> {
         if (snapshot.hasData) {
           if (snapshot.data!.docs.length != null) {
             if (snapshot.data.docs.length != 0) {
+              setState(() {
+                numberOfResults = snapshot.data.docs.length;
+              });
               
               return 
                   ListView.builder(

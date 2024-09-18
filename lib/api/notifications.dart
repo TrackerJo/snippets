@@ -22,6 +22,7 @@ class PushNotifications {
   }
 
   Future<void> initNotifications() async {
+    
     await _firebaseMessaging.requestPermission();
     await _firebaseMessaging.getToken();
 

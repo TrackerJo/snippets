@@ -125,7 +125,7 @@ class CustomAppBar extends StatelessWidget {
           actions: [
             if(fixRight)
               const SizedBox(width: 25, height: 0,),
-            if(title == "Responses" || title == "Friends")
+            if(title == "Responses" || title == "Friends" || title == "Results")
               
               const SizedBox(width: 50, height: 0,),
             if(showPreviewButton)

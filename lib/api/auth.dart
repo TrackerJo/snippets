@@ -19,7 +19,7 @@ class Auth {
               email: email, password: password))
           .user!;
 
-      var userInfoMap = await FBDatabase(uid: user.uid).getUserData(user.uid);
+      var userInfoMap = (await FBDatabase(uid: user.uid).getUserData(user.uid))!;
       await HelperFunctions.saveUserNameSF(userInfoMap["username"]);
       await HelperFunctions.saveUserDisplayNameSF(userInfoMap["fullname"]);
       await HelperFunctions.saveUserEmailSF(userInfoMap["email"]);
@@ -96,8 +96,29 @@ class Auth {
     }
   }
 
+  Future<void> deleteAccount() async {
+    
+    
+      await HelperFunctions.saveUserDisplayNameSF("");
+      await HelperFunctions.saveUserEmailSF("");
+      await HelperFunctions.saveUserNameSF("");
+      await HelperFunctions.saveUserDataSF("");
+      await PushNotifications().unsubscribeFromTopic("all");
+      //Clear widgetData
+      WidgetKit.removeItem("botwData", "group.kazoom_snippets");
+      WidgetKit.removeItem("snippetsData", "group.kazoom_snippets");
+      WidgetKit.removeItem("snippetsResponsesData", "group.kazoom_snippets");
+
+      WidgetKit.reloadAllTimelines();
+
+await FirebaseAuth.instance.currentUser!.delete();
+
+  }
+
+
   Future<bool> isUserLoggedIn() async {
     User? user = _auth.currentUser;
+    // return false;
     return user != null;
   }
 
@@ -119,6 +140,20 @@ class Auth {
             .userDataStream(streamController);
       }
     });
+  }
+
+  Future<String?> reauthenticateUser(String email, String password) async {
+    print("authing");
+    try {
+        await FirebaseAuth.instance.currentUser!
+            .reauthenticateWithCredential(EmailAuthProvider.credential(email: email, password: password));
+      } on FirebaseAuthException catch (e) {
+        if (e.code == "wrong-password") {
+          return "Incorrect password";
+        }
+        return e.message ?? "An error occurred";
+      }
+      return null;
   }
 
   Future<String> changePassword(String email, String oldPassword, String newPassword) async {

@@ -67,6 +67,7 @@ class _ProfilePageState extends State<ProfilePage> {
   
 
   String editDescription = "";
+  bool userExists = true;
 
   
 
@@ -165,10 +166,23 @@ class _ProfilePageState extends State<ProfilePage> {
       });
 
     } else {
-      Stream viewerDataStream = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+      Stream? viewerDataStream = await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
           .getUserStream(widget.uid);
+          if(viewerDataStream == null){
+            setState(() {
+              userExists = false;
+              
+            });
+            return;
+          }
       userStreamSub = viewerDataStream.listen((event) async {
-
+        if (event.data() == null) {
+          setState(() {
+              userExists = false;
+              
+            });
+            return;
+        }
         Map<String, dynamic> viewerData = event.data() as Map<String, dynamic>;
         setState(() {
           profileData = viewerData;
@@ -262,9 +276,16 @@ class _ProfilePageState extends State<ProfilePage> {
           }
         });
       
-      Map<String, dynamic> viewerData =
+      Map<String, dynamic>? viewerData =
           (await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
               .getUserData(widget.uid));
+      if(viewerData == null){
+        setState(() {
+          userExists = false;
+          
+        });
+        return;
+      }
       setState(() {
         profileData = viewerData;
         numberOfFriends = viewerData["friends"].length;
@@ -341,6 +362,7 @@ class _ProfilePageState extends State<ProfilePage> {
           });
         }
       }
+      await fixUserData(viewerData);
     }
     if (mounted) {
       setState(() {
@@ -353,6 +375,34 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
 
+  Future fixUserData(Map<String, dynamic> dataToFix) async {
+    List<dynamic> friends = dataToFix["friends"];
+    List<dynamic> friendRequests = dataToFix["friendRequests"];
+    List<dynamic> outgoingRequests = dataToFix["outgoingRequests"];
+
+    //Check if has any friend requests that are in friends list
+    for (dynamic request in friendRequests) {
+      for (dynamic friend in friends) {
+        if (request["userId"] == friend["userId"]) {
+          await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+              .removeFriendRequest(request["userId"], request["displayName"],
+                  request["username"], request["FCMToken"]);
+        }
+      }
+    }
+
+    //Check if has any outgoing requests that are in friends list
+    for (dynamic request in outgoingRequests) {
+      for (dynamic friend in friends) {
+        if (request["userId"] == friend["userId"]) {
+          await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+              .removeOutgoingFriendRequest(request["userId"], request["displayName"],
+                  request["username"], request["FCMToken"]);
+        }
+      }
+    }
+
+  }
 
 
 
@@ -526,7 +576,7 @@ class _ProfilePageState extends State<ProfilePage> {
           preferredSize: const Size.fromHeight(kToolbarHeight),
           child: CustomAppBar(
             fixRight: true,
-            title: isCurrentUser ? "Your Profile" : displayName,
+            title: !userExists ? "User Doesn't Exist" :isCurrentUser ? "Your Profile" : displayName,
             showBackButton: widget.showBackButton || widget.isFriendLink,
             onBackButtonPressed: () {
               HapticFeedback.mediumImpact();
@@ -605,7 +655,25 @@ class _ProfilePageState extends State<ProfilePage> {
         ) : null,
 
         backgroundColor: const Color(0xFF232323),
-        body: gotData ? Stack(
+        body: !userExists ? 
+        Center(
+          child: Column(
+          
+          
+            children: [
+              const SizedBox(height: 20,),
+              Text("Account doesnt exist anymore :(", style: TextStyle(color: Colors.white, fontSize: 20), textAlign: TextAlign.center,),
+              const SizedBox(height: 20,),
+              ElevatedButton(onPressed: () {
+                router.pushReplacement("/");
+              }, 
+              style: elevatedButtonDecoration,
+              child: Text("Go Back Home", style: TextStyle(color: Colors.black, fontSize: 16),))
+            ],
+          ),
+        )
+        :
+        gotData ? Stack(
           children: [
             const BackgroundTile(),
             SingleChildScrollView(
@@ -720,6 +788,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 20),
                   if(blankOfTheWeek.isNotEmpty && blankOfTheWeek["status"] == "done" && isCurrentUser)
                     ElevatedButton(onPressed: () {
+                      HapticFeedback.mediumImpact();
                       nextScreen(context, BotwResultsPage(answers: blankOfTheWeek["answers"]));
                     },style: elevatedButtonDecoration ,child: const Text(
                       "View Results",

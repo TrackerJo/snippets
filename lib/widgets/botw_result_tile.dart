@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 
 import 'package:snippets/pages/profile_page.dart';
@@ -60,8 +61,9 @@ class _BOTWResultTileState extends State<BOTWResultTile> {
           ),
         ),
         child: ListTile(
-          onTap: () => {
-            Navigator.of(context).push(MaterialPageRoute(builder: (context) => ProfilePage(uid: widget.userId)))
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            Navigator.of(context).push(MaterialPageRoute(builder: (context) => ProfilePage(uid: widget.userId)));
           },
           
           title: Text(
