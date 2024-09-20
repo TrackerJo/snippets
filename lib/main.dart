@@ -1,15 +1,11 @@
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
 
 import 'package:flutter_widgetkit/flutter_widgetkit.dart';
 import 'package:go_router/go_router.dart';
@@ -22,6 +18,7 @@ import 'package:snippets/api/database.dart';
 import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/api/local_database.dart';
 import 'package:snippets/api/notifications.dart';
+import 'package:snippets/api/remote_config.dart';
 import 'package:snippets/helper/app_badge.dart';
 
 import 'package:snippets/helper/helper_function.dart';
@@ -35,6 +32,7 @@ import 'package:snippets/pages/profile_page.dart';
 import 'package:snippets/pages/question_page.dart';
 import 'package:snippets/pages/responses_page.dart';
 import 'package:snippets/pages/swipe_pages.dart';
+import 'package:snippets/pages/update_page.dart';
 import 'package:snippets/pages/voting_page.dart';
 import 'package:snippets/pages/welcome_page.dart';
 import 'package:snippets/providers/card_provider.dart';
@@ -42,11 +40,11 @@ import 'package:snippets/providers/card_provider.dart';
 import 'package:snippets/widgets/response_tile.dart';
 
 import 'firebase_options.dart';
-const String appGroupId = 'group.kazoom_snippets';           
+
+const String appGroupId = 'group.kazoom_snippets';
 const String iOSWidgetName = 'Snippets_Widgets';
 // final navigatorKey = GlobalKey<NavigatorState>();
 final userStreamController = StreamController.broadcast();
-
 
 class Answer {
   final String answer;
@@ -65,7 +63,6 @@ class Answer {
         'uid': uid,
         'displayName': displayName,
       };
-
 }
 
 class WidgetData {
@@ -76,9 +73,8 @@ class WidgetData {
 
   WidgetData.fromJson(Map<String, dynamic> json)
       : text = json['text'],
-        answers = (json['answers'] as List)
-            .map((e) => Answer.fromJson(e))
-            .toList();
+        answers =
+            (json['answers'] as List).map((e) => Answer.fromJson(e)).toList();
 
   Map<String, dynamic> toJson() => {
         'text': text,
@@ -97,7 +93,7 @@ AppDb localDb = AppDb();
 //   // );
 
 //   // if(message.data["type"] == "widget-botw"){
-    
+
 //   //   Map<String, dynamic> data = WidgetData(message.data["blank"].split(" of")[0], answers: []).toJson();
 
 //   //     WidgetKit.setItem(
@@ -107,7 +103,6 @@ AppDb localDb = AppDb();
 //   //     WidgetKit.reloadAllTimelines();
 //   //     await AppBadge.addBadge(1);
 //   // } else if(message.data["type"] == "widget-question"){
-
 
 //   //   Map<String, dynamic> oldSnippets = json.decode(await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets'));
 
@@ -124,14 +119,14 @@ AppDb localDb = AppDb();
 //   //     dynamic indexData = message.data["index"];
 //   //     if(indexData is String) {
 //   //       indexData = int.parse(indexData);
-//   //     } 
+//   //     }
 //   //   int index = indexes.indexOf(indexData);
 
 //   //   if(index == -1) {
 
 //   //     questions.add(message.data["question"]);
 //   //     ids.add(message.data["snippetId"]);
-      
+
 //   //     indexes.add(indexData);
 //   //     isAnonymous.add(message.data["snippetType"] == "anonymous");
 //   //     hasAnswereds.add(false);
@@ -156,7 +151,7 @@ AppDb localDb = AppDb();
 //   //       'group.kazoom_snippets');
 //   //     questions[index] = message.data["question"];
 //   //     ids[index] = message.data["snippetId"];
-    
+
 //   //     indexes[index] = indexData;
 //   //     isAnonymous[index] = message.data["snippetType"] == "anonymous";
 //   //     hasAnswereds[index] = false;
@@ -168,7 +163,6 @@ AppDb localDb = AppDb();
 //   //     "indexes": indexes,
 //   //     "isAnonymous": isAnonymous,
 //   //   };
-
 
 //   //   WidgetKit.setItem(
 //   //     'snippetsData',
@@ -198,7 +192,6 @@ AppDb localDb = AppDb();
 //   //     jsonEncode(oldBOTW),
 //   //     'group.kazoom_snippets');
 //   //   WidgetKit.reloadAllTimelines();
-    
 
 //   // } else if(message.data["type"] == "widget-snippet-response"){
 //   //   Map<String, dynamic> oldResponsesMap = json.decode(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets'));
@@ -222,22 +215,16 @@ AppDb localDb = AppDb();
 //   //   await AppBadge.addBadge(1);
 //   // } else if(message.data["type"] == "notification") {
 //   //   await AppBadge.addBadge(1);
-    
+
 //   // }
-// } 
+// }
 
 void main() async {
-
   WidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp(
+  await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-      // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-
-
-
-  
+  // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   runApp(const MainApp());
 }
@@ -250,219 +237,237 @@ class MainApp extends StatefulWidget {
 }
 
 List<Map<String, dynamic>> createDiscussionUsersList(String discussionUsers) {
-
-    List<Map<String, dynamic>> users = [];
-    List<String> userStrings = discussionUsers.split("|");
-    for (var user in userStrings) {
-      List<String> userParts = user.split("^");
-      if(userParts.length == 2) {
-        
-        
-        users.add({
-          "userId": userParts[0],
-          "FCMToken": userParts[1]
-        });
-      }
+  List<Map<String, dynamic>> users = [];
+  List<String> userStrings = discussionUsers.split("|");
+  for (var user in userStrings) {
+    List<String> userParts = user.split("^");
+    if (userParts.length == 2) {
+      users.add({"userId": userParts[0], "FCMToken": userParts[1]});
     }
-    return users;
   }
+  return users;
+}
 
-  String createDiscussionUsersString(List<dynamic> discussionUsers) {
-    String users = "";
-    for (var value in discussionUsers) {
-      users += "|${value["userId"]}^${value["FCMToken"]}";
-    }
-    return users;
-   
+String createDiscussionUsersString(List<dynamic> discussionUsers) {
+  String users = "";
+  for (var value in discussionUsers) {
+    users += "|${value["userId"]}^${value["FCMToken"]}";
   }
+  return users;
+}
 
 final router = GoRouter(
-    routes: [
-      GoRoute(
-        path: '/',
-        builder: (_, __)  {
-          
-            return const SwipePages();
-          
-        }, 
-        
-        
-      ),
-      GoRoute(
-        path: '/nowifi',
+  routes: [
+    GoRoute(
+      path: '/',
+      builder: (_, __) {
+        return const SwipePages();
+      },
+    ),
+    GoRoute(
+      path: '/update/:isLoggedIn',
+      builder: (_, __) {
+        return UpdatePage(
+          isLoggedIn: __.pathParameters["isLoggedIn"] == "true",
+        );
+      },
+    ),
+    GoRoute(
+      path: '/nowifi',
+      builder: (_, __) {
+        return const NoWifiPage();
+      },
+    ),
+    GoRoute(
+        path: "/login",
         builder: (_, __) {
-          return NoWifiPage( );
-        },
+          return const WelcomePage();
+        }),
+    GoRoute(
+        path: '/welcome/:uid/:toProfile',
+        builder: (_, __) {
+          return WelcomePage(
+            uid: __.pathParameters['uid']!,
+            toProfile: __.pathParameters['toProfile'] == 'true',
+          );
+        }),
+    GoRoute(
+        path: '/forgotPassword/:uid/:toProfile',
+        builder: (_, __) {
+          return ForgotPasswordPage(
+            uid: __.pathParameters['uid']!,
+            toProfile: __.pathParameters['toProfile'] == 'true',
+          );
+        }),
+    GoRoute(
+        path: '/createAccount/:uid/:toProfile',
+        builder: (_, __) {
+          return CreateAccountPage(
+            uid: __.pathParameters['uid']!,
+            toProfile: __.pathParameters['toProfile'] == 'true',
+          );
+        }),
+    GoRoute(
+        path: '/onBoarding/:uid/:toProfile',
+        builder: (_, __) {
+          return OnBoardingPage(
+            uid: __.pathParameters['uid']!,
+            toProfile: __.pathParameters['toProfile'] == 'true',
+          );
+        }),
+    GoRoute(
+        path: '/onBoarding/:visited',
+        builder: (_, __) {
+          return OnBoardingPage(
+            alreadyOnboarded: __.pathParameters['visited'] == 'true',
+          );
+        }),
+    GoRoute(
+        path: "/home/discussion",
+        builder: (context, state) {
+          return DiscussionPage(
+              responseTile: ResponseTile(
+                displayName: state.uri.queryParameters['displayName']!,
+                response: state.uri.queryParameters['response']!,
+                userId: state.uri.queryParameters['userId']!,
+                snippetId: state.uri.queryParameters['snippetId']!,
+                question: state.uri.queryParameters['snippetQuestion']!
+                    .replaceAll("~", "?"),
+                theme: state.uri.queryParameters['theme']!,
+                isDisplayOnly:
+                    state.uri.queryParameters['isDisplayOnly'] == 'true',
+                isAnonymous:
+                    state.uri.queryParameters['snippetType'] == 'anonymous',
+              ),
+              theme: state.uri.queryParameters['theme']!);
+        }),
+    GoRoute(
+      path: '/home/index/:index',
+      builder: (context, state) => SwipePages(
+        initialIndex: int.parse(state.pathParameters['index']!),
       ),
-      GoRoute(path:"/login", builder: (_, __) {
-        return const WelcomePage();
-      }),
-      GoRoute(path: '/welcome/:uid/:toProfile', builder: (_, __) {
-        return WelcomePage(
-          uid: __.pathParameters['uid']!,
-          toProfile: __.pathParameters['toProfile'] == 'true',
-        );
-      }),
-      GoRoute(path: '/forgotPassword/:uid/:toProfile', builder: (_, __) {
-        return ForgotPasswordPage(
-          uid: __.pathParameters['uid']!,
-          toProfile: __.pathParameters['toProfile'] == 'true',
-        );
-      }),
-      GoRoute(path: '/createAccount/:uid/:toProfile', builder: (_, __) {
-        return CreateAccountPage(
-          uid: __.pathParameters['uid']!,
-          toProfile: __.pathParameters['toProfile'] == 'true',
-        );
-      }),
-
-      GoRoute(path: '/onBoarding/:uid/:toProfile', builder: (_, __) {
-        return OnBoardingPage(
-          uid: __.pathParameters['uid']!,
-          toProfile: __.pathParameters['toProfile'] == 'true',
-        );
-      }),
-      GoRoute(path: '/onBoarding/:visited', builder: (_, __) {
-        return OnBoardingPage(
-
-          alreadyOnboarded: __.pathParameters['visited'] == 'true',
-        );
-      }),
-      GoRoute(path: "/home/discussion", builder: (context, state) {
-           
-
-            return  DiscussionPage(responseTile: ResponseTile(
-                    displayName: state.uri.queryParameters['displayName']!,
-                    response: state.uri.queryParameters['response']!,
-                    userId: state.uri.queryParameters['userId']!,
-                    snippetId: state.uri.queryParameters['snippetId']!,
-                    question: state.uri.queryParameters['snippetQuestion']!.replaceAll("~", "?"),
-                    theme: state.uri.queryParameters['theme']!,
-
-                    isDisplayOnly: state.uri.queryParameters['isDisplayOnly'] == 'true',
-                    isAnonymous:state.uri.queryParameters['snippetType'] == 'anonymous' ,
-
-                  ), theme: state.uri.queryParameters['theme']!);
-
-            } ),
-      GoRoute(
-            path: '/home/index/:index',
-            builder: (context, state) => SwipePages(
-              initialIndex: int.parse(state.pathParameters['index']!),
-            ),
-          ),
+    ),
+    GoRoute(
+      path: '/home/widget',
+      builder: (context, state) => SwipePages(
+        initialIndex: int.parse(state.uri.queryParameters['index']!),
+      ),
+    ),
+    GoRoute(
+      path: '/friendLink',
+      builder: (context, state) => ProfilePage(
+        uid: state.uri.queryParameters['uid']!,
+        isFriendLink: true,
+      ),
+    ),
+    GoRoute(
+      path: '/home',
+      builder: (_, __) => const SwipePages(),
+      routes: [
         GoRoute(
-            path: '/home/widget',
-            builder: (context, state) => SwipePages(
-              initialIndex: int.parse(state.uri.queryParameters['index']!),
-            ),
-          ),
-          
-      GoRoute(
-        path: '/friendLink',
-        builder: (context, state) => ProfilePage(
-          uid: state.uri.queryParameters['uid']!,
-          isFriendLink: true,
-        ),
-      ),
-      GoRoute(path: '/home', builder: (_, __) => const SwipePages(), routes: [
-         GoRoute(path: "discussion/widget", builder: (context, state) {
-           
-
-            return  DiscussionPage(responseTile: ResponseTile(
+            path: "discussion/widget",
+            builder: (context, state) {
+              return DiscussionPage(
+                  responseTile: ResponseTile(
                     displayName: state.uri.queryParameters['displayName']!,
                     response: state.uri.queryParameters['response']!,
                     userId: state.uri.queryParameters['userId']!,
                     snippetId: state.uri.queryParameters['snippetId']!,
-                    question: state.uri.queryParameters['snippetQuestion']!.replaceAll("~", "?"),
+                    question: state.uri.queryParameters['snippetQuestion']!
+                        .replaceAll("~", "?"),
                     theme: "blue",
-
                     isDisplayOnly: true,
-                    isAnonymous:state.uri.queryParameters['snippetType'] == 'anonymous' ,
-
-                  ), theme:"blue");
-
-            } ),
+                    isAnonymous:
+                        state.uri.queryParameters['snippetType'] == 'anonymous',
+                  ),
+                  theme: "blue");
+            }),
         GoRoute(
-            path: 'profile/widget',
-            builder: (context, state) => ProfilePage(uid: state.uri.queryParameters['uid']!,
-            showBackButton: true,),
+          path: 'profile/widget',
+          builder: (context, state) => ProfilePage(
+            uid: state.uri.queryParameters['uid']!,
+            showBackButton: true,
           ),
-          GoRoute(
-            path: 'friendLink',
-            builder: (context, state) => ProfilePage(
-              uid: state.uri.queryParameters['uid']!,
-            ),
+        ),
+        GoRoute(
+          path: 'friendLink',
+          builder: (context, state) => ProfilePage(
+            uid: state.uri.queryParameters['uid']!,
           ),
-          GoRoute(
-            path: 'question/widget',
-            builder: (context, state) => QuestionPage(
-              snippetId: state.uri.queryParameters['id']!,
-              theme: "blue",
-              question: state.uri.queryParameters['question']!.replaceAll("~", "?"),
-              type: state.uri.queryParameters['type']!,
-            ),
+        ),
+        GoRoute(
+          path: 'question/widget',
+          builder: (context, state) => QuestionPage(
+            snippetId: state.uri.queryParameters['id']!,
+            theme: "blue",
+            question:
+                state.uri.queryParameters['question']!.replaceAll("~", "?"),
+            type: state.uri.queryParameters['type']!,
           ),
-          GoRoute(
-            path: 'responses/widget',
-            builder: (context, state) => ResponsesPage(snippetId: state.uri.queryParameters['id']!,
+        ),
+        GoRoute(
+          path: 'responses/widget',
+          builder: (context, state) => ResponsesPage(
+            snippetId: state.uri.queryParameters['id']!,
             theme: "blue",
             question: state.uri.queryParameters['question']!,
-            isAnonymous: state.uri.queryParameters['type']! == "anonymous",),
-
+            isAnonymous: state.uri.queryParameters['type']! == "anonymous",
           ),
-          GoRoute(
-            path: 'question/:id/:theme/:question/:type',
-            builder: (context, state) => QuestionPage(
-              snippetId: state.pathParameters['id']!,
-              theme: state.pathParameters['theme']!,
-              question: state.pathParameters['question']!.replaceAll("~", "?"),
-              type: state.pathParameters['type']!,
-            ),
+        ),
+        GoRoute(
+          path: 'question/:id/:theme/:question/:type',
+          builder: (context, state) => QuestionPage(
+            snippetId: state.pathParameters['id']!,
+            theme: state.pathParameters['theme']!,
+            question: state.pathParameters['question']!.replaceAll("~", "?"),
+            type: state.pathParameters['type']!,
           ),
-          GoRoute(
-            path: 'voting',
-            builder: (context, state) => const VotingPage(),
-          ),
-          
-          GoRoute(
-            path: 'responses/:id/:theme/:question/:type',
-            builder: (context, state) => ResponsesPage(snippetId: state.pathParameters['id']!,
+        ),
+        GoRoute(
+          path: 'voting',
+          builder: (context, state) => const VotingPage(),
+        ),
+        GoRoute(
+          path: 'responses/:id/:theme/:question/:type',
+          builder: (context, state) => ResponsesPage(
+            snippetId: state.pathParameters['id']!,
             theme: state.pathParameters['theme']!,
             question: state.pathParameters['question']!,
-            isAnonymous: state.pathParameters['type']! == "anonymous",),
-
+            isAnonymous: state.pathParameters['type']! == "anonymous",
           ),
-          GoRoute(
-            path: 'profile/:uid',
-            builder: (context, state) => ProfilePage(uid: state.pathParameters['uid']!,
-            showBackButton: true,),
+        ),
+        GoRoute(
+          path: 'profile/:uid',
+          builder: (context, state) => ProfilePage(
+            uid: state.pathParameters['uid']!,
+            showBackButton: true,
           ),
-          
-          
-          GoRoute(path: 'results',
-          builder: (context, state) {
-            return const BotwResultsPage();
-
-            } 
-          ),
-        ],),
-
-    ],
+        ),
+        GoRoute(
+            path: 'results',
+            builder: (context, state) {
+              return const BotwResultsPage();
+            }),
+      ],
+    ),
+  ],
 );
 
 class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
-    final connectionChecker = InternetConnectionChecker();
-    late StreamSubscription<InternetConnectionStatus> subscription;
-
-
-
+  final connectionChecker = InternetConnectionChecker();
+  late StreamSubscription<InternetConnectionStatus> subscription;
 
   bool isSignedIn = false;
   getUserLoggedInState() async {
-    
+    int updateLocalDB = await HelperFunctions.getLocalDatabaseUpdateSF();
+    if (updateLocalDB < 4) {
+      print("Deleting local database");
+      await LocalDatabase().deleteDB();
+      await HelperFunctions.saveLocalDatabaseUpdateSF(4);
+    }
+
     bool status = await Auth().isUserLoggedIn();
-    if(status){
+    if (status) {
       await PushNotifications().initNotifications();
     }
     // await LocalDatabase().clearChats();
@@ -470,10 +475,14 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
     setState(() {
       isSignedIn = status;
-      
     });
     if (!status) {
       router.go('/login');
+    }
+    bool needsUpdate = await RemoteConfig().checkUpdates();
+    if (needsUpdate) {
+      //Show update dialog
+      router.go('/update/$status');
     }
   }
 
@@ -482,25 +491,21 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     // TODO: implement initState
     super.initState();
 
-   subscription = connectionChecker.onStatusChange.listen(
+    subscription = connectionChecker.onStatusChange.listen(
       (InternetConnectionStatus status) async {
         if (status == InternetConnectionStatus.connected) {
-           //Check if on /nowifi
+          //Check if on /nowifi
           String? currentPage = await HelperFunctions.getOpenedPageFromSF();
-          if(currentPage == "nowifi"){
+          if (currentPage == "nowifi") {
             bool status = await Auth().isUserLoggedIn();
-            if(!status){
-               router.go('/login');
-
+            if (!status) {
+              router.go('/login');
             } else {
-                 router.go('/');
+              router.go('/');
             }
           }
         } else {
-         
-        router.replace("/nowifi");
-
-
+          router.replace("/nowifi");
         }
       },
     );
@@ -508,14 +513,15 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
   }
 
-  bool compareAnswerList(List<Map<String, dynamic>> l1, List<Map<String, dynamic>> l2) {
+  bool compareAnswerList(
+      List<Map<String, dynamic>> l1, List<Map<String, dynamic>> l2) {
     if (l1.length != l2.length) {
-
       return false;
     }
     for (var i = 0; i < l1.length; i++) {
-      if (l1[i]["answer"] != l2[i]["answer"] || l1[i]["userId"] != l2[i]["userId"] || l1[i]["displayName"] != l2[i]["displayName"]) {
-
+      if (l1[i]["answer"] != l2[i]["answer"] ||
+          l1[i]["userId"] != l2[i]["userId"] ||
+          l1[i]["displayName"] != l2[i]["displayName"]) {
         return false;
       }
     }
@@ -523,29 +529,26 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     return true;
   }
 
-  bool compareQuestionsAndIDs(Map<String,dynamic> oldData, Map<String,dynamic> newData) {
-    if(oldData["snippets"].length != newData["snippets"].length) {
+  bool compareQuestionsAndIDs(
+      Map<String, dynamic> oldData, Map<String, dynamic> newData) {
+    if (oldData["snippets"].length != newData["snippets"].length) {
       return false;
     }
-   
+
     for (var i = 0; i < oldData["snippets"].length; i++) {
-      
-      if(oldData["snippets"][i] != newData["snippets"][i]) {
+      if (oldData["snippets"][i] != newData["snippets"][i]) {
         return false;
       }
-      
     }
     return true;
   }
 
   bool compareResponsesList(List<String> l1, List<String> l2) {
     if (l1.length != l2.length) {
-
       return false;
     }
     for (var i = 0; i < l1.length; i++) {
       if (l1[i] != l2[i]) {
-
         return false;
       }
     }
@@ -553,57 +556,110 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     return true;
   }
 
+  Future fixUserData(Map<String, dynamic> dataToFix) async {
+    List<dynamic> friends = dataToFix["friends"];
+    List<dynamic> friendRequests = dataToFix["friendRequests"];
+    List<dynamic> outgoingRequests = dataToFix["outgoingRequests"];
+    List<String> friendIds =
+        friends.map((e) => e["userId"].toString()).toList();
 
-   @override
+    //Check if has any friend requests that are in friends list
+    for (Map<String, dynamic> request in friendRequests) {
+      print("Checking friend request");
+      print("Request: $request");
+      if (friendIds.contains(request["userId"])) {
+        print("Removing friend request");
+        await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+            .removeFriendRequest(request, dataToFix);
+      }
+    }
+
+    //Check if has any outgoing requests that are in friends list
+    for (Map<String, dynamic> request in outgoingRequests) {
+      if (friendIds.contains(request["userId"])) {
+        await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+            .removeFriendRequest(request, dataToFix);
+      }
+    }
+
+    //Check for duplicate friends
+    List<String> readIds = [];
+    List<Map<String, dynamic>> requestsToRemove = [];
+    for (var i = 0; i < friendIds.length; i++) {
+      String id = friendIds[i];
+      if (readIds.contains(id)) {
+        requestsToRemove.add(friends[readIds.indexOf(id)]);
+        readIds[readIds.indexOf(id)] = "removed";
+        readIds.add(id);
+      } else {
+        readIds.add(id);
+      }
+    }
+
+    for (Map<String, dynamic> request in requestsToRemove) {
+      await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+          .removeFriendFix(request, dataToFix);
+    }
+  }
+
+  @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     switch (state) {
       case AppLifecycleState.resumed:
-         bool isConnected = await InternetConnectionChecker().hasConnection;
+        bool isConnected = await InternetConnectionChecker().hasConnection;
         if (isConnected) {
           //Check if on /nowifi
           String? currentPage = await HelperFunctions.getOpenedPageFromSF();
-          if(currentPage == "nowifi"){
+          if (currentPage == "nowifi") {
             bool status = await Auth().isUserLoggedIn();
-            if(!status){
-               router.go('/login');
-               return;
+            if (!status) {
+              router.go('/login');
+              return;
             } else {
-                 router.go('/');
+              router.go('/');
             }
           }
-          
         } else {
           router.replace("/nowifi");
           return;
         }
         //Check if user is logged in
         bool status = await Auth().isUserLoggedIn();
-        if(!status) {
+        bool needsUpdate = await RemoteConfig().checkUpdates();
+        if (needsUpdate) {
+          //Show update dialog
+          router.go('/update/$status');
+        }
+        if (!status) {
           return;
         }
         Map<String, dynamic> botwData = await Database().getBOTW();
         List<Answer> answers = [];
         var answersData = botwData["answers"];
-      if (answersData is List) {
-        for (var answer in answersData) {
-          answers.add(Answer(answer["answer"], answer["userId"], answer["displayName"]));
+        if (answersData is List) {
+          for (var answer in answersData) {
+            answers.add(Answer(
+                answer["answer"], answer["userId"], answer["displayName"]));
+          }
+        } else if (answersData is Map) {
+          for (var answer in answersData.values) {
+            answers.add(Answer(
+                answer["answer"], answer["userId"], answer["displayName"]));
+          }
         }
-      } else if (answersData is Map) {
-        for (var answer in answersData.values) {
-          answers.add(Answer(answer["answer"], answer["userId"], answer["displayName"]));
-        }
-      }
-      print(botwData);
-        Map<String, dynamic> data = WidgetData(botwData["blank"].split(" of")[0], answers: answers).toJson();
+        print(botwData);
+        Map<String, dynamic> data =
+            WidgetData(botwData["blank"].split(" of")[0], answers: answers)
+                .toJson();
 
-        if(await WidgetKit.getItem('botwData', 'group.kazoom_snippets') == null) {
+        if (await WidgetKit.getItem('botwData', 'group.kazoom_snippets') ==
+            null) {
           WidgetKit.setItem(
-            'botwData',
-            jsonEncode(data),
-            'group.kazoom_snippets');
+              'botwData', jsonEncode(data), 'group.kazoom_snippets');
           WidgetKit.reloadAllTimelines();
         } else {
-          Map<String,dynamic> oldBOTW = json.decode(await WidgetKit.getItem('botwData', 'group.kazoom_snippets'));
+          Map<String, dynamic> oldBOTW = json.decode(
+              await WidgetKit.getItem('botwData', 'group.kazoom_snippets'));
 
           List<Map<String, dynamic>> newAnswers = [];
           for (var answer in data["answers"]) {
@@ -621,157 +677,174 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
               "displayName": answer["displayName"],
             });
           }
-          
 
-          if(oldBOTW["text"] != data["text"] || !compareAnswerList(oldAnswers, newAnswers) ) {
+          if (oldBOTW["text"] != data["text"] ||
+              !compareAnswerList(oldAnswers, newAnswers)) {
             WidgetKit.setItem(
-              'botwData',
-              jsonEncode(data),
-              'group.kazoom_snippets');
+                'botwData', jsonEncode(data), 'group.kazoom_snippets');
             WidgetKit.reloadAllTimelines();
           }
         }
 
-        List<Map<String, dynamic>> snippets = await Database().getSnippetsList();
+        List<Map<String, dynamic>> snippets =
+            await Database().getSnippetsList();
         List<Map<String, dynamic>> removedSnippets = [];
-        for(var snippet in snippets){
+        for (var snippet in snippets) {
           int index = snippets.indexOf(snippet);
-          if(snippet["type"] == "anonymous"){
+          if (snippet["type"] == "anonymous") {
             DateTime now = DateTime.now();
             DateTime lastRecieved = snippet["lastRecieved"];
-            snippets[index]["removalDate"] = DateFormat("yyyy-MM-dd HH:mm:ss").format(lastRecieved.add(const Duration(days: 1)));
-            if(now.isAfter(lastRecieved.add(const Duration(days: 1)))){
+            snippets[index]["removalDate"] = DateFormat("yyyy-MM-dd HH:mm:ss")
+                .format(lastRecieved.add(const Duration(days: 1)));
+            if (now.isAfter(lastRecieved.add(const Duration(days: 1)))) {
               removedSnippets.add(snippet);
             }
-
-          } else if(snippet["type"] == "custom") {
+          } else if (snippet["type"] == "custom") {
             DateTime now = DateTime.now();
             DateTime lastRecieved = snippet["lastRecieved"];
-            snippets[index]["removalDate"] = DateFormat("yyyy-MM-dd HH:mm:ss").format(lastRecieved.add(const Duration(days: 1)));
-            if(now.isAfter(lastRecieved.add(const Duration(days: 1)))){
+            snippets[index]["removalDate"] = DateFormat("yyyy-MM-dd HH:mm:ss")
+                .format(lastRecieved.add(const Duration(days: 1)));
+            if (now.isAfter(lastRecieved.add(const Duration(days: 1)))) {
               removedSnippets.add(snippet);
             }
           } else {
             snippets[index]["removalDate"] = "None";
           }
         }
-        for(var rSnippet in removedSnippets){
+        for (var rSnippet in removedSnippets) {
           snippets.remove(rSnippet);
           await LocalDatabase().deleteSnippetById(rSnippet["snippetId"]);
         }
         List<String> snippetStrings = [];
         for (var snippet in snippets) {
-          snippetStrings.add("${snippet["question"]}|${snippet["snippetId"]}|${snippet["index"]}|${snippet["type"]}|${snippet["answered"] ? "true" : "false"}|${snippet["removalDate"]}");
+          snippetStrings.add(
+              "${snippet["question"]}|${snippet["snippetId"]}|${snippet["index"]}|${snippet["type"]}|${snippet["answered"] ? "true" : "false"}|${snippet["removalDate"]}");
         }
 
-        if(await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets') == null) {
+        if (await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets') ==
+            null) {
+          print("NULL SNIPPETS");
 
-            print("NULL SNIPPETS");
-          
           WidgetKit.setItem(
-            'snippetsData',
-            jsonEncode({
-              "snippets": snippetStrings,
-            }),
-            'group.kazoom_snippets');
-          WidgetKit.reloadAllTimelines();
-        } else {
-          Map<String, dynamic> oldSnippets = json.decode(await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets'));
-          print("SNIPPETS");
-          print(oldSnippets);
-          if(!compareQuestionsAndIDs(oldSnippets, {
-                "snippets": snippetStrings,
-              })) {
-
-            WidgetKit.setItem(
               'snippetsData',
               jsonEncode({
                 "snippets": snippetStrings,
               }),
               'group.kazoom_snippets');
+          WidgetKit.reloadAllTimelines();
+        } else {
+          Map<String, dynamic> oldSnippets = json.decode(
+              await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets'));
+          print("SNIPPETS");
+          print(oldSnippets);
+          if (!compareQuestionsAndIDs(oldSnippets, {
+            "snippets": snippetStrings,
+          })) {
+            WidgetKit.setItem(
+                'snippetsData',
+                jsonEncode({
+                  "snippets": snippetStrings,
+                }),
+                'group.kazoom_snippets');
             WidgetKit.reloadAllTimelines();
           }
         }
 
-        List<Map<String, dynamic>> snippetResponses = await Database().getSnippetsResponses();
+        List<Map<String, dynamic>> snippetResponses =
+            await Database().getSnippetsResponses();
         List<String> responseStrings = [];
         List<String> unansweredQuestions = [];
         DateTime? anonymousRemovalDateRes;
         for (var response in snippetResponses) {
-          if(unansweredQuestions.contains(response["snippetId"])) {
+          if (unansweredQuestions.contains(response["snippetId"])) {
             continue;
           }
-          if(snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["type"] == "anonymous"){
-
-            DateTime lastRecieved = snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["lastRecieved"];
+          if (snippets.firstWhere(
+                  (e) => e["snippetId"] == response["snippetId"])["type"] ==
+              "anonymous") {
+            DateTime lastRecieved = snippets.firstWhere(
+                (e) => e["snippetId"] == response["snippetId"])["lastRecieved"];
             anonymousRemovalDateRes = lastRecieved.add(const Duration(days: 1));
-
           }
-         
 
-          responseStrings.add("${response["displayName"]}|${snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["question"]}|${response["answer"]}|${response["snippetId"]}|${response["uid"]}|${snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["type"]}|${snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["answered"]}");
-          if(snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["answered"] == false) {
+          responseStrings.add(
+              "${response["displayName"]}|${snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["question"]}|${response["answer"]}|${response["snippetId"]}|${response["uid"]}|${snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["type"]}|${snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["answered"]}");
+          if (snippets.firstWhere(
+                  (e) => e["snippetId"] == response["snippetId"])["answered"] ==
+              false) {
             unansweredQuestions.add(response["snippetId"]);
           }
         }
 
-        if(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets') == null) {
+        if (await WidgetKit.getItem(
+                'snippetsResponsesData', 'group.kazoom_snippets') ==
+            null) {
           WidgetKit.setItem(
-            'snippetsResponsesData',
-            jsonEncode({"responses": responseStrings, "anonymousRemovalDate":anonymousRemovalDateRes != null ? DateFormat("yyyy-MM-dd HH:mm:ss").format(anonymousRemovalDateRes) : ""}),
-            'group.kazoom_snippets');
+              'snippetsResponsesData',
+              jsonEncode({
+                "responses": responseStrings,
+                "anonymousRemovalDate": anonymousRemovalDateRes != null
+                    ? DateFormat("yyyy-MM-dd HH:mm:ss")
+                        .format(anonymousRemovalDateRes)
+                    : ""
+              }),
+              'group.kazoom_snippets');
           WidgetKit.reloadAllTimelines();
         } else {
-          Map<String, dynamic> oldResponsesMap = json.decode(await WidgetKit.getItem('snippetsResponsesData', 'group.kazoom_snippets'));
-          List<String> oldResponses = oldResponsesMap["responses"].cast<String>();
-          if(!compareResponsesList(oldResponses, responseStrings)) {
+          Map<String, dynamic> oldResponsesMap = json.decode(
+              await WidgetKit.getItem(
+                  'snippetsResponsesData', 'group.kazoom_snippets'));
+          List<String> oldResponses =
+              oldResponsesMap["responses"].cast<String>();
+          if (!compareResponsesList(oldResponses, responseStrings)) {
             WidgetKit.setItem(
-              'snippetsResponsesData',
-              jsonEncode({"responses": responseStrings, "anonymousRemovalDate":anonymousRemovalDateRes != null ? DateFormat("yyyy-MM-dd HH:mm:ss").format(anonymousRemovalDateRes) : ""}),
-              'group.kazoom_snippets');
+                'snippetsResponsesData',
+                jsonEncode({
+                  "responses": responseStrings,
+                  "anonymousRemovalDate": anonymousRemovalDateRes != null
+                      ? DateFormat("yyyy-MM-dd HH:mm:ss")
+                          .format(anonymousRemovalDateRes)
+                      : ""
+                }),
+                'group.kazoom_snippets');
             WidgetKit.reloadAllTimelines();
           }
         }
 
-
-        
-        
         await LocalDatabase().deleteOldResponse();
         // await AppBadge.resetBadge();
         //Check if on IOS
-        if(Platform.isIOS){
+        if (Platform.isIOS) {
           AppBadge.resetBadge();
           WidgetKit.setItem("badgeCount", 0, 'group.kazoom_snippets');
         }
+        int numCachedResponses = await LocalDatabase().numberOfResponses();
+        int numCachedSnippets = await LocalDatabase().numberOfSnippets();
+        print("Cached responses: $numCachedResponses");
+        print("Cached snippets: $numCachedSnippets");
 
         //Check if FCM token changed
         String deviceToken = await PushNotifications().getDeviceToken();
-        Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-      
+        Map<String, dynamic> userData =
+            await HelperFunctions.getUserDataFromSF();
+        fixUserData(userData);
+
         if (userData['FCMToken'] != deviceToken) {
           //Update FCM token
-          await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).updateUserFCMToken(deviceToken);
+          await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+              .updateUserFCMToken(deviceToken);
           //Subscribe to topic
           await PushNotifications().subscribeToTopic("all");
         }
 
         break;
       case AppLifecycleState.inactive:
-
-
-
         break;
       case AppLifecycleState.paused:
-
-
         break;
       case AppLifecycleState.detached:
-
-
         break;
       case AppLifecycleState.hidden:
-
-
         break;
     }
   }
@@ -780,10 +853,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   void dispose() {
     // TODO: implement dispose
     WidgetsBinding.instance.removeObserver(this);
-     subscription.cancel();
+    subscription.cancel();
     super.dispose();
   }
-
 
   @override
   Widget build(BuildContext context) {

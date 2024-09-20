@@ -1,6 +1,5 @@
 import 'dart:async';
 
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:snippets/api/database.dart';
@@ -36,7 +35,6 @@ class ResponsesPage extends StatefulWidget {
 }
 
 class _ResponsesPageState extends State<ResponsesPage> {
-
   String userDisplayName = "";
   String userResponse = "";
   List<dynamic> discussionUsers = [];
@@ -64,24 +62,25 @@ class _ResponsesPageState extends State<ResponsesPage> {
 
   void getResponsesList() async {
     await HelperFunctions.saveOpenedPageSF("responses-${widget.snippetId}");
-      List<Map<String, dynamic>> snippets = await Database().getSnippetsList();
-      bool snippetExists = snippets.any((e) => e["snippetId"] == widget.snippetId);
-      if(!snippetExists){
-        router.pushReplacement("/");
-      }
-
+    List<Map<String, dynamic>> snippets = await Database().getSnippetsList();
+    bool snippetExists =
+        snippets.any((e) => e["snippetId"] == widget.snippetId);
+    if (!snippetExists) {
+      router.pushReplacement("/");
+    }
 
     List<String> newFriends = [];
     List<String> removedFriends = [];
     List<String> friends = [];
-    if(!widget.isAnonymous) {
+    if (!widget.isAnonymous) {
       Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
       friends = toStringList(userData["friends"]);
-      List<String> responsesIDs = await LocalDatabase().getCachedResponsesIDs(widget.snippetId);
+      List<String> responsesIDs =
+          await LocalDatabase().getCachedResponsesIDs(widget.snippetId);
       print("Friends: $friends");
       print("Responses: $responsesIDs");
-  
-      if(!compareLists(friends, responsesIDs)){
+
+      if (!compareLists(friends, responsesIDs)) {
         for (var item in friends) {
           if (!responsesIDs.contains(item)) {
             newFriends.add(item);
@@ -94,30 +93,25 @@ class _ResponsesPageState extends State<ResponsesPage> {
         }
         for (var friend in removedFriends) {
           LocalDatabase().removeResponse(widget.snippetId, friend);
-    
-          
         }
-
       }
     }
     StreamController responsesList = StreamController();
-    await Database().getSnippetResponses(responsesList, widget.snippetId, widget.isAnonymous, newFriends.isNotEmpty, newFriends, friends);
-    
+    await Database().getSnippetResponses(responsesList, widget.snippetId,
+        widget.isAnonymous, newFriends.isNotEmpty, newFriends, friends);
+
     responsesList.stream.listen((event) {
-      if(responsesStream.isClosed) return;
+      if (responsesStream.isClosed) return;
       print("Local Responses: $event");
       responsesStream.add(event);
     });
-    
-    
   }
 
   void getUserDisplayName() async {
-    String displayName = (await HelperFunctions.getUserDisplayNameFromSF())!;
-
+    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
     if (mounted) {
       setState(() {
-        userDisplayName = displayName;
+        userDisplayName = userData["fullname"];
       });
     }
     if (widget.userResponse != "~~~") {
@@ -126,7 +120,7 @@ class _ResponsesPageState extends State<ResponsesPage> {
         discussionUsers = widget.userDiscussionUsers;
       });
     } else {
-      if(widget.isAnonymous) {
+      if (widget.isAnonymous) {
         return;
       }
       Map<String, dynamic> response =
@@ -206,16 +200,14 @@ class _ResponsesPageState extends State<ResponsesPage> {
         if (snapshot.hasData) {
           if (snapshot.data!.length != null) {
             if (snapshot.data.length + 1 != 0) {
-              return SizedBox(
-                  height: MediaQuery.of(context).size.height - 100,
+              return Expanded(
                   child: ListView.builder(
                       shrinkWrap: true,
                       clipBehavior: Clip.none,
                       itemCount: snapshot.data.length + 1,
                       itemBuilder: (context, index) {
-
-                        if (index == 0 ) {
-                          if(widget.isAnonymous){
+                        if (index == 0) {
+                          if (widget.isAnonymous) {
                             return const SizedBox();
                           }
                           // return the header
@@ -242,15 +234,14 @@ class _ResponsesPageState extends State<ResponsesPage> {
                         return Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: ResponseTile(
-                              question: widget.question,
-                              response: snapshot.data[index].answer,
-                              displayName: snapshot.data[index].displayName,
-                              snippetId: widget.snippetId,
-                              theme: widget.theme,
-                              userId: snapshot.data[index].uid,
-                              isAnonymous: widget.isAnonymous,
-                              
-                              ),
+                            question: widget.question,
+                            response: snapshot.data[index].answer,
+                            displayName: snapshot.data[index].displayName,
+                            snippetId: widget.snippetId,
+                            theme: widget.theme,
+                            userId: snapshot.data[index].uid,
+                            isAnonymous: widget.isAnonymous,
+                          ),
                         );
                       }));
             } else {

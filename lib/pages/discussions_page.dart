@@ -1,11 +1,10 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-
 import 'package:snippets/api/fb_database.dart';
-
 
 import 'package:snippets/widgets/discussion_tile.dart';
 
@@ -18,55 +17,77 @@ class DiscussionsPage extends StatefulWidget {
 }
 
 class _DiscussionsPageState extends State<DiscussionsPage> {
-  List<Map<String,dynamic>> discussions = [];
-  List<Map<String,dynamic>> oldDiscussions = [];
+  List<Map<String, dynamic>> discussions = [];
+  List<Map<String, dynamic>> oldDiscussions = [];
   StreamSubscription? discSub;
   bool isLoading = false;
 
   void getDiscussions() async {
-
-    if(!mounted) return;
+    if (!mounted) return;
     setState(() {
       isLoading = true;
     });
     StreamController discStream = StreamController();
-    
+
     await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
         .getDiscussions(FirebaseAuth.instance.currentUser!.uid, discStream);
-        if(!mounted) return;
-      setState(() {
-        discussions = [];
-      });
+    if (!mounted) return;
+    setState(() {
+      discussions = [];
+    });
     discSub = discStream.stream.listen((discussionsMap) {
       if (mounted) {
-      setState(() {
-        // discussions.add(discussionsMap);
-        if(discussions.any((element) => element["snippetId"] == discussionsMap["snippetId"] && element["answerId"] == discussionsMap["answerId"])) {
-          //Get one that exists
-          var existing = discussions.firstWhere((element) => element["snippetId"] == discussionsMap["snippetId"] && element["answerId"] == discussionsMap["answerId"]);
-          print("REMOVING");
-          discussionsMap["snippetQuestion"] = existing["snippetQuestion"];
-          discussionsMap["isAnonymous"] = existing["isAnonymous"];
-          discussions.removeWhere((element) => element["snippetId"] == discussionsMap["snippetId"] && element["answerId"] == discussionsMap["answerId"]);
+        setState(() {
+          // discussions.add(discussionsMap);
+          if (discussions.any((element) =>
+              element["snippetId"] == discussionsMap["snippetId"] &&
+              element["answerId"] == discussionsMap["answerId"])) {
+            //Get one that exists
+            var existing = discussions.firstWhere((element) =>
+                element["snippetId"] == discussionsMap["snippetId"] &&
+                element["answerId"] == discussionsMap["answerId"]);
+            print("REMOVING");
+            discussionsMap["snippetQuestion"] = existing["snippetQuestion"];
+            discussionsMap["isAnonymous"] = existing["isAnonymous"];
+            discussions.removeWhere((element) =>
+                element["snippetId"] == discussionsMap["snippetId"] &&
+                element["answerId"] == discussionsMap["answerId"]);
 
-          // discussions.add(existing);
-        }
+            // discussions.add(existing);
+          }
 
-        
-        discussions.add(discussionsMap);
-        //Sort by last message
-        discussions.sort((a, b) {
-          var aTime = a["lastMessage"]["date"].toDate();
-          var bTime = b["lastMessage"]["date"].toDate();
-          return bTime.compareTo(aTime);
+          discussions.add(discussionsMap);
+          //Sort by last message
+          discussions.sort((a, b) {
+            var aTime = a["lastMessage"]["date"];
+            var bTime = b["lastMessage"]["date"];
+            //Chech type of aTime and bTime
+            if (aTime is Timestamp) {
+              aTime = aTime.toDate();
+            }
+            if (bTime is Timestamp) {
+              bTime = bTime.toDate();
+            }
+            if (a["lastMessage"]["message"] == "No messages" &&
+                b["lastMessage"]["message"] == "No messages") {
+              //Rank b higher
+              return 0;
+            } else if (b["lastMessage"]["message"] == "No messages") {
+              //Rank a higher
+              return -1;
+            } else if (a["lastMessage"]["message"] == "No messages") {
+              //Rank b higher
+              return 1;
+            }
+
+            return bTime.compareTo(aTime);
+          });
         });
-      });
-    }
+      }
     });
     setState(() {
       isLoading = false;
     });
-    
   }
 
   @override
@@ -76,31 +97,28 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
     getDiscussions();
   }
 
-     @override
-    void didUpdateWidget(covariant DiscussionsPage oldWidget) {
-
-      super.didUpdateWidget(oldWidget);
-      if(!mounted) {
-        discSub?.cancel();
-        return;
-      };
-      if(widget.index != 2) {
-        discSub?.cancel();
-        // discussions = [];
-        // setState(() {});
-        return;
-      };
-      print("INDEX CHANGED to ${widget.index}");
-      
-
-      setState(() {
-        isLoading = true;
-        oldDiscussions = discussions;
-        discussions = [];
-      });
-      getDiscussions();
+  @override
+  void didUpdateWidget(covariant DiscussionsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!mounted) {
+      discSub?.cancel();
+      return;
     }
+    if (widget.index != 2) {
+      discSub?.cancel();
+      // discussions = [];
+      // setState(() {});
+      return;
+    }
+    print("INDEX CHANGED to ${widget.index}");
 
+    setState(() {
+      isLoading = true;
+      oldDiscussions = discussions;
+      discussions = [];
+    });
+    getDiscussions();
+  }
 
   @override
   void dispose() {
@@ -112,82 +130,94 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
       backgroundColor: const Color(0xFF232323),
-      body: isLoading ? ListView(
-        children: [
-          const SizedBox(height: 20),
-          Center(
-            child: Column(
+      body: isLoading
+          ? ListView(
               children: [
-                if(oldDiscussions == [] || oldDiscussions.isEmpty) 
-            const Text("No discussions yet", style: TextStyle(color: Colors.white, fontSize: 20)),
-          if(oldDiscussions == [] || oldDiscussions.isEmpty)
-            const SizedBox(height: 20),
-          if(oldDiscussions == [] || oldDiscussions.isEmpty)
-            const Text("Join a discussion by sending a message in a discussion", style: TextStyle(color: Colors.white, fontSize: 20), textAlign: TextAlign.center, ),
-           
+                const SizedBox(height: 20),
+                Center(
+                  child: Column(
+                    children: [
+                      if (oldDiscussions == [] || oldDiscussions.isEmpty)
+                        const Text("No discussions yet",
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 20)),
+                      if (oldDiscussions == [] || oldDiscussions.isEmpty)
+                        const SizedBox(height: 20),
+                      if (oldDiscussions == [] || oldDiscussions.isEmpty)
+                        const Text(
+                          "Join a discussion by sending a message in a discussion",
+                          style: TextStyle(color: Colors.white, fontSize: 20),
+                          textAlign: TextAlign.center,
+                        ),
+                    ],
+                  ),
+                ),
+                for (var discussion in oldDiscussions)
+                  if (discussion["snippetId"] != null &&
+                      discussion["answerId"] != null &&
+                      discussion["snippetQuestion"] != null &&
+                      discussion["answerUser"] != null &&
+                      discussion["lastMessage"] != null)
+                    DiscussionTile(
+                      snippetId: discussion["snippetId"],
+                      discussionId: discussion["answerId"],
+                      question: discussion["snippetQuestion"],
+                      answerUser: discussion["answerUser"],
+                      lastMessageSender: discussion["lastMessage"]
+                          ["senderDisplayName"],
+                      lastMessage: discussion["lastMessage"]["message"],
+                      hasBeenRead: discussion["lastMessage"]["readBy"]
+                          .contains(FirebaseAuth.instance.currentUser!.uid),
+                      theme: "blue",
+                      answerResponse: discussion["answerResponse"],
+                      isAnonymous: discussion["isAnonymous"],
+                    )
+              ],
+            )
+          : ListView(
+              children: [
+                const SizedBox(height: 20),
+                Center(
+                  child: Column(
+                    children: [
+                      if (discussions == [] || discussions.isEmpty)
+                        const Text("No discussions yet",
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 20)),
+                      if (discussions == [] || discussions.isEmpty)
+                        const SizedBox(height: 20),
+                      if (discussions == [] || discussions.isEmpty)
+                        const Text(
+                          "Join a discussion by sending a message in a discussion",
+                          style: TextStyle(color: Colors.white, fontSize: 20),
+                          textAlign: TextAlign.center,
+                        ),
+                    ],
+                  ),
+                ),
+                for (var discussion in discussions)
+                  if (discussion["snippetId"] != null &&
+                      discussion["answerId"] != null &&
+                      discussion["snippetQuestion"] != null &&
+                      discussion["answerUser"] != null &&
+                      discussion["lastMessage"] != null)
+                    DiscussionTile(
+                      snippetId: discussion["snippetId"],
+                      discussionId: discussion["answerId"],
+                      question: discussion["snippetQuestion"],
+                      answerUser: discussion["answerUser"],
+                      lastMessageSender: discussion["lastMessage"]
+                          ["senderDisplayName"],
+                      lastMessage: discussion["lastMessage"]["message"],
+                      hasBeenRead: discussion["lastMessage"]["readBy"]
+                          .contains(FirebaseAuth.instance.currentUser!.uid),
+                      theme: "blue",
+                      answerResponse: discussion["answerResponse"],
+                      isAnonymous: discussion["isAnonymous"],
+                    )
               ],
             ),
-          ),
-               
-                
-          for (var discussion in oldDiscussions)
-            if(discussion["snippetId"] != null && discussion["answerId"] != null && discussion["snippetQuestion"] != null && discussion["answerUser"] != null && discussion["lastMessage"] != null )
-            DiscussionTile(
-              snippetId: discussion["snippetId"],
-              discussionId: discussion["answerId"],
-              question: discussion["snippetQuestion"],
-              answerUser: discussion["answerUser"],
-              lastMessageSender: discussion["lastMessage"]
-                  ["senderDisplayName"],
-              lastMessage: discussion["lastMessage"]["message"],
-              hasBeenRead: discussion["lastMessage"]["readBy"]
-                  .contains(FirebaseAuth.instance.currentUser!.uid),
-              theme: "blue",
-              answerResponse: discussion["answerResponse"],
-              isAnonymous: discussion["isAnonymous"],
-
-            )
-        ],
-      ) : ListView(
-        children: [
-          const SizedBox(height: 20),
-          Center(
-            child: Column(
-              children: [
-                if(discussions == [] || discussions.isEmpty) 
-            const Text("No discussions yet", style: TextStyle(color: Colors.white, fontSize: 20)),
-          if(discussions == [] || discussions.isEmpty)
-            const SizedBox(height: 20),
-          if(discussions == [] || discussions.isEmpty)
-            const Text("Join a discussion by sending a message in a discussion", style: TextStyle(color: Colors.white, fontSize: 20), textAlign: TextAlign.center, ),
-           
-              ],
-            ),
-          ),
-               
-                
-          for (var discussion in discussions)
-            if(discussion["snippetId"] != null && discussion["answerId"] != null && discussion["snippetQuestion"] != null && discussion["answerUser"] != null && discussion["lastMessage"] != null )
-            DiscussionTile(
-              snippetId: discussion["snippetId"],
-              discussionId: discussion["answerId"],
-              question: discussion["snippetQuestion"],
-              answerUser: discussion["answerUser"],
-              lastMessageSender: discussion["lastMessage"]
-                  ["senderDisplayName"],
-              lastMessage: discussion["lastMessage"]["message"],
-              hasBeenRead: discussion["lastMessage"]["readBy"]
-                  .contains(FirebaseAuth.instance.currentUser!.uid),
-              theme: "blue",
-              answerResponse: discussion["answerResponse"],
-              isAnonymous: discussion["isAnonymous"],
-
-
-            )
-        ],
-      ),
     );
   }
 }

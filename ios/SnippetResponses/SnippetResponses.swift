@@ -99,8 +99,9 @@ struct SnippetResponsesEntryView : View {
     }
     
     func answerSnippet() -> some View{
+        var question: String = entry.responses[entry.index].question.replacingOccurrences(of: "~", with: "?")
         return VStack {
-            Text("Q: " + entry.snippetsData!.responses[entry.index].split(separator:"|")[1]).font(.system(size: 20, weight: .heavy))
+            Text("Q: " + question).font(.system(size: 20, weight: .heavy))
                 .foregroundColor(.white.opacity(0.8))
                 .minimumScaleFactor(0.2)
             Spacer()
@@ -109,7 +110,7 @@ struct SnippetResponsesEntryView : View {
                 .font(.system(size: 15, weight: .heavy))
                 .foregroundColor(.white.opacity(0.8))
                 .minimumScaleFactor(0.2)
-                .widgetURL(URL(string:"/home/question/widget/?id=" + entry.snippetsData!.responses[entry.index].split(separator:"|")[3] + "&question=" + entry.snippetsData!.responses[entry.index].split(separator:"|")[1].replacingOccurrences(of: "?", with: "~") + "&type=" + entry.snippetsData!.responses[entry.index].split(separator:"|")[5]))
+                .widgetURL(URL(string:"/home/question/widget/?id=" + entry.responses[entry.index].snippetId + "&question=" + entry.responses[entry.index].question.replacingOccurrences(of: "?", with: "~") + "&type=" + entry.responses[entry.index].snippetType))
             Spacer()
         }
     }
@@ -121,7 +122,7 @@ struct SnippetResponsesEntryView : View {
                 .foregroundColor(.white.opacity(0.8))
                 .minimumScaleFactor(0.2)
                 Spacer()
-            Text("Q: " + entry.responses[entry.index].question)
+            Text("Q: " + entry.responses[entry.index].question.replacingOccurrences(of: "~", with: "?"))
                 .font(.system(size: 20, weight: .heavy))
                 .foregroundColor(.white.opacity(0.8))
                 .minimumScaleFactor(0.2)

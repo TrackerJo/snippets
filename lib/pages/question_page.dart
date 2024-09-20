@@ -30,15 +30,16 @@ class QuestionPage extends StatefulWidget {
 
 class _QuestionPageState extends State<QuestionPage> {
   String answer = "";
+  bool isLoading = false;
 
   void savePage() async {
     await HelperFunctions.saveOpenedPageSF("question-${widget.snippetId}");
     List<Map<String, dynamic>> snippets = await Database().getSnippetsList();
-    bool snippetExists = snippets.any((e) => e["snippetId"] == widget.snippetId);
-    if(!snippetExists){
+    bool snippetExists =
+        snippets.any((e) => e["snippetId"] == widget.snippetId);
+    if (!snippetExists) {
       router.pushReplacement("/");
     }
-
   }
 
   @override
@@ -54,7 +55,8 @@ class _QuestionPageState extends State<QuestionPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("Anonymous Snippets"),
-          content: const Text("Your response will be completely anonymous to everyone and will be public, not just to your friends."),
+          content: const Text(
+              "Your response will be completely anonymous to everyone and will be public, not just to your friends."),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -66,8 +68,9 @@ class _QuestionPageState extends State<QuestionPage> {
               onPressed: () async {
                 Navigator.of(context).pop();
                 String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
-                  await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-                    .submitAnswer(widget.snippetId, answer, widget.question, widget.theme, anonymousID);
+                await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+                    .submitAnswer(widget.snippetId, answer, widget.question,
+                        widget.theme, anonymousID);
               },
               child: const Text("I understand"),
             ),
@@ -78,35 +81,43 @@ class _QuestionPageState extends State<QuestionPage> {
   }
 
   void submitAnswer() async {
-    if(widget.type == "anonymous") {
-      bool hasSeenAnonymouse = (await HelperFunctions.checkIfSeenAnonymousSnippetSF());
-      if(!hasSeenAnonymouse) {
+    setState(() {
+      isLoading = true;
+    });
+    if (widget.type == "anonymous") {
+      bool hasSeenAnonymouse =
+          (await HelperFunctions.checkIfSeenAnonymousSnippetSF());
+      if (!hasSeenAnonymouse) {
         await HelperFunctions.saveSeenAnonymousSnippetSF();
         showAnonymousInfoDialog(context);
       } else {
-
         String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
         await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-          .submitAnswer(widget.snippetId, answer, widget.question, widget.theme, anonymousID);
+            .submitAnswer(widget.snippetId, answer, widget.question,
+                widget.theme, anonymousID);
       }
     } else {
       await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-        .submitAnswer(widget.snippetId, answer, widget.question, widget.theme, null);
-
+          .submitAnswer(
+              widget.snippetId, answer, widget.question, widget.theme, null);
     }
-    
+setState(() {
+      isLoading = false;
+    });
     // Navigator.of(context).pop();
     //Go to responses page
     Navigator.of(context).pop();
     nextScreen(
         context,
         ResponsesPage(
-            snippetId: widget.snippetId,
-            userResponse: answer,
-            userDiscussionUsers: [FirebaseAuth.instance.currentUser!.uid],
-            question: widget.question,
-            theme: widget.theme,
-            isAnonymous: widget.type == "anonymous",));
+          snippetId: widget.snippetId,
+          userResponse: answer,
+          userDiscussionUsers: [FirebaseAuth.instance.currentUser!.uid],
+          question: widget.question,
+          theme: widget.theme,
+          isAnonymous: widget.type == "anonymous",
+        ));
+
   }
 
   @override
@@ -168,34 +179,41 @@ class _QuestionPageState extends State<QuestionPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () => {
-                    submitAnswer(),
-                  },
-                  style: ElevatedButton.styleFrom(
-                    elevation: 10,
-                    shadowColor: widget.theme == "sunset"
-                        ? ColorSys.sunset
-                        : widget.theme == "sunrise"
-                            ? ColorSys.sunriseGradient.colors[0]
-                            : widget.theme == "blue"
-                                ? ColorSys.secondarySolid
-                                : ColorSys.primarySolid,
-                    minimumSize: const Size(150, 50),
-                    backgroundColor: widget.theme == "sunset"
-                        ? ColorSys.sunset
-                        : widget.theme == "sunrise"
-                            ? ColorSys.sunriseGradient.colors[0]
-                            : widget.theme == "blue"
-                                ? ColorSys.secondarySolid
-                                : ColorSys.primarySolid,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
-                    ),
-                  ),
-                  child: const Text('Submit',
-                      style: TextStyle(fontSize: 20, color: Colors.black)),
-                ),
+                isLoading
+                    ? Center(
+                        child: CircularProgressIndicator(
+                          color: ColorSys.primary,
+                        ),
+                      )
+                    : ElevatedButton(
+                        onPressed: () => {
+                          submitAnswer(),
+                        },
+                        style: ElevatedButton.styleFrom(
+                          elevation: 10,
+                          shadowColor: widget.theme == "sunset"
+                              ? ColorSys.sunset
+                              : widget.theme == "sunrise"
+                                  ? ColorSys.sunriseGradient.colors[0]
+                                  : widget.theme == "blue"
+                                      ? ColorSys.secondarySolid
+                                      : ColorSys.primarySolid,
+                          minimumSize: const Size(150, 50),
+                          backgroundColor: widget.theme == "sunset"
+                              ? ColorSys.sunset
+                              : widget.theme == "sunrise"
+                                  ? ColorSys.sunriseGradient.colors[0]
+                                  : widget.theme == "blue"
+                                      ? ColorSys.secondarySolid
+                                      : ColorSys.primarySolid,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20.0),
+                          ),
+                        ),
+                        child: const Text('Submit',
+                            style:
+                                TextStyle(fontSize: 20, color: Colors.black)),
+                      ),
               ],
             ),
           ),

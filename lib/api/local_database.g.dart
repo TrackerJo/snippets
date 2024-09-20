@@ -68,6 +68,12 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
   late final GeneratedColumn<String> snippetId = GeneratedColumn<String>(
       'snippet_id', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _lastUpdatedMillisMeta =
+      const VerificationMeta('lastUpdatedMillis');
+  @override
+  late final GeneratedColumn<int> lastUpdatedMillis = GeneratedColumn<int>(
+      'last_updated_millis', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -79,7 +85,8 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
         senderDisplayName,
         readBy,
         chatId,
-        snippetId
+        snippetId,
+        lastUpdatedMillis
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -152,6 +159,14 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
     } else if (isInserting) {
       context.missing(_snippetIdMeta);
     }
+    if (data.containsKey('last_updated_millis')) {
+      context.handle(
+          _lastUpdatedMillisMeta,
+          lastUpdatedMillis.isAcceptableOrUnknown(
+              data['last_updated_millis']!, _lastUpdatedMillisMeta));
+    } else if (isInserting) {
+      context.missing(_lastUpdatedMillisMeta);
+    }
     return context;
   }
 
@@ -181,6 +196,8 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
           .read(DriftSqlType.string, data['${effectivePrefix}chat_id'])!,
       snippetId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}snippet_id'])!,
+      lastUpdatedMillis: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}last_updated_millis'])!,
     );
   }
 
@@ -201,6 +218,7 @@ class Chat extends DataClass implements Insertable<Chat> {
   final String readBy;
   final String chatId;
   final String snippetId;
+  final int lastUpdatedMillis;
   const Chat(
       {required this.id,
       required this.message,
@@ -211,7 +229,8 @@ class Chat extends DataClass implements Insertable<Chat> {
       required this.senderDisplayName,
       required this.readBy,
       required this.chatId,
-      required this.snippetId});
+      required this.snippetId,
+      required this.lastUpdatedMillis});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -225,6 +244,7 @@ class Chat extends DataClass implements Insertable<Chat> {
     map['read_by'] = Variable<String>(readBy);
     map['chat_id'] = Variable<String>(chatId);
     map['snippet_id'] = Variable<String>(snippetId);
+    map['last_updated_millis'] = Variable<int>(lastUpdatedMillis);
     return map;
   }
 
@@ -240,6 +260,7 @@ class Chat extends DataClass implements Insertable<Chat> {
       readBy: Value(readBy),
       chatId: Value(chatId),
       snippetId: Value(snippetId),
+      lastUpdatedMillis: Value(lastUpdatedMillis),
     );
   }
 
@@ -257,6 +278,7 @@ class Chat extends DataClass implements Insertable<Chat> {
       readBy: serializer.fromJson<String>(json['readBy']),
       chatId: serializer.fromJson<String>(json['chatId']),
       snippetId: serializer.fromJson<String>(json['snippetId']),
+      lastUpdatedMillis: serializer.fromJson<int>(json['lastUpdatedMillis']),
     );
   }
   @override
@@ -273,6 +295,7 @@ class Chat extends DataClass implements Insertable<Chat> {
       'readBy': serializer.toJson<String>(readBy),
       'chatId': serializer.toJson<String>(chatId),
       'snippetId': serializer.toJson<String>(snippetId),
+      'lastUpdatedMillis': serializer.toJson<int>(lastUpdatedMillis),
     };
   }
 
@@ -286,7 +309,8 @@ class Chat extends DataClass implements Insertable<Chat> {
           String? senderDisplayName,
           String? readBy,
           String? chatId,
-          String? snippetId}) =>
+          String? snippetId,
+          int? lastUpdatedMillis}) =>
       Chat(
         id: id ?? this.id,
         message: message ?? this.message,
@@ -298,6 +322,7 @@ class Chat extends DataClass implements Insertable<Chat> {
         readBy: readBy ?? this.readBy,
         chatId: chatId ?? this.chatId,
         snippetId: snippetId ?? this.snippetId,
+        lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
       );
   Chat copyWithCompanion(ChatsCompanion data) {
     return Chat(
@@ -315,6 +340,9 @@ class Chat extends DataClass implements Insertable<Chat> {
       readBy: data.readBy.present ? data.readBy.value : this.readBy,
       chatId: data.chatId.present ? data.chatId.value : this.chatId,
       snippetId: data.snippetId.present ? data.snippetId.value : this.snippetId,
+      lastUpdatedMillis: data.lastUpdatedMillis.present
+          ? data.lastUpdatedMillis.value
+          : this.lastUpdatedMillis,
     );
   }
 
@@ -330,14 +358,25 @@ class Chat extends DataClass implements Insertable<Chat> {
           ..write('senderDisplayName: $senderDisplayName, ')
           ..write('readBy: $readBy, ')
           ..write('chatId: $chatId, ')
-          ..write('snippetId: $snippetId')
+          ..write('snippetId: $snippetId, ')
+          ..write('lastUpdatedMillis: $lastUpdatedMillis')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, message, messageId, senderId,
-      senderUsername, date, senderDisplayName, readBy, chatId, snippetId);
+  int get hashCode => Object.hash(
+      id,
+      message,
+      messageId,
+      senderId,
+      senderUsername,
+      date,
+      senderDisplayName,
+      readBy,
+      chatId,
+      snippetId,
+      lastUpdatedMillis);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -351,7 +390,8 @@ class Chat extends DataClass implements Insertable<Chat> {
           other.senderDisplayName == this.senderDisplayName &&
           other.readBy == this.readBy &&
           other.chatId == this.chatId &&
-          other.snippetId == this.snippetId);
+          other.snippetId == this.snippetId &&
+          other.lastUpdatedMillis == this.lastUpdatedMillis);
 }
 
 class ChatsCompanion extends UpdateCompanion<Chat> {
@@ -365,6 +405,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
   final Value<String> readBy;
   final Value<String> chatId;
   final Value<String> snippetId;
+  final Value<int> lastUpdatedMillis;
   const ChatsCompanion({
     this.id = const Value.absent(),
     this.message = const Value.absent(),
@@ -376,6 +417,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
     this.readBy = const Value.absent(),
     this.chatId = const Value.absent(),
     this.snippetId = const Value.absent(),
+    this.lastUpdatedMillis = const Value.absent(),
   });
   ChatsCompanion.insert({
     this.id = const Value.absent(),
@@ -388,6 +430,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
     required String readBy,
     required String chatId,
     required String snippetId,
+    required int lastUpdatedMillis,
   })  : message = Value(message),
         messageId = Value(messageId),
         senderId = Value(senderId),
@@ -396,7 +439,8 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
         senderDisplayName = Value(senderDisplayName),
         readBy = Value(readBy),
         chatId = Value(chatId),
-        snippetId = Value(snippetId);
+        snippetId = Value(snippetId),
+        lastUpdatedMillis = Value(lastUpdatedMillis);
   static Insertable<Chat> custom({
     Expression<int>? id,
     Expression<String>? message,
@@ -408,6 +452,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
     Expression<String>? readBy,
     Expression<String>? chatId,
     Expression<String>? snippetId,
+    Expression<int>? lastUpdatedMillis,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -420,6 +465,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
       if (readBy != null) 'read_by': readBy,
       if (chatId != null) 'chat_id': chatId,
       if (snippetId != null) 'snippet_id': snippetId,
+      if (lastUpdatedMillis != null) 'last_updated_millis': lastUpdatedMillis,
     });
   }
 
@@ -433,7 +479,8 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
       Value<String>? senderDisplayName,
       Value<String>? readBy,
       Value<String>? chatId,
-      Value<String>? snippetId}) {
+      Value<String>? snippetId,
+      Value<int>? lastUpdatedMillis}) {
     return ChatsCompanion(
       id: id ?? this.id,
       message: message ?? this.message,
@@ -445,6 +492,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
       readBy: readBy ?? this.readBy,
       chatId: chatId ?? this.chatId,
       snippetId: snippetId ?? this.snippetId,
+      lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
     );
   }
 
@@ -481,6 +529,9 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
     if (snippetId.present) {
       map['snippet_id'] = Variable<String>(snippetId.value);
     }
+    if (lastUpdatedMillis.present) {
+      map['last_updated_millis'] = Variable<int>(lastUpdatedMillis.value);
+    }
     return map;
   }
 
@@ -496,7 +547,8 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
           ..write('senderDisplayName: $senderDisplayName, ')
           ..write('readBy: $readBy, ')
           ..write('chatId: $chatId, ')
-          ..write('snippetId: $snippetId')
+          ..write('snippetId: $snippetId, ')
+          ..write('lastUpdatedMillis: $lastUpdatedMillis')
           ..write(')'))
         .toString();
   }
@@ -550,9 +602,23 @@ class $SnipResponsesTable extends SnipResponses
   late final GeneratedColumn<DateTime> lastUpdated = GeneratedColumn<DateTime>(
       'last_updated', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _lastUpdatedMillisMeta =
+      const VerificationMeta('lastUpdatedMillis');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, answer, snippetId, uid, displayName, date, lastUpdated];
+  late final GeneratedColumn<int> lastUpdatedMillis = GeneratedColumn<int>(
+      'last_updated_millis', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        answer,
+        snippetId,
+        uid,
+        displayName,
+        date,
+        lastUpdated,
+        lastUpdatedMillis
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -606,6 +672,14 @@ class $SnipResponsesTable extends SnipResponses
     } else if (isInserting) {
       context.missing(_lastUpdatedMeta);
     }
+    if (data.containsKey('last_updated_millis')) {
+      context.handle(
+          _lastUpdatedMillisMeta,
+          lastUpdatedMillis.isAcceptableOrUnknown(
+              data['last_updated_millis']!, _lastUpdatedMillisMeta));
+    } else if (isInserting) {
+      context.missing(_lastUpdatedMillisMeta);
+    }
     return context;
   }
 
@@ -629,6 +703,8 @@ class $SnipResponsesTable extends SnipResponses
           .read(DriftSqlType.dateTime, data['${effectivePrefix}date'])!,
       lastUpdated: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}last_updated'])!,
+      lastUpdatedMillis: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}last_updated_millis'])!,
     );
   }
 
@@ -646,6 +722,7 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
   final String displayName;
   final DateTime date;
   final DateTime lastUpdated;
+  final int lastUpdatedMillis;
   const SnipResponse(
       {required this.id,
       required this.answer,
@@ -653,7 +730,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
       required this.uid,
       required this.displayName,
       required this.date,
-      required this.lastUpdated});
+      required this.lastUpdated,
+      required this.lastUpdatedMillis});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -664,6 +742,7 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
     map['display_name'] = Variable<String>(displayName);
     map['date'] = Variable<DateTime>(date);
     map['last_updated'] = Variable<DateTime>(lastUpdated);
+    map['last_updated_millis'] = Variable<int>(lastUpdatedMillis);
     return map;
   }
 
@@ -676,6 +755,7 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
       displayName: Value(displayName),
       date: Value(date),
       lastUpdated: Value(lastUpdated),
+      lastUpdatedMillis: Value(lastUpdatedMillis),
     );
   }
 
@@ -690,6 +770,7 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
       displayName: serializer.fromJson<String>(json['displayName']),
       date: serializer.fromJson<DateTime>(json['date']),
       lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
+      lastUpdatedMillis: serializer.fromJson<int>(json['lastUpdatedMillis']),
     );
   }
   @override
@@ -703,6 +784,7 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
       'displayName': serializer.toJson<String>(displayName),
       'date': serializer.toJson<DateTime>(date),
       'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
+      'lastUpdatedMillis': serializer.toJson<int>(lastUpdatedMillis),
     };
   }
 
@@ -713,7 +795,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
           String? uid,
           String? displayName,
           DateTime? date,
-          DateTime? lastUpdated}) =>
+          DateTime? lastUpdated,
+          int? lastUpdatedMillis}) =>
       SnipResponse(
         id: id ?? this.id,
         answer: answer ?? this.answer,
@@ -722,6 +805,7 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
         displayName: displayName ?? this.displayName,
         date: date ?? this.date,
         lastUpdated: lastUpdated ?? this.lastUpdated,
+        lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
       );
   SnipResponse copyWithCompanion(SnipResponsesCompanion data) {
     return SnipResponse(
@@ -734,6 +818,9 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
       date: data.date.present ? data.date.value : this.date,
       lastUpdated:
           data.lastUpdated.present ? data.lastUpdated.value : this.lastUpdated,
+      lastUpdatedMillis: data.lastUpdatedMillis.present
+          ? data.lastUpdatedMillis.value
+          : this.lastUpdatedMillis,
     );
   }
 
@@ -746,14 +833,15 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
           ..write('uid: $uid, ')
           ..write('displayName: $displayName, ')
           ..write('date: $date, ')
-          ..write('lastUpdated: $lastUpdated')
+          ..write('lastUpdated: $lastUpdated, ')
+          ..write('lastUpdatedMillis: $lastUpdatedMillis')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, answer, snippetId, uid, displayName, date, lastUpdated);
+  int get hashCode => Object.hash(id, answer, snippetId, uid, displayName, date,
+      lastUpdated, lastUpdatedMillis);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -764,7 +852,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
           other.uid == this.uid &&
           other.displayName == this.displayName &&
           other.date == this.date &&
-          other.lastUpdated == this.lastUpdated);
+          other.lastUpdated == this.lastUpdated &&
+          other.lastUpdatedMillis == this.lastUpdatedMillis);
 }
 
 class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
@@ -775,6 +864,7 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
   final Value<String> displayName;
   final Value<DateTime> date;
   final Value<DateTime> lastUpdated;
+  final Value<int> lastUpdatedMillis;
   const SnipResponsesCompanion({
     this.id = const Value.absent(),
     this.answer = const Value.absent(),
@@ -783,6 +873,7 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
     this.displayName = const Value.absent(),
     this.date = const Value.absent(),
     this.lastUpdated = const Value.absent(),
+    this.lastUpdatedMillis = const Value.absent(),
   });
   SnipResponsesCompanion.insert({
     this.id = const Value.absent(),
@@ -792,12 +883,14 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
     required String displayName,
     required DateTime date,
     required DateTime lastUpdated,
+    required int lastUpdatedMillis,
   })  : answer = Value(answer),
         snippetId = Value(snippetId),
         uid = Value(uid),
         displayName = Value(displayName),
         date = Value(date),
-        lastUpdated = Value(lastUpdated);
+        lastUpdated = Value(lastUpdated),
+        lastUpdatedMillis = Value(lastUpdatedMillis);
   static Insertable<SnipResponse> custom({
     Expression<int>? id,
     Expression<String>? answer,
@@ -806,6 +899,7 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
     Expression<String>? displayName,
     Expression<DateTime>? date,
     Expression<DateTime>? lastUpdated,
+    Expression<int>? lastUpdatedMillis,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -815,6 +909,7 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
       if (displayName != null) 'display_name': displayName,
       if (date != null) 'date': date,
       if (lastUpdated != null) 'last_updated': lastUpdated,
+      if (lastUpdatedMillis != null) 'last_updated_millis': lastUpdatedMillis,
     });
   }
 
@@ -825,7 +920,8 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
       Value<String>? uid,
       Value<String>? displayName,
       Value<DateTime>? date,
-      Value<DateTime>? lastUpdated}) {
+      Value<DateTime>? lastUpdated,
+      Value<int>? lastUpdatedMillis}) {
     return SnipResponsesCompanion(
       id: id ?? this.id,
       answer: answer ?? this.answer,
@@ -834,6 +930,7 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
       displayName: displayName ?? this.displayName,
       date: date ?? this.date,
       lastUpdated: lastUpdated ?? this.lastUpdated,
+      lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
     );
   }
 
@@ -861,6 +958,9 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
     if (lastUpdated.present) {
       map['last_updated'] = Variable<DateTime>(lastUpdated.value);
     }
+    if (lastUpdatedMillis.present) {
+      map['last_updated_millis'] = Variable<int>(lastUpdatedMillis.value);
+    }
     return map;
   }
 
@@ -873,7 +973,8 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
           ..write('uid: $uid, ')
           ..write('displayName: $displayName, ')
           ..write('date: $date, ')
-          ..write('lastUpdated: $lastUpdated')
+          ..write('lastUpdated: $lastUpdated, ')
+          ..write('lastUpdatedMillis: $lastUpdatedMillis')
           ..write(')'))
         .toString();
   }
@@ -940,6 +1041,24 @@ class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
   late final GeneratedColumn<String> type = GeneratedColumn<String>(
       'type', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _lastUpdatedMeta =
+      const VerificationMeta('lastUpdated');
+  @override
+  late final GeneratedColumn<DateTime> lastUpdated = GeneratedColumn<DateTime>(
+      'last_updated', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _lastUpdatedMillisMeta =
+      const VerificationMeta('lastUpdatedMillis');
+  @override
+  late final GeneratedColumn<int> lastUpdatedMillis = GeneratedColumn<int>(
+      'last_updated_millis', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _lastRecievedMillisMeta =
+      const VerificationMeta('lastRecievedMillis');
+  @override
+  late final GeneratedColumn<int> lastRecievedMillis = GeneratedColumn<int>(
+      'last_recieved_millis', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -950,7 +1069,10 @@ class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
         index,
         answered,
         uid,
-        type
+        type,
+        lastUpdated,
+        lastUpdatedMillis,
+        lastRecievedMillis
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1015,6 +1137,30 @@ class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
     } else if (isInserting) {
       context.missing(_typeMeta);
     }
+    if (data.containsKey('last_updated')) {
+      context.handle(
+          _lastUpdatedMeta,
+          lastUpdated.isAcceptableOrUnknown(
+              data['last_updated']!, _lastUpdatedMeta));
+    } else if (isInserting) {
+      context.missing(_lastUpdatedMeta);
+    }
+    if (data.containsKey('last_updated_millis')) {
+      context.handle(
+          _lastUpdatedMillisMeta,
+          lastUpdatedMillis.isAcceptableOrUnknown(
+              data['last_updated_millis']!, _lastUpdatedMillisMeta));
+    } else if (isInserting) {
+      context.missing(_lastUpdatedMillisMeta);
+    }
+    if (data.containsKey('last_recieved_millis')) {
+      context.handle(
+          _lastRecievedMillisMeta,
+          lastRecievedMillis.isAcceptableOrUnknown(
+              data['last_recieved_millis']!, _lastRecievedMillisMeta));
+    } else if (isInserting) {
+      context.missing(_lastRecievedMillisMeta);
+    }
     return context;
   }
 
@@ -1042,6 +1188,12 @@ class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
           .read(DriftSqlType.string, data['${effectivePrefix}uid'])!,
       type: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}type'])!,
+      lastUpdated: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_updated'])!,
+      lastUpdatedMillis: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}last_updated_millis'])!,
+      lastRecievedMillis: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}last_recieved_millis'])!,
     );
   }
 
@@ -1061,6 +1213,9 @@ class Snippet extends DataClass implements Insertable<Snippet> {
   final bool answered;
   final String uid;
   final String type;
+  final DateTime lastUpdated;
+  final int lastUpdatedMillis;
+  final int lastRecievedMillis;
   const Snippet(
       {required this.id,
       required this.lastRecieved,
@@ -1070,7 +1225,10 @@ class Snippet extends DataClass implements Insertable<Snippet> {
       required this.index,
       required this.answered,
       required this.uid,
-      required this.type});
+      required this.type,
+      required this.lastUpdated,
+      required this.lastUpdatedMillis,
+      required this.lastRecievedMillis});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1083,6 +1241,9 @@ class Snippet extends DataClass implements Insertable<Snippet> {
     map['answered'] = Variable<bool>(answered);
     map['uid'] = Variable<String>(uid);
     map['type'] = Variable<String>(type);
+    map['last_updated'] = Variable<DateTime>(lastUpdated);
+    map['last_updated_millis'] = Variable<int>(lastUpdatedMillis);
+    map['last_recieved_millis'] = Variable<int>(lastRecievedMillis);
     return map;
   }
 
@@ -1097,6 +1258,9 @@ class Snippet extends DataClass implements Insertable<Snippet> {
       answered: Value(answered),
       uid: Value(uid),
       type: Value(type),
+      lastUpdated: Value(lastUpdated),
+      lastUpdatedMillis: Value(lastUpdatedMillis),
+      lastRecievedMillis: Value(lastRecievedMillis),
     );
   }
 
@@ -1113,6 +1277,9 @@ class Snippet extends DataClass implements Insertable<Snippet> {
       answered: serializer.fromJson<bool>(json['answered']),
       uid: serializer.fromJson<String>(json['uid']),
       type: serializer.fromJson<String>(json['type']),
+      lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
+      lastUpdatedMillis: serializer.fromJson<int>(json['lastUpdatedMillis']),
+      lastRecievedMillis: serializer.fromJson<int>(json['lastRecievedMillis']),
     );
   }
   @override
@@ -1128,6 +1295,9 @@ class Snippet extends DataClass implements Insertable<Snippet> {
       'answered': serializer.toJson<bool>(answered),
       'uid': serializer.toJson<String>(uid),
       'type': serializer.toJson<String>(type),
+      'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
+      'lastUpdatedMillis': serializer.toJson<int>(lastUpdatedMillis),
+      'lastRecievedMillis': serializer.toJson<int>(lastRecievedMillis),
     };
   }
 
@@ -1140,7 +1310,10 @@ class Snippet extends DataClass implements Insertable<Snippet> {
           int? index,
           bool? answered,
           String? uid,
-          String? type}) =>
+          String? type,
+          DateTime? lastUpdated,
+          int? lastUpdatedMillis,
+          int? lastRecievedMillis}) =>
       Snippet(
         id: id ?? this.id,
         lastRecieved: lastRecieved ?? this.lastRecieved,
@@ -1151,6 +1324,9 @@ class Snippet extends DataClass implements Insertable<Snippet> {
         answered: answered ?? this.answered,
         uid: uid ?? this.uid,
         type: type ?? this.type,
+        lastUpdated: lastUpdated ?? this.lastUpdated,
+        lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
+        lastRecievedMillis: lastRecievedMillis ?? this.lastRecievedMillis,
       );
   Snippet copyWithCompanion(SnippetsCompanion data) {
     return Snippet(
@@ -1165,6 +1341,14 @@ class Snippet extends DataClass implements Insertable<Snippet> {
       answered: data.answered.present ? data.answered.value : this.answered,
       uid: data.uid.present ? data.uid.value : this.uid,
       type: data.type.present ? data.type.value : this.type,
+      lastUpdated:
+          data.lastUpdated.present ? data.lastUpdated.value : this.lastUpdated,
+      lastUpdatedMillis: data.lastUpdatedMillis.present
+          ? data.lastUpdatedMillis.value
+          : this.lastUpdatedMillis,
+      lastRecievedMillis: data.lastRecievedMillis.present
+          ? data.lastRecievedMillis.value
+          : this.lastRecievedMillis,
     );
   }
 
@@ -1179,14 +1363,28 @@ class Snippet extends DataClass implements Insertable<Snippet> {
           ..write('index: $index, ')
           ..write('answered: $answered, ')
           ..write('uid: $uid, ')
-          ..write('type: $type')
+          ..write('type: $type, ')
+          ..write('lastUpdated: $lastUpdated, ')
+          ..write('lastUpdatedMillis: $lastUpdatedMillis, ')
+          ..write('lastRecievedMillis: $lastRecievedMillis')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(
-      id, lastRecieved, snippetId, question, theme, index, answered, uid, type);
+      id,
+      lastRecieved,
+      snippetId,
+      question,
+      theme,
+      index,
+      answered,
+      uid,
+      type,
+      lastUpdated,
+      lastUpdatedMillis,
+      lastRecievedMillis);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1199,7 +1397,10 @@ class Snippet extends DataClass implements Insertable<Snippet> {
           other.index == this.index &&
           other.answered == this.answered &&
           other.uid == this.uid &&
-          other.type == this.type);
+          other.type == this.type &&
+          other.lastUpdated == this.lastUpdated &&
+          other.lastUpdatedMillis == this.lastUpdatedMillis &&
+          other.lastRecievedMillis == this.lastRecievedMillis);
 }
 
 class SnippetsCompanion extends UpdateCompanion<Snippet> {
@@ -1212,6 +1413,9 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
   final Value<bool> answered;
   final Value<String> uid;
   final Value<String> type;
+  final Value<DateTime> lastUpdated;
+  final Value<int> lastUpdatedMillis;
+  final Value<int> lastRecievedMillis;
   const SnippetsCompanion({
     this.id = const Value.absent(),
     this.lastRecieved = const Value.absent(),
@@ -1222,6 +1426,9 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
     this.answered = const Value.absent(),
     this.uid = const Value.absent(),
     this.type = const Value.absent(),
+    this.lastUpdated = const Value.absent(),
+    this.lastUpdatedMillis = const Value.absent(),
+    this.lastRecievedMillis = const Value.absent(),
   });
   SnippetsCompanion.insert({
     this.id = const Value.absent(),
@@ -1233,6 +1440,9 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
     required bool answered,
     required String uid,
     required String type,
+    required DateTime lastUpdated,
+    required int lastUpdatedMillis,
+    required int lastRecievedMillis,
   })  : lastRecieved = Value(lastRecieved),
         snippetId = Value(snippetId),
         question = Value(question),
@@ -1240,7 +1450,10 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
         index = Value(index),
         answered = Value(answered),
         uid = Value(uid),
-        type = Value(type);
+        type = Value(type),
+        lastUpdated = Value(lastUpdated),
+        lastUpdatedMillis = Value(lastUpdatedMillis),
+        lastRecievedMillis = Value(lastRecievedMillis);
   static Insertable<Snippet> custom({
     Expression<int>? id,
     Expression<DateTime>? lastRecieved,
@@ -1251,6 +1464,9 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
     Expression<bool>? answered,
     Expression<String>? uid,
     Expression<String>? type,
+    Expression<DateTime>? lastUpdated,
+    Expression<int>? lastUpdatedMillis,
+    Expression<int>? lastRecievedMillis,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1262,6 +1478,10 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
       if (answered != null) 'answered': answered,
       if (uid != null) 'uid': uid,
       if (type != null) 'type': type,
+      if (lastUpdated != null) 'last_updated': lastUpdated,
+      if (lastUpdatedMillis != null) 'last_updated_millis': lastUpdatedMillis,
+      if (lastRecievedMillis != null)
+        'last_recieved_millis': lastRecievedMillis,
     });
   }
 
@@ -1274,7 +1494,10 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
       Value<int>? index,
       Value<bool>? answered,
       Value<String>? uid,
-      Value<String>? type}) {
+      Value<String>? type,
+      Value<DateTime>? lastUpdated,
+      Value<int>? lastUpdatedMillis,
+      Value<int>? lastRecievedMillis}) {
     return SnippetsCompanion(
       id: id ?? this.id,
       lastRecieved: lastRecieved ?? this.lastRecieved,
@@ -1285,6 +1508,9 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
       answered: answered ?? this.answered,
       uid: uid ?? this.uid,
       type: type ?? this.type,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+      lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
+      lastRecievedMillis: lastRecievedMillis ?? this.lastRecievedMillis,
     );
   }
 
@@ -1318,6 +1544,15 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
     if (type.present) {
       map['type'] = Variable<String>(type.value);
     }
+    if (lastUpdated.present) {
+      map['last_updated'] = Variable<DateTime>(lastUpdated.value);
+    }
+    if (lastUpdatedMillis.present) {
+      map['last_updated_millis'] = Variable<int>(lastUpdatedMillis.value);
+    }
+    if (lastRecievedMillis.present) {
+      map['last_recieved_millis'] = Variable<int>(lastRecievedMillis.value);
+    }
     return map;
   }
 
@@ -1332,7 +1567,10 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
           ..write('index: $index, ')
           ..write('answered: $answered, ')
           ..write('uid: $uid, ')
-          ..write('type: $type')
+          ..write('type: $type, ')
+          ..write('lastUpdated: $lastUpdated, ')
+          ..write('lastUpdatedMillis: $lastUpdatedMillis, ')
+          ..write('lastRecievedMillis: $lastRecievedMillis')
           ..write(')'))
         .toString();
   }
@@ -1379,9 +1617,15 @@ class $BOTWTable extends BOTW with TableInfo<$BOTWTable, BOTWData> {
   late final GeneratedColumn<DateTime> week = GeneratedColumn<DateTime>(
       'week', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _lastUpdatedMillisMeta =
+      const VerificationMeta('lastUpdatedMillis');
+  @override
+  late final GeneratedColumn<int> lastUpdatedMillis = GeneratedColumn<int>(
+      'last_updated_millis', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, blank, status, answers, lastUpdated, week];
+      [id, blank, status, answers, lastUpdated, week, lastUpdatedMillis];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1427,6 +1671,14 @@ class $BOTWTable extends BOTW with TableInfo<$BOTWTable, BOTWData> {
     } else if (isInserting) {
       context.missing(_weekMeta);
     }
+    if (data.containsKey('last_updated_millis')) {
+      context.handle(
+          _lastUpdatedMillisMeta,
+          lastUpdatedMillis.isAcceptableOrUnknown(
+              data['last_updated_millis']!, _lastUpdatedMillisMeta));
+    } else if (isInserting) {
+      context.missing(_lastUpdatedMillisMeta);
+    }
     return context;
   }
 
@@ -1448,6 +1700,8 @@ class $BOTWTable extends BOTW with TableInfo<$BOTWTable, BOTWData> {
           .read(DriftSqlType.dateTime, data['${effectivePrefix}last_updated'])!,
       week: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}week'])!,
+      lastUpdatedMillis: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}last_updated_millis'])!,
     );
   }
 
@@ -1464,13 +1718,15 @@ class BOTWData extends DataClass implements Insertable<BOTWData> {
   final String answers;
   final DateTime lastUpdated;
   final DateTime week;
+  final int lastUpdatedMillis;
   const BOTWData(
       {required this.id,
       required this.blank,
       required this.status,
       required this.answers,
       required this.lastUpdated,
-      required this.week});
+      required this.week,
+      required this.lastUpdatedMillis});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1480,6 +1736,7 @@ class BOTWData extends DataClass implements Insertable<BOTWData> {
     map['answers'] = Variable<String>(answers);
     map['last_updated'] = Variable<DateTime>(lastUpdated);
     map['week'] = Variable<DateTime>(week);
+    map['last_updated_millis'] = Variable<int>(lastUpdatedMillis);
     return map;
   }
 
@@ -1491,6 +1748,7 @@ class BOTWData extends DataClass implements Insertable<BOTWData> {
       answers: Value(answers),
       lastUpdated: Value(lastUpdated),
       week: Value(week),
+      lastUpdatedMillis: Value(lastUpdatedMillis),
     );
   }
 
@@ -1504,6 +1762,7 @@ class BOTWData extends DataClass implements Insertable<BOTWData> {
       answers: serializer.fromJson<String>(json['answers']),
       lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
       week: serializer.fromJson<DateTime>(json['week']),
+      lastUpdatedMillis: serializer.fromJson<int>(json['lastUpdatedMillis']),
     );
   }
   @override
@@ -1516,6 +1775,7 @@ class BOTWData extends DataClass implements Insertable<BOTWData> {
       'answers': serializer.toJson<String>(answers),
       'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
       'week': serializer.toJson<DateTime>(week),
+      'lastUpdatedMillis': serializer.toJson<int>(lastUpdatedMillis),
     };
   }
 
@@ -1525,7 +1785,8 @@ class BOTWData extends DataClass implements Insertable<BOTWData> {
           String? status,
           String? answers,
           DateTime? lastUpdated,
-          DateTime? week}) =>
+          DateTime? week,
+          int? lastUpdatedMillis}) =>
       BOTWData(
         id: id ?? this.id,
         blank: blank ?? this.blank,
@@ -1533,6 +1794,7 @@ class BOTWData extends DataClass implements Insertable<BOTWData> {
         answers: answers ?? this.answers,
         lastUpdated: lastUpdated ?? this.lastUpdated,
         week: week ?? this.week,
+        lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
       );
   BOTWData copyWithCompanion(BOTWCompanion data) {
     return BOTWData(
@@ -1543,6 +1805,9 @@ class BOTWData extends DataClass implements Insertable<BOTWData> {
       lastUpdated:
           data.lastUpdated.present ? data.lastUpdated.value : this.lastUpdated,
       week: data.week.present ? data.week.value : this.week,
+      lastUpdatedMillis: data.lastUpdatedMillis.present
+          ? data.lastUpdatedMillis.value
+          : this.lastUpdatedMillis,
     );
   }
 
@@ -1554,14 +1819,15 @@ class BOTWData extends DataClass implements Insertable<BOTWData> {
           ..write('status: $status, ')
           ..write('answers: $answers, ')
           ..write('lastUpdated: $lastUpdated, ')
-          ..write('week: $week')
+          ..write('week: $week, ')
+          ..write('lastUpdatedMillis: $lastUpdatedMillis')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, blank, status, answers, lastUpdated, week);
+  int get hashCode => Object.hash(
+      id, blank, status, answers, lastUpdated, week, lastUpdatedMillis);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1571,7 +1837,8 @@ class BOTWData extends DataClass implements Insertable<BOTWData> {
           other.status == this.status &&
           other.answers == this.answers &&
           other.lastUpdated == this.lastUpdated &&
-          other.week == this.week);
+          other.week == this.week &&
+          other.lastUpdatedMillis == this.lastUpdatedMillis);
 }
 
 class BOTWCompanion extends UpdateCompanion<BOTWData> {
@@ -1581,6 +1848,7 @@ class BOTWCompanion extends UpdateCompanion<BOTWData> {
   final Value<String> answers;
   final Value<DateTime> lastUpdated;
   final Value<DateTime> week;
+  final Value<int> lastUpdatedMillis;
   const BOTWCompanion({
     this.id = const Value.absent(),
     this.blank = const Value.absent(),
@@ -1588,6 +1856,7 @@ class BOTWCompanion extends UpdateCompanion<BOTWData> {
     this.answers = const Value.absent(),
     this.lastUpdated = const Value.absent(),
     this.week = const Value.absent(),
+    this.lastUpdatedMillis = const Value.absent(),
   });
   BOTWCompanion.insert({
     this.id = const Value.absent(),
@@ -1596,11 +1865,13 @@ class BOTWCompanion extends UpdateCompanion<BOTWData> {
     required String answers,
     required DateTime lastUpdated,
     required DateTime week,
+    required int lastUpdatedMillis,
   })  : blank = Value(blank),
         status = Value(status),
         answers = Value(answers),
         lastUpdated = Value(lastUpdated),
-        week = Value(week);
+        week = Value(week),
+        lastUpdatedMillis = Value(lastUpdatedMillis);
   static Insertable<BOTWData> custom({
     Expression<int>? id,
     Expression<String>? blank,
@@ -1608,6 +1879,7 @@ class BOTWCompanion extends UpdateCompanion<BOTWData> {
     Expression<String>? answers,
     Expression<DateTime>? lastUpdated,
     Expression<DateTime>? week,
+    Expression<int>? lastUpdatedMillis,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1616,6 +1888,7 @@ class BOTWCompanion extends UpdateCompanion<BOTWData> {
       if (answers != null) 'answers': answers,
       if (lastUpdated != null) 'last_updated': lastUpdated,
       if (week != null) 'week': week,
+      if (lastUpdatedMillis != null) 'last_updated_millis': lastUpdatedMillis,
     });
   }
 
@@ -1625,7 +1898,8 @@ class BOTWCompanion extends UpdateCompanion<BOTWData> {
       Value<String>? status,
       Value<String>? answers,
       Value<DateTime>? lastUpdated,
-      Value<DateTime>? week}) {
+      Value<DateTime>? week,
+      Value<int>? lastUpdatedMillis}) {
     return BOTWCompanion(
       id: id ?? this.id,
       blank: blank ?? this.blank,
@@ -1633,6 +1907,7 @@ class BOTWCompanion extends UpdateCompanion<BOTWData> {
       answers: answers ?? this.answers,
       lastUpdated: lastUpdated ?? this.lastUpdated,
       week: week ?? this.week,
+      lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
     );
   }
 
@@ -1657,6 +1932,9 @@ class BOTWCompanion extends UpdateCompanion<BOTWData> {
     if (week.present) {
       map['week'] = Variable<DateTime>(week.value);
     }
+    if (lastUpdatedMillis.present) {
+      map['last_updated_millis'] = Variable<int>(lastUpdatedMillis.value);
+    }
     return map;
   }
 
@@ -1668,7 +1946,8 @@ class BOTWCompanion extends UpdateCompanion<BOTWData> {
           ..write('status: $status, ')
           ..write('answers: $answers, ')
           ..write('lastUpdated: $lastUpdated, ')
-          ..write('week: $week')
+          ..write('week: $week, ')
+          ..write('lastUpdatedMillis: $lastUpdatedMillis')
           ..write(')'))
         .toString();
   }
@@ -1700,6 +1979,7 @@ typedef $$ChatsTableCreateCompanionBuilder = ChatsCompanion Function({
   required String readBy,
   required String chatId,
   required String snippetId,
+  required int lastUpdatedMillis,
 });
 typedef $$ChatsTableUpdateCompanionBuilder = ChatsCompanion Function({
   Value<int> id,
@@ -1712,6 +1992,7 @@ typedef $$ChatsTableUpdateCompanionBuilder = ChatsCompanion Function({
   Value<String> readBy,
   Value<String> chatId,
   Value<String> snippetId,
+  Value<int> lastUpdatedMillis,
 });
 
 class $$ChatsTableTableManager extends RootTableManager<
@@ -1741,6 +2022,7 @@ class $$ChatsTableTableManager extends RootTableManager<
             Value<String> readBy = const Value.absent(),
             Value<String> chatId = const Value.absent(),
             Value<String> snippetId = const Value.absent(),
+            Value<int> lastUpdatedMillis = const Value.absent(),
           }) =>
               ChatsCompanion(
             id: id,
@@ -1753,6 +2035,7 @@ class $$ChatsTableTableManager extends RootTableManager<
             readBy: readBy,
             chatId: chatId,
             snippetId: snippetId,
+            lastUpdatedMillis: lastUpdatedMillis,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -1765,6 +2048,7 @@ class $$ChatsTableTableManager extends RootTableManager<
             required String readBy,
             required String chatId,
             required String snippetId,
+            required int lastUpdatedMillis,
           }) =>
               ChatsCompanion.insert(
             id: id,
@@ -1777,6 +2061,7 @@ class $$ChatsTableTableManager extends RootTableManager<
             readBy: readBy,
             chatId: chatId,
             snippetId: snippetId,
+            lastUpdatedMillis: lastUpdatedMillis,
           ),
         ));
 }
@@ -1830,6 +2115,11 @@ class $$ChatsTableFilterComposer extends FilterComposer<_$AppDb, $ChatsTable> {
 
   ColumnFilters<String> get snippetId => $state.composableBuilder(
       column: $state.table.snippetId,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get lastUpdatedMillis => $state.composableBuilder(
+      column: $state.table.lastUpdatedMillis,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 }
@@ -1886,6 +2176,11 @@ class $$ChatsTableOrderingComposer
       column: $state.table.snippetId,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get lastUpdatedMillis => $state.composableBuilder(
+      column: $state.table.lastUpdatedMillis,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
 }
 
 typedef $$SnipResponsesTableCreateCompanionBuilder = SnipResponsesCompanion
@@ -1897,6 +2192,7 @@ typedef $$SnipResponsesTableCreateCompanionBuilder = SnipResponsesCompanion
   required String displayName,
   required DateTime date,
   required DateTime lastUpdated,
+  required int lastUpdatedMillis,
 });
 typedef $$SnipResponsesTableUpdateCompanionBuilder = SnipResponsesCompanion
     Function({
@@ -1907,6 +2203,7 @@ typedef $$SnipResponsesTableUpdateCompanionBuilder = SnipResponsesCompanion
   Value<String> displayName,
   Value<DateTime> date,
   Value<DateTime> lastUpdated,
+  Value<int> lastUpdatedMillis,
 });
 
 class $$SnipResponsesTableTableManager extends RootTableManager<
@@ -1933,6 +2230,7 @@ class $$SnipResponsesTableTableManager extends RootTableManager<
             Value<String> displayName = const Value.absent(),
             Value<DateTime> date = const Value.absent(),
             Value<DateTime> lastUpdated = const Value.absent(),
+            Value<int> lastUpdatedMillis = const Value.absent(),
           }) =>
               SnipResponsesCompanion(
             id: id,
@@ -1942,6 +2240,7 @@ class $$SnipResponsesTableTableManager extends RootTableManager<
             displayName: displayName,
             date: date,
             lastUpdated: lastUpdated,
+            lastUpdatedMillis: lastUpdatedMillis,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -1951,6 +2250,7 @@ class $$SnipResponsesTableTableManager extends RootTableManager<
             required String displayName,
             required DateTime date,
             required DateTime lastUpdated,
+            required int lastUpdatedMillis,
           }) =>
               SnipResponsesCompanion.insert(
             id: id,
@@ -1960,6 +2260,7 @@ class $$SnipResponsesTableTableManager extends RootTableManager<
             displayName: displayName,
             date: date,
             lastUpdated: lastUpdated,
+            lastUpdatedMillis: lastUpdatedMillis,
           ),
         ));
 }
@@ -2001,6 +2302,11 @@ class $$SnipResponsesTableFilterComposer
       column: $state.table.lastUpdated,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get lastUpdatedMillis => $state.composableBuilder(
+      column: $state.table.lastUpdatedMillis,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
 }
 
 class $$SnipResponsesTableOrderingComposer
@@ -2040,6 +2346,11 @@ class $$SnipResponsesTableOrderingComposer
       column: $state.table.lastUpdated,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get lastUpdatedMillis => $state.composableBuilder(
+      column: $state.table.lastUpdatedMillis,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
 }
 
 typedef $$SnippetsTableCreateCompanionBuilder = SnippetsCompanion Function({
@@ -2052,6 +2363,9 @@ typedef $$SnippetsTableCreateCompanionBuilder = SnippetsCompanion Function({
   required bool answered,
   required String uid,
   required String type,
+  required DateTime lastUpdated,
+  required int lastUpdatedMillis,
+  required int lastRecievedMillis,
 });
 typedef $$SnippetsTableUpdateCompanionBuilder = SnippetsCompanion Function({
   Value<int> id,
@@ -2063,6 +2377,9 @@ typedef $$SnippetsTableUpdateCompanionBuilder = SnippetsCompanion Function({
   Value<bool> answered,
   Value<String> uid,
   Value<String> type,
+  Value<DateTime> lastUpdated,
+  Value<int> lastUpdatedMillis,
+  Value<int> lastRecievedMillis,
 });
 
 class $$SnippetsTableTableManager extends RootTableManager<
@@ -2091,6 +2408,9 @@ class $$SnippetsTableTableManager extends RootTableManager<
             Value<bool> answered = const Value.absent(),
             Value<String> uid = const Value.absent(),
             Value<String> type = const Value.absent(),
+            Value<DateTime> lastUpdated = const Value.absent(),
+            Value<int> lastUpdatedMillis = const Value.absent(),
+            Value<int> lastRecievedMillis = const Value.absent(),
           }) =>
               SnippetsCompanion(
             id: id,
@@ -2102,6 +2422,9 @@ class $$SnippetsTableTableManager extends RootTableManager<
             answered: answered,
             uid: uid,
             type: type,
+            lastUpdated: lastUpdated,
+            lastUpdatedMillis: lastUpdatedMillis,
+            lastRecievedMillis: lastRecievedMillis,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -2113,6 +2436,9 @@ class $$SnippetsTableTableManager extends RootTableManager<
             required bool answered,
             required String uid,
             required String type,
+            required DateTime lastUpdated,
+            required int lastUpdatedMillis,
+            required int lastRecievedMillis,
           }) =>
               SnippetsCompanion.insert(
             id: id,
@@ -2124,6 +2450,9 @@ class $$SnippetsTableTableManager extends RootTableManager<
             answered: answered,
             uid: uid,
             type: type,
+            lastUpdated: lastUpdated,
+            lastUpdatedMillis: lastUpdatedMillis,
+            lastRecievedMillis: lastRecievedMillis,
           ),
         ));
 }
@@ -2175,6 +2504,21 @@ class $$SnippetsTableFilterComposer
       column: $state.table.type,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<DateTime> get lastUpdated => $state.composableBuilder(
+      column: $state.table.lastUpdated,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get lastUpdatedMillis => $state.composableBuilder(
+      column: $state.table.lastUpdatedMillis,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get lastRecievedMillis => $state.composableBuilder(
+      column: $state.table.lastRecievedMillis,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
 }
 
 class $$SnippetsTableOrderingComposer
@@ -2224,6 +2568,21 @@ class $$SnippetsTableOrderingComposer
       column: $state.table.type,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<DateTime> get lastUpdated => $state.composableBuilder(
+      column: $state.table.lastUpdated,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get lastUpdatedMillis => $state.composableBuilder(
+      column: $state.table.lastUpdatedMillis,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get lastRecievedMillis => $state.composableBuilder(
+      column: $state.table.lastRecievedMillis,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
 }
 
 typedef $$BOTWTableCreateCompanionBuilder = BOTWCompanion Function({
@@ -2233,6 +2592,7 @@ typedef $$BOTWTableCreateCompanionBuilder = BOTWCompanion Function({
   required String answers,
   required DateTime lastUpdated,
   required DateTime week,
+  required int lastUpdatedMillis,
 });
 typedef $$BOTWTableUpdateCompanionBuilder = BOTWCompanion Function({
   Value<int> id,
@@ -2241,6 +2601,7 @@ typedef $$BOTWTableUpdateCompanionBuilder = BOTWCompanion Function({
   Value<String> answers,
   Value<DateTime> lastUpdated,
   Value<DateTime> week,
+  Value<int> lastUpdatedMillis,
 });
 
 class $$BOTWTableTableManager extends RootTableManager<
@@ -2266,6 +2627,7 @@ class $$BOTWTableTableManager extends RootTableManager<
             Value<String> answers = const Value.absent(),
             Value<DateTime> lastUpdated = const Value.absent(),
             Value<DateTime> week = const Value.absent(),
+            Value<int> lastUpdatedMillis = const Value.absent(),
           }) =>
               BOTWCompanion(
             id: id,
@@ -2274,6 +2636,7 @@ class $$BOTWTableTableManager extends RootTableManager<
             answers: answers,
             lastUpdated: lastUpdated,
             week: week,
+            lastUpdatedMillis: lastUpdatedMillis,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -2282,6 +2645,7 @@ class $$BOTWTableTableManager extends RootTableManager<
             required String answers,
             required DateTime lastUpdated,
             required DateTime week,
+            required int lastUpdatedMillis,
           }) =>
               BOTWCompanion.insert(
             id: id,
@@ -2290,6 +2654,7 @@ class $$BOTWTableTableManager extends RootTableManager<
             answers: answers,
             lastUpdated: lastUpdated,
             week: week,
+            lastUpdatedMillis: lastUpdatedMillis,
           ),
         ));
 }
@@ -2325,6 +2690,11 @@ class $$BOTWTableFilterComposer extends FilterComposer<_$AppDb, $BOTWTable> {
       column: $state.table.week,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get lastUpdatedMillis => $state.composableBuilder(
+      column: $state.table.lastUpdatedMillis,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
 }
 
 class $$BOTWTableOrderingComposer
@@ -2357,6 +2727,11 @@ class $$BOTWTableOrderingComposer
 
   ColumnOrderings<DateTime> get week => $state.composableBuilder(
       column: $state.table.week,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get lastUpdatedMillis => $state.composableBuilder(
+      column: $state.table.lastUpdatedMillis,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }

@@ -66,10 +66,11 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyA81JdmJjbsHvFJmAhm1toWApX29-K7nNk',
-    appId: '1:245390768336:ios:f5865a578ed4f1b44c46d5',
+    appId: '1:245390768336:ios:73ffe79b2d6448024c46d5',
     messagingSenderId: '245390768336',
     projectId: 'snippets2024',
     storageBucket: 'snippets2024.appspot.com',
-    iosBundleId: 'com.kazoom.snippets',
+    iosBundleId: 'com.kazoom.snippet',
   );
+
 }

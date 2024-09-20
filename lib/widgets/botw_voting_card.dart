@@ -1,16 +1,10 @@
 import 'dart:math';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:snippets/api/fb_database.dart';
-import 'package:snippets/pages/responses_page.dart';
 import 'package:snippets/providers/card_provider.dart';
 import 'package:snippets/templates/colorsSys.dart';
-import 'package:snippets/templates/input_decoration.dart';
 
-import 'helper_functions.dart';
 
 class BOTWVotingCard extends StatefulWidget {
   // final bool isAnswered;
@@ -45,7 +39,7 @@ class _BOTWVotingCardState extends State<BOTWVotingCard> {
     // TODO: implement initState
     super.initState();
 
-    WidgetsBinding.instance!.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       final size = MediaQuery.of(context).size;
 
       final provider = Provider.of<CardProvider>(context, listen: false);
@@ -85,12 +79,12 @@ class _BOTWVotingCardState extends State<BOTWVotingCard> {
             ..translate(-center.dx, -center.dy);
 
 
-        return AnimatedContainer(child: buildCard(),duration: Duration(milliseconds: milliseconds),
+        return AnimatedContainer(duration: Duration(milliseconds: milliseconds),
             curve: Curves.easeInOut,
             transform: rotatedMatrix
               ..translate(
                 position.dx, position.dy,
-              ),);
+              ),child: buildCard(),);
       }
     ),
   );
@@ -111,11 +105,11 @@ class _BOTWVotingCardState extends State<BOTWVotingCard> {
       },
       child: Builder(
         builder: (context) {
-          final milliseconds = 0;
+          const milliseconds = 0;
           final provider = Provider.of<CardProvider>(context);
           final position = provider.position;
           return AnimatedContainer(
-            duration: Duration(milliseconds: milliseconds),
+            duration: const Duration(milliseconds: milliseconds),
             curve: Curves.easeInOut,
             transform: Matrix4.identity()
               ..translate(

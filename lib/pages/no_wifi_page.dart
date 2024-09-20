@@ -23,8 +23,8 @@ class _NoWifiPageState extends State<NoWifiPage> {
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
         resizeToAvoidBottomInset: true,
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
+        appBar: const PreferredSize(
+          preferredSize: Size.fromHeight(kToolbarHeight),
           child: CustomAppBar(
             title: "No Wifi",
             
@@ -38,7 +38,7 @@ class _NoWifiPageState extends State<NoWifiPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [ 
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Text(
                     "Oh no! Looks like you're offline",
                     style: TextStyle(
@@ -47,7 +47,7 @@ class _NoWifiPageState extends State<NoWifiPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Text(
                     "Please connect to a wifi network to continue",
                     style: TextStyle(

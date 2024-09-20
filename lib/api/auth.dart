@@ -6,7 +6,6 @@ import 'package:flutter_widgetkit/flutter_widgetkit.dart';
 import 'package:phone_input/phone_input_package.dart';
 import 'package:snippets/api/notifications.dart';
 
-
 import '../helper/helper_function.dart';
 import 'fb_database.dart';
 
@@ -19,17 +18,15 @@ class Auth {
               email: email, password: password))
           .user!;
 
-      var userInfoMap = (await FBDatabase(uid: user.uid).getUserData(user.uid))!;
-      await HelperFunctions.saveUserNameSF(userInfoMap["username"]);
-      await HelperFunctions.saveUserDisplayNameSF(userInfoMap["fullname"]);
-      await HelperFunctions.saveUserEmailSF(userInfoMap["email"]);
+      var userInfoMap =
+          (await FBDatabase(uid: user.uid).getUserData(user.uid))!;
+
       await HelperFunctions.saveUserDataSF(jsonEncode(userInfoMap));
       await PushNotifications().initNotifications();
       await PushNotifications().subscribeToTopic("all");
 
       return true;
     } on FirebaseAuthException catch (e) {
-
       switch (e.code) {
         case "user-not-found":
           return "No user found with that email.";
@@ -48,7 +45,6 @@ class Auth {
       await _auth.sendPasswordResetEmail(email: email);
       return true;
     } on FirebaseAuthException catch (e) {
-
       return e.message;
     }
   }
@@ -63,14 +59,10 @@ class Auth {
 
       await FBDatabase(uid: user.uid)
           .savingUserData(fullName, email, username, phoneNumber);
-      await HelperFunctions.saveUserNameSF(username);
-      await HelperFunctions.saveUserDisplayNameSF(fullName);
-      await HelperFunctions.saveUserEmailSF(email);
-      
+
       await PushNotifications().subscribeToTopic("all");
       return true;
     } on FirebaseAuthException catch (e) {
-
       return e.message;
     }
   }
@@ -79,9 +71,7 @@ class Auth {
   Future signOut() async {
     try {
       // router.pushReplacement("/login");
-      await HelperFunctions.saveUserDisplayNameSF("");
-      await HelperFunctions.saveUserEmailSF("");
-      await HelperFunctions.saveUserNameSF("");
+
       await HelperFunctions.saveUserDataSF("");
       await PushNotifications().unsubscribeFromTopic("all");
       //Clear widgetData
@@ -97,24 +87,17 @@ class Auth {
   }
 
   Future<void> deleteAccount() async {
-    
-    
-      await HelperFunctions.saveUserDisplayNameSF("");
-      await HelperFunctions.saveUserEmailSF("");
-      await HelperFunctions.saveUserNameSF("");
-      await HelperFunctions.saveUserDataSF("");
-      await PushNotifications().unsubscribeFromTopic("all");
-      //Clear widgetData
-      WidgetKit.removeItem("botwData", "group.kazoom_snippets");
-      WidgetKit.removeItem("snippetsData", "group.kazoom_snippets");
-      WidgetKit.removeItem("snippetsResponsesData", "group.kazoom_snippets");
+    await HelperFunctions.saveUserDataSF("");
+    await PushNotifications().unsubscribeFromTopic("all");
+    //Clear widgetData
+    WidgetKit.removeItem("botwData", "group.kazoom_snippets");
+    WidgetKit.removeItem("snippetsData", "group.kazoom_snippets");
+    WidgetKit.removeItem("snippetsResponsesData", "group.kazoom_snippets");
 
-      WidgetKit.reloadAllTimelines();
+    WidgetKit.reloadAllTimelines();
 
-await FirebaseAuth.instance.currentUser!.delete();
-
+    await FirebaseAuth.instance.currentUser!.delete();
   }
-
 
   Future<bool> isUserLoggedIn() async {
     User? user = _auth.currentUser;
@@ -131,11 +114,9 @@ await FirebaseAuth.instance.currentUser!.delete();
 
     _auth.authStateChanges().listen((User? user) {
       if (user == null) {
-
         // router.pushReplacement("/login");
         stream.cancel();
       } else {
-
         stream = FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
             .userDataStream(streamController);
       }
@@ -145,22 +126,23 @@ await FirebaseAuth.instance.currentUser!.delete();
   Future<String?> reauthenticateUser(String email, String password) async {
     print("authing");
     try {
-        await FirebaseAuth.instance.currentUser!
-            .reauthenticateWithCredential(EmailAuthProvider.credential(email: email, password: password));
-      } on FirebaseAuthException catch (e) {
-        if (e.code == "wrong-password") {
-          return "Incorrect password";
-        }
-        return e.message ?? "An error occurred";
+      await FirebaseAuth.instance.currentUser!.reauthenticateWithCredential(
+          EmailAuthProvider.credential(email: email, password: password));
+    } on FirebaseAuthException catch (e) {
+      if (e.code == "wrong-password") {
+        return "Incorrect password";
       }
-      return null;
+      return e.message ?? "An error occurred";
+    }
+    return null;
   }
 
-  Future<String> changePassword(String email, String oldPassword, String newPassword) async {
+  Future<String> changePassword(
+      String email, String oldPassword, String newPassword) async {
     //First reauthenticate the user
     try {
-      await FirebaseAuth.instance.currentUser!
-          .reauthenticateWithCredential(EmailAuthProvider.credential(email: email, password: oldPassword));
+      await FirebaseAuth.instance.currentUser!.reauthenticateWithCredential(
+          EmailAuthProvider.credential(email: email, password: oldPassword));
     } on FirebaseAuthException catch (e) {
       if (e.code == "wrong-password") {
         return "Incorrect password";
@@ -171,10 +153,12 @@ await FirebaseAuth.instance.currentUser!.delete();
     return "Done";
   }
 
-  Future<String> changeEmail(String oldEmail,String newEmail, String currentPassword) async {
+  Future<String> changeEmail(
+      String oldEmail, String newEmail, String currentPassword) async {
     try {
-      await FirebaseAuth.instance.currentUser!
-          .reauthenticateWithCredential(EmailAuthProvider.credential(email: oldEmail, password: currentPassword));
+      await FirebaseAuth.instance.currentUser!.reauthenticateWithCredential(
+          EmailAuthProvider.credential(
+              email: oldEmail, password: currentPassword));
     } on FirebaseAuthException catch (e) {
       if (e.code == "wrong-password") {
         return "Incorrect password";

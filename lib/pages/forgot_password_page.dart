@@ -95,7 +95,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                 fontWeight: FontWeight.w400,
                                 color: Colors.white)),
                         const SizedBox(height: 25),
-                        Text("Enter your email connected to your account and then click send email to reset your password, you will receive an email with instructions on how to reset your password",
+                        const Text("Enter your email connected to your account and then click send email to reset your password, you will receive an email with instructions on how to reset your password",
                             style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 15,

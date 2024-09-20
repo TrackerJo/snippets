@@ -10,11 +10,11 @@ import 'package:snippets/main.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
 
-
 class CreateAccountPage extends StatefulWidget {
   final bool toProfile;
   final String uid;
-  const CreateAccountPage({super.key, required this.uid, required this.toProfile});
+  const CreateAccountPage(
+      {super.key, required this.uid, required this.toProfile});
 
   @override
   State<CreateAccountPage> createState() => _CreateAccountPageState();
@@ -27,7 +27,6 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
-  
   PhoneNumber? phoneNumber;
   bool _isLoading = false;
   Auth authService = Auth();
@@ -38,12 +37,13 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         _isLoading = true;
       });
       HapticFeedback.mediumImpact();
-      bool isUsernameTaken = await FBDatabase().checkUsername(usernameController.text.toLowerCase());
+      bool isUsernameTaken = await FBDatabase()
+          .checkUsername(usernameController.text.toLowerCase());
       if (isUsernameTaken) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Username is already taken"),
-             backgroundColor: Colors.red,
+            backgroundColor: Colors.red,
           ),
         );
         setState(() {
@@ -55,17 +55,20 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
       authService
           .registerUserWithEmailandPassword(
-               fullNameController.text, emailController.text, passwordController.text,usernameController.text.toLowerCase(),  phoneNumber)
+              fullNameController.text,
+              emailController.text,
+              passwordController.text,
+              usernameController.text.toLowerCase(),
+              phoneNumber)
           .then((val) {
         if (val == true) {
-
-          router.pushReplacement("/onBoarding/${widget.uid}/${widget.toProfile}");
+          router
+              .pushReplacement("/onBoarding/${widget.uid}/${widget.toProfile}");
         } else {
           setState(() {
             _isLoading = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-
             SnackBar(
               content: Text(val!),
               backgroundColor: Colors.red,
@@ -95,8 +98,8 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         backgroundColor: const Color(0xFF232323),
         resizeToAvoidBottomInset: true,
         body: Padding(
-            padding:
-                const EdgeInsets.only(left: 20.0, top: 40, right: 20, bottom: 00),
+            padding: const EdgeInsets.only(
+                left: 20.0, top: 40, right: 20, bottom: 00),
             child: Form(
               key: formKey,
               child: SingleChildScrollView(
@@ -122,36 +125,34 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                               color: Colors.white)),
                       const SizedBox(height: 50),
                       TextFormField(
-                        controller: fullNameController,
-                        onTap: () {
+                          controller: fullNameController,
+                          onTap: () {
                             HapticFeedback.selectionClick();
                           },
-                        decoration: textInputDecoration.copyWith(
-                            labelText: "Display Name",
-                            fillColor: ColorSys.secondary,
-                            prefixIcon: Icon(
-                              Icons.person,
-                              color: Theme.of(context).primaryColor,
-                            )),
-                        
-                        
-                        //Check email validation
-                        validator: (val) {
-                          if(val!.isEmpty){
-                            return "Please enter a name";
-                          }
-                          //Make sure name only contains a-z, A-Z, 0-9, and spaces
-                          return RegExp(r"^[a-zA-Z0-9 ]+$").hasMatch(val)
-                              ? null
-                              : "Name can only contain letters and numbers";
-                        }
-                      ),
+                          decoration: textInputDecoration.copyWith(
+                              labelText: "Display Name",
+                              fillColor: ColorSys.secondary,
+                              prefixIcon: Icon(
+                                Icons.person,
+                                color: Theme.of(context).primaryColor,
+                              )),
+
+                          //Check email validation
+                          validator: (val) {
+                            if (val!.isEmpty) {
+                              return "Please enter a name";
+                            }
+                            //Make sure name only contains a-z, A-Z, 0-9, and spaces
+                            return RegExp(r"^[a-zA-Z0-9 ]+$").hasMatch(val)
+                                ? null
+                                : "Name can only contain letters and numbers";
+                          }),
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: usernameController,
                         onTap: () {
-                            HapticFeedback.selectionClick();
-                          },
+                          HapticFeedback.selectionClick();
+                        },
                         decoration: textInputDecoration.copyWith(
                             labelText: "Username",
                             fillColor: ColorSys.secondary,
@@ -159,30 +160,28 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                               Icons.person,
                               color: Theme.of(context).primaryColor,
                             )),
-                       
-                        
+
                         //Check email validation
                         validator: (val) {
-                          if(val!.isEmpty){
+                          if (val!.isEmpty) {
                             return "Please enter a username";
                           }
-                          if(val.length < 3){
+                          if (val.length < 3) {
                             return "Username must be at least 3 characters";
                           }
-                
+
                           //Make sure name only contains a-z, A-Z, 0-9, and underscores, and dashes
-                          return RegExp(r"^[a-zA-Z0-9_-]+$").hasMatch(val)
+                          return RegExp(r"^[a-z0-9_-]+$").hasMatch(val)
                               ? null
                               : "Username can only contain a-z, 0-9, _, and -";
-                
                         },
                       ),
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: emailController,
                         onTap: () {
-                            HapticFeedback.selectionClick();
-                          },
+                          HapticFeedback.selectionClick();
+                        },
                         decoration: textInputDecoration.copyWith(
                             labelText: "Email",
                             fillColor: ColorSys.secondary,
@@ -190,8 +189,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                               Icons.email,
                               color: Theme.of(context).primaryColor,
                             )),
-                       
-                        
+
                         //Check email validation
                         validator: (val) {
                           return RegExp(
@@ -220,10 +218,10 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                         obscureText: true,
                         controller: passwordController,
                         onTap: () {
-                            HapticFeedback.selectionClick();
-                          },
+                          HapticFeedback.selectionClick();
+                        },
                         decoration: textInputDecoration.copyWith(
-                          fillColor: ColorSys.secondary,
+                            fillColor: ColorSys.secondary,
                             labelText: "Password",
                             prefixIcon: Icon(
                               Icons.lock,
@@ -236,7 +234,6 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                             return null;
                           }
                         },
-                       
                       ),
                       const SizedBox(height: 20),
                       _isLoading
@@ -248,7 +245,6 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                                 style: ElevatedButton.styleFrom(
                                     backgroundColor: ColorSys.primaryDark,
                                     elevation: 0,
-                                    
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(30))),
@@ -274,7 +270,8 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
                                     HapticFeedback.mediumImpact();
-                                   router.pushReplacement("/welcome/${widget.uid}/${widget.toProfile}");
+                                    router.pushReplacement(
+                                        "/welcome/${widget.uid}/${widget.toProfile}");
                                   })
                           ]))
                     ]),

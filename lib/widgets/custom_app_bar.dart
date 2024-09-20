@@ -49,8 +49,8 @@ class CustomAppBar extends StatelessWidget {
         Material(
           elevation: 10,
           shadowColor: theme == "blue"
-                      ? ColorSys.blueGreenGradient.colors[0]
-                      : ColorSys.purpleBlueGradient.colors[1],
+              ? ColorSys.blueGreenGradient.colors[0]
+              : ColorSys.purpleBlueGradient.colors[1],
           borderRadius: const BorderRadius.only(
             bottomLeft: Radius.circular(23),
             bottomRight: Radius.circular(23),
@@ -60,8 +60,8 @@ class CustomAppBar extends StatelessWidget {
             height: 400,
             decoration: ShapeDecoration(
               gradient: theme == "blue"
-                          ? ColorSys.blueGreenGradient
-                          : ColorSys.purpleBarGradient,
+                  ? ColorSys.blueGreenGradient
+                  : ColorSys.purpleBarGradient,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(23),
@@ -100,35 +100,47 @@ class CustomAppBar extends StatelessWidget {
                   splashColor: Colors.transparent,
                   splashRadius: 25,
                   icon: const Icon(Icons.arrow_back_ios_new),
-                  onPressed:(){
+                  onPressed: () {
                     HapticFeedback.mediumImpact();
 
-                    if(onBackButtonPressed != null){
+                    if (onBackButtonPressed != null) {
                       onBackButtonPressed!();
                     }
-                  } ,
+                  },
                   color: Colors.black,
                 )
               : showShareButton
                   ? Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: IconButton(
+                      padding: const EdgeInsets.all(8.0),
+                      child: IconButton(
                         splashColor: ColorSys.primary,
                         splashRadius: 25,
                         icon: const Icon(Icons.ios_share_outlined),
                         onPressed: onShareButtonPressed,
                         color: const Color.fromARGB(255, 0, 0, 0),
                       ),
-                  )
-                  : showFriendsButton? const SizedBox( width: 15, height: 0,) : null,
+                    )
+                  : showFriendsButton
+                      ? const SizedBox(
+                          width: 15,
+                          height: 0,
+                        )
+                      : null,
           // actions: [],
           actions: [
-            if(fixRight)
-              const SizedBox(width: 25, height: 0,),
-            if(title == "Responses" || title == "Friends" || title == "Results")
-              
-              const SizedBox(width: 50, height: 0,),
-            if(showPreviewButton)
+            if (fixRight)
+              const SizedBox(
+                width: 25,
+                height: 0,
+              ),
+            if (title == "Responses" ||
+                title == "Friends" ||
+                title == "Results")
+              const SizedBox(
+                width: 50,
+                height: 0,
+              ),
+            if (showPreviewButton)
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: IconButton(
@@ -139,8 +151,7 @@ class CustomAppBar extends StatelessWidget {
                   color: const Color.fromARGB(255, 0, 0, 0),
                 ),
               ),
-
-            if(showHelpButton)
+            if (showHelpButton)
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: IconButton(
