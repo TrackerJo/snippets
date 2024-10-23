@@ -130,7 +130,7 @@ class CustomAppBar extends StatelessWidget {
           actions: [
             if (fixRight)
               const SizedBox(
-                width: 25,
+                width: 40,
                 height: 0,
               ),
             if (title == "Responses" ||

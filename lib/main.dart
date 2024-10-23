@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:firebase_core/firebase_core.dart';
 
 import 'package:flutter/material.dart';
@@ -19,6 +19,7 @@ import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/api/local_database.dart';
 import 'package:snippets/api/notifications.dart';
 import 'package:snippets/api/remote_config.dart';
+import 'package:snippets/constants.dart';
 import 'package:snippets/helper/app_badge.dart';
 
 import 'package:snippets/helper/helper_function.dart';
@@ -44,7 +45,9 @@ import 'firebase_options.dart';
 const String appGroupId = 'group.kazoom_snippets';
 const String iOSWidgetName = 'Snippets_Widgets';
 // final navigatorKey = GlobalKey<NavigatorState>();
-final userStreamController = StreamController.broadcast();
+
+final StreamController<User> currentUserStream =
+    StreamController<User>.broadcast();
 
 class Answer {
   final String answer;
@@ -236,22 +239,22 @@ class MainApp extends StatefulWidget {
   State<MainApp> createState() => _MainAppState();
 }
 
-List<Map<String, dynamic>> createDiscussionUsersList(String discussionUsers) {
-  List<Map<String, dynamic>> users = [];
+List<DiscussionUser> createDiscussionUsersList(String discussionUsers) {
+  List<DiscussionUser> users = [];
   List<String> userStrings = discussionUsers.split("|");
   for (var user in userStrings) {
     List<String> userParts = user.split("^");
     if (userParts.length == 2) {
-      users.add({"userId": userParts[0], "FCMToken": userParts[1]});
+      users.add(DiscussionUser(FCMToken: userParts[1], userId: userParts[0]));
     }
   }
   return users;
 }
 
-String createDiscussionUsersString(List<dynamic> discussionUsers) {
+String createDiscussionUsersString(List<DiscussionUser> discussionUsers) {
   String users = "";
   for (var value in discussionUsers) {
-    users += "|${value["userId"]}^${value["FCMToken"]}";
+    users += "|${value.userId}^${value.FCMToken}";
   }
   return users;
 }
@@ -460,10 +463,10 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   bool isSignedIn = false;
   getUserLoggedInState() async {
     int updateLocalDB = await HelperFunctions.getLocalDatabaseUpdateSF();
-    if (updateLocalDB < 4) {
+    if (updateLocalDB < 16) {
       print("Deleting local database");
       await LocalDatabase().deleteDB();
-      await HelperFunctions.saveLocalDatabaseUpdateSF(4);
+      await HelperFunctions.saveLocalDatabaseUpdateSF(16);
     }
 
     bool status = await Auth().isUserLoggedIn();
@@ -471,7 +474,6 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       await PushNotifications().initNotifications();
     }
     // await LocalDatabase().clearChats();
-    Auth().listenToAuthState(userStreamController);
 
     setState(() {
       isSignedIn = status;
@@ -479,10 +481,13 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     if (!status) {
       router.go('/login');
     }
+    Auth().listenToAuthState(currentUserStream);
     bool needsUpdate = await RemoteConfig().checkUpdates();
     if (needsUpdate) {
       //Show update dialog
       router.go('/update/$status');
+    } else if (await HelperFunctions.getOpenedPageFromSF() == "update") {
+      router.go('/');
     }
   }
 
@@ -505,7 +510,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             }
           }
         } else {
-          router.replace("/nowifi");
+          router.pushReplacement("/nowifi");
         }
       },
     );
@@ -556,35 +561,35 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     return true;
   }
 
-  Future fixUserData(Map<String, dynamic> dataToFix) async {
-    List<dynamic> friends = dataToFix["friends"];
-    List<dynamic> friendRequests = dataToFix["friendRequests"];
-    List<dynamic> outgoingRequests = dataToFix["outgoingRequests"];
-    List<String> friendIds =
-        friends.map((e) => e["userId"].toString()).toList();
-
+  Future fixUserData(User dataToFix) async {
+    List<UserMini> friends = dataToFix.friends;
+    List<UserMini> friendRequests = dataToFix.friendRequests;
+    List<UserMini> outgoingRequests = dataToFix.outgoingFriendRequests;
+    List<String> friendIds = friends.map((e) => e.userId).toList();
+    print(friendIds);
+    print("Fixing user data");
     //Check if has any friend requests that are in friends list
-    for (Map<String, dynamic> request in friendRequests) {
-      print("Checking friend request");
-      print("Request: $request");
-      if (friendIds.contains(request["userId"])) {
-        print("Removing friend request");
-        await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+    for (UserMini request in friendRequests) {
+      if (friendIds.contains(request.userId)) {
+        await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
             .removeFriendRequest(request, dataToFix);
       }
     }
 
     //Check if has any outgoing requests that are in friends list
-    for (Map<String, dynamic> request in outgoingRequests) {
-      if (friendIds.contains(request["userId"])) {
-        await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-            .removeFriendRequest(request, dataToFix);
+    for (UserMini request in outgoingRequests) {
+      print("Checking outgoing requests");
+      print("Request: $request");
+      if (friendIds.contains(request.userId)) {
+        print("Removing request");
+        await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+            .removeOutgoingFriendRequest(request, dataToFix);
       }
     }
 
     //Check for duplicate friends
     List<String> readIds = [];
-    List<Map<String, dynamic>> requestsToRemove = [];
+    List<UserMini> requestsToRemove = [];
     for (var i = 0; i < friendIds.length; i++) {
       String id = friendIds[i];
       if (readIds.contains(id)) {
@@ -596,8 +601,8 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       }
     }
 
-    for (Map<String, dynamic> request in requestsToRemove) {
-      await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+    for (UserMini request in requestsToRemove) {
+      await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
           .removeFriendFix(request, dataToFix);
     }
   }
@@ -620,7 +625,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             }
           }
         } else {
-          router.replace("/nowifi");
+          router.pushReplacement("/nowifi");
           return;
         }
         //Check if user is logged in
@@ -629,27 +634,23 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         if (needsUpdate) {
           //Show update dialog
           router.go('/update/$status');
+        } else if (await HelperFunctions.getOpenedPageFromSF() == "update") {
+          router.go('/');
         }
         if (!status) {
           return;
         }
-        Map<String, dynamic> botwData = await Database().getBOTW();
+        BOTW botwData = await Database().getBOTW();
         List<Answer> answers = [];
-        var answersData = botwData["answers"];
-        if (answersData is List) {
-          for (var answer in answersData) {
-            answers.add(Answer(
-                answer["answer"], answer["userId"], answer["displayName"]));
-          }
-        } else if (answersData is Map) {
-          for (var answer in answersData.values) {
-            answers.add(Answer(
-                answer["answer"], answer["userId"], answer["displayName"]));
-          }
+        var answersData = botwData.answers;
+
+        for (var answer in answersData.values) {
+          answers.add(Answer(answer.answer, answer.userId, answer.displayName));
         }
+        print("BOTW DATA");
         print(botwData);
         Map<String, dynamic> data =
-            WidgetData(botwData["blank"].split(" of")[0], answers: answers)
+            WidgetData(botwData.blank.split(" of")[0], answers: answers)
                 .toJson();
 
         if (await WidgetKit.getItem('botwData', 'group.kazoom_snippets') ==
@@ -686,37 +687,43 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           }
         }
 
-        List<Map<String, dynamic>> snippets =
-            await Database().getSnippetsList();
-        List<Map<String, dynamic>> removedSnippets = [];
+        List<Snippet> snippets = await Database().getSnippetsList();
+        List<Map<String, dynamic>> snippetsData = [];
+        List<Snippet> removedSnippets = [];
         for (var snippet in snippets) {
+          Map<String, dynamic> snippetData = snippet.toMap();
           int index = snippets.indexOf(snippet);
-          if (snippet["type"] == "anonymous") {
+          if (snippet.type == "anonymous") {
             DateTime now = DateTime.now();
-            DateTime lastRecieved = snippet["lastRecieved"];
-            snippets[index]["removalDate"] = DateFormat("yyyy-MM-dd HH:mm:ss")
+            DateTime lastRecieved =
+                DateTime.fromMillisecondsSinceEpoch(snippet.lastRecievedMillis);
+            snippetData["removalDate"] = DateFormat("yyyy-MM-dd HH:mm:ss")
                 .format(lastRecieved.add(const Duration(days: 1)));
             if (now.isAfter(lastRecieved.add(const Duration(days: 1)))) {
               removedSnippets.add(snippet);
             }
-          } else if (snippet["type"] == "custom") {
+          } else if (snippet.type == "custom") {
             DateTime now = DateTime.now();
-            DateTime lastRecieved = snippet["lastRecieved"];
-            snippets[index]["removalDate"] = DateFormat("yyyy-MM-dd HH:mm:ss")
+            DateTime lastRecieved =
+                DateTime.fromMillisecondsSinceEpoch(snippet.lastRecievedMillis);
+            snippetData["removalDate"] = DateFormat("yyyy-MM-dd HH:mm:ss")
                 .format(lastRecieved.add(const Duration(days: 1)));
             if (now.isAfter(lastRecieved.add(const Duration(days: 1)))) {
               removedSnippets.add(snippet);
             }
           } else {
-            snippets[index]["removalDate"] = "None";
+            snippetData["removalDate"] = "None";
           }
+          snippetsData.add(snippetData);
         }
         for (var rSnippet in removedSnippets) {
           snippets.remove(rSnippet);
-          await LocalDatabase().deleteSnippetById(rSnippet["snippetId"]);
+          snippetsData.remove(snippetsData
+              .firstWhere((e) => e["snippetId"] == rSnippet.snippetId));
+          await LocalDatabase().deleteSnippetById(rSnippet.snippetId);
         }
         List<String> snippetStrings = [];
-        for (var snippet in snippets) {
+        for (var snippet in snippetsData) {
           snippetStrings.add(
               "${snippet["question"]}|${snippet["snippetId"]}|${snippet["index"]}|${snippet["type"]}|${snippet["answered"] ? "true" : "false"}|${snippet["removalDate"]}");
         }
@@ -735,8 +742,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         } else {
           Map<String, dynamic> oldSnippets = json.decode(
               await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets'));
-          print("SNIPPETS");
-          print(oldSnippets);
+
           if (!compareQuestionsAndIDs(oldSnippets, {
             "snippets": snippetStrings,
           })) {
@@ -750,29 +756,26 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           }
         }
 
-        List<Map<String, dynamic>> snippetResponses =
+        List<SnippetResponse> snippetResponses =
             await Database().getSnippetsResponses();
         List<String> responseStrings = [];
         List<String> unansweredQuestions = [];
-        DateTime? anonymousRemovalDateRes;
+
         for (var response in snippetResponses) {
-          if (unansweredQuestions.contains(response["snippetId"])) {
+          if (unansweredQuestions.contains(response.snippetId)) {
             continue;
           }
-          if (snippets.firstWhere(
-                  (e) => e["snippetId"] == response["snippetId"])["type"] ==
-              "anonymous") {
-            DateTime lastRecieved = snippets.firstWhere(
-                (e) => e["snippetId"] == response["snippetId"])["lastRecieved"];
-            anonymousRemovalDateRes = lastRecieved.add(const Duration(days: 1));
+          if (response.userId == auth.FirebaseAuth.instance.currentUser!.uid) {
+            continue;
           }
 
           responseStrings.add(
-              "${response["displayName"]}|${snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["question"]}|${response["answer"]}|${response["snippetId"]}|${response["uid"]}|${snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["type"]}|${snippets.firstWhere((e) => e["snippetId"] == response["snippetId"])["answered"]}");
-          if (snippets.firstWhere(
-                  (e) => e["snippetId"] == response["snippetId"])["answered"] ==
+              "${response.displayName}|${snippets.firstWhere((e) => e.snippetId == response.snippetId).question}|${response.answer}|${response.snippetId}|${response.userId}|${snippets.firstWhere((e) => e.snippetId == response.snippetId).type}|${snippets.firstWhere((e) => e.snippetId == response.snippetId).answered ? "true" : "false"}");
+          if (snippets
+                  .firstWhere((e) => e.snippetId == response.snippetId)
+                  .answered ==
               false) {
-            unansweredQuestions.add(response["snippetId"]);
+            unansweredQuestions.add(response.snippetId);
           }
         }
 
@@ -783,10 +786,6 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
               'snippetsResponsesData',
               jsonEncode({
                 "responses": responseStrings,
-                "anonymousRemovalDate": anonymousRemovalDateRes != null
-                    ? DateFormat("yyyy-MM-dd HH:mm:ss")
-                        .format(anonymousRemovalDateRes)
-                    : ""
               }),
               'group.kazoom_snippets');
           WidgetKit.reloadAllTimelines();
@@ -796,15 +795,15 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
                   'snippetsResponsesData', 'group.kazoom_snippets'));
           List<String> oldResponses =
               oldResponsesMap["responses"].cast<String>();
+          print("OLD RESPONSES");
+          print(oldResponses);
+          print("NEW RESPONSES");
+          print(responseStrings);
           if (!compareResponsesList(oldResponses, responseStrings)) {
             WidgetKit.setItem(
                 'snippetsResponsesData',
                 jsonEncode({
                   "responses": responseStrings,
-                  "anonymousRemovalDate": anonymousRemovalDateRes != null
-                      ? DateFormat("yyyy-MM-dd HH:mm:ss")
-                          .format(anonymousRemovalDateRes)
-                      : ""
                 }),
                 'group.kazoom_snippets');
             WidgetKit.reloadAllTimelines();
@@ -825,13 +824,13 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
         //Check if FCM token changed
         String deviceToken = await PushNotifications().getDeviceToken();
-        Map<String, dynamic> userData =
-            await HelperFunctions.getUserDataFromSF();
+        User userData = await Database()
+            .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
         fixUserData(userData);
 
-        if (userData['FCMToken'] != deviceToken) {
+        if (userData.FCMToken != deviceToken) {
           //Update FCM token
-          await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+          await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
               .updateUserFCMToken(deviceToken);
           //Subscribe to topic
           await PushNotifications().subscribeToTopic("all");
@@ -854,6 +853,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     // TODO: implement dispose
     WidgetsBinding.instance.removeObserver(this);
     subscription.cancel();
+    currentUserStream.close();
     super.dispose();
   }
 

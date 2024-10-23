@@ -1,9 +1,10 @@
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:snippets/api/fb_database.dart';
+import 'package:snippets/constants.dart';
 import 'package:snippets/templates/input_decoration.dart';
 import 'package:snippets/widgets/profile_tile.dart';
 
@@ -17,13 +18,13 @@ class FindProfilePage extends StatefulWidget {
 
 class _FindProfilePageState extends State<FindProfilePage> {
   String profileName = "";
-  Stream? profileStream;
+  Stream<List<User>>? profileStream;
 
   List<Map<String, dynamic>> suggestedFriends = [];
 
   void getData() async {
     List<Map<String, dynamic>> mutual =
-        await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+        await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
             .getSuggestedFriends();
     if (!mounted) return;
     setState(() {
@@ -81,8 +82,9 @@ class _FindProfilePageState extends State<FindProfilePage> {
                           });
                           return;
                         }
-                        var stream = await FBDatabase(
-                                uid: FirebaseAuth.instance.currentUser!.uid)
+                        Stream<List<User>> stream = await FBDatabase(
+                                uid:
+                                    auth.FirebaseAuth.instance.currentUser!.uid)
                             .searchUsers(value);
                         setState(() {
                           profileName = value;
@@ -121,11 +123,11 @@ class _FindProfilePageState extends State<FindProfilePage> {
           return const Center();
         }
         if (snapshot.hasData) {
-          if (snapshot.data!.docs.length != null) {
-            if (snapshot.data.docs.length != 0) {
+          if (snapshot.data!.length != null) {
+            if (snapshot.data.length != 0) {
               return ListView.builder(
                   clipBehavior: Clip.none,
-                  itemCount: snapshot.data.docs.length,
+                  itemCount: snapshot.data.length,
                   itemBuilder: (context, index) {
                     //int reverseIndex = snapshot.data.docs.length - index - 1;
                     // bool isWinner = false;
@@ -139,12 +141,13 @@ class _FindProfilePageState extends State<FindProfilePage> {
                     //     isWinner = value;
                     //   });
                     // });
+                    User user = snapshot.data[index];
                     return Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: ProfileTile(
-                        displayName: snapshot.data.docs[index]["fullname"],
-                        uid: snapshot.data.docs[index]["uid"],
-                        username: snapshot.data.docs[index]["username"],
+                        displayName: user.displayName,
+                        uid: user.userId,
+                        username: user.username,
                         // isWinner: isWinner,
                         // groupId: widget.groupId,
                         // userName: userName,

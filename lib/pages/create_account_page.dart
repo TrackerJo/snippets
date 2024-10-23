@@ -108,6 +108,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
+                      const SizedBox(height: 20),
                       const Text(
                         "Welcome to Snippets!",
                         style: TextStyle(

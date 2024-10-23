@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:snippets/constants.dart';
 
-enum CardStatus {like, dislike}
+enum CardStatus { like, dislike }
 
 class CardProvider extends ChangeNotifier {
-  List<Map<String, dynamic>> _answers = [];
+  List<BOTWAnswer> _answers = [];
   bool _isDragging = false;
   Offset _position = Offset.zero;
   Size _screenSize = Size.zero;
   double _angle = 0;
-  void Function(Map<String, dynamic> answer)? onLike;
-  void Function(Map<String, dynamic> answer)? onDislike;
+  void Function(BOTWAnswer answer)? onLike;
+  void Function(BOTWAnswer answer)? onDislike;
 
-  List<Map<String, dynamic>> get answers => _answers;
+  List<BOTWAnswer> get answers => _answers;
   Offset get position => _position;
   bool get isDragging => _isDragging;
   double get angle => _angle;
@@ -20,16 +21,15 @@ class CardProvider extends ChangeNotifier {
     reset();
   }
 
-  void setAnswers(List<Map<String, dynamic>> answers) {
+  void setAnswers(List<BOTWAnswer> answers) {
     _answers = answers.reversed.toList();
-
   }
 
-  void setOnLike(void Function(Map<String, dynamic> answer) onLike) {
+  void setOnLike(void Function(BOTWAnswer answer) onLike) {
     this.onLike = onLike;
   }
 
-  void setOnDislike(void Function(Map<String, dynamic> answer) onDislike) {
+  void setOnDislike(void Function(BOTWAnswer answer) onDislike) {
     this.onDislike = onDislike;
   }
 
@@ -41,12 +41,11 @@ class CardProvider extends ChangeNotifier {
     _isDragging = true;
 
     notifyListeners();
-
   }
 
   void updatePosition(DragUpdateDetails details) {
     _position += details.delta;
-    
+
     final x = _position.dx;
     _angle = 15 * x / _screenSize.width;
 
@@ -66,23 +65,20 @@ class CardProvider extends ChangeNotifier {
         dislike();
         break;
       default:
-       resetPosition();
+        resetPosition();
     }
-
-
-   
   }
 
-  void like() async{
+  void like() async {
     _angle = 15;
     _position += Offset(2 * _screenSize.width / 2, 0);
-    
+
     onLike!(answers.last);
     _nextCard();
     notifyListeners();
   }
 
-  void dislike(){
+  void dislike() {
     _angle = 15;
     _position += Offset(-2 * _screenSize.width / 2, 0);
     onDislike!(answers.last);
@@ -94,16 +90,14 @@ class CardProvider extends ChangeNotifier {
     if (_answers.isEmpty) return;
 
     await Future.delayed(const Duration(milliseconds: 200));
-    Map<String, dynamic> lastCard = _answers.last;
+    BOTWAnswer lastCard = _answers.last;
     _answers.removeLast();
     // _answers.insert(0, lastCard);
 
     resetPosition();
-     
   }
 
-  void goBack(Map<String, dynamic> answer) {
-    
+  void goBack(BOTWAnswer answer) {
     _answers.add(answer);
 
     // _answers = _answers.reversed.toList();
@@ -128,10 +122,7 @@ class CardProvider extends ChangeNotifier {
     }
   }
 
-  void reset(){
-    
+  void reset() {
     notifyListeners();
   }
-
-
 }

@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:snippets/api/database.dart';
 import 'package:snippets/api/fb_database.dart';
-import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/constants.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/pages/botw_results_page.dart';
 
@@ -54,13 +54,13 @@ class _ProfilePageState extends State<ProfilePage> {
   bool hasFriendRequest = false;
   int numberOfFriends = 0;
   int numberOfMutualFriends = 0;
-  Map<String, dynamic> profileData = {};
-  Map<String, dynamic> blankOfTheWeek = {};
-  List<Map<String, dynamic>> mutualFriends = [];
+  User profileData = User.empty();
+  BOTW blankOfTheWeek = BOTW.empty();
+  List<UserMini> mutualFriends = [];
   StreamSubscription userStreamSub = const Stream.empty().listen((event) {});
   StreamSubscription blankStreamSub = const Stream.empty().listen((event) {});
   StreamSubscription userStreamSub2 = const Stream.empty().listen((event) {});
-  StreamController botwStreamController = StreamController();
+  StreamController<BOTW> botwStreamController = StreamController();
 
   String editDescription = "";
   bool userExists = true;
@@ -69,21 +69,17 @@ class _ProfilePageState extends State<ProfilePage> {
     Stream blankStream = await Database().getBOTWStream(botwStreamController);
     blankStreamSub = blankStream.listen((event) {
       if (botwStreamController.isClosed) return;
-      Map<String, dynamic> data = event;
+      BOTW data = event;
 
-      if (data.isEmpty) {
-        return;
-      }
-      Map<String, dynamic> answers = data["answers"];
+      Map<String, BOTWAnswer> answers = data.answers;
       if (!answers.containsKey(uid)) {
-        data["answers"][uid] = {
-          "answer": "",
-          "displayName": displayName,
-          "userId": uid,
-          "votes": 0,
-          "voters": [],
-          "FCMToken": profileData["FCMToken"]
-        };
+        data.answers[uid] = BOTWAnswer(
+            FCMToken: profileData.FCMToken,
+            answer: "",
+            displayName: displayName,
+            userId: uid,
+            voters: [],
+            votes: 0);
       }
       setState(() {
         blankOfTheWeek = data;
@@ -102,63 +98,52 @@ class _ProfilePageState extends State<ProfilePage> {
     String userDisplayName = "";
     bool currentUser = false;
     if (widget.uid == "") {
-      userStreamSub = userStreamController.stream.listen((event) {
-        if (event == null) {
-          return;
-        }
+      userStreamSub = currentUserStream.stream.listen((event) {
         setState(() {
           profileData = event;
-          numberOfFriends = profileData["friends"].length;
-          userDisplayName = profileData["fullname"];
-          Map<String, dynamic> newBlankofTheWeek = blankOfTheWeek;
+          numberOfFriends = profileData.friends.length;
+          userDisplayName = profileData.displayName;
+          BOTW newBlankofTheWeek = blankOfTheWeek;
           print(newBlankofTheWeek);
-          if (newBlankofTheWeek.isNotEmpty &&
-              newBlankofTheWeek["answers"].containsKey(profileData["uid"])) {
-            newBlankofTheWeek["answers"][profileData["uid"]] = {
-              "answer": newBlankofTheWeek["answers"][profileData["uid"]]
-                  ["answer"],
-              "displayName": profileData["fullname"],
-              "userId": profileData["uid"],
-              "votes": newBlankofTheWeek["answers"][profileData["uid"]]
-                  ["votes"],
-              "voters": newBlankofTheWeek["answers"][profileData["uid"]]
-                  ["voters"],
-              "FCMToken": profileData["FCMToken"]
-            };
+          if (newBlankofTheWeek.answers.containsKey(profileData.userId)) {
+            newBlankofTheWeek.answers[profileData.userId] = BOTWAnswer(
+                FCMToken: profileData.FCMToken,
+                answer: newBlankofTheWeek.answers[profileData.userId]!.answer,
+                displayName: profileData.displayName,
+                userId: profileData.userId,
+                voters: newBlankofTheWeek.answers[profileData.userId]!.voters,
+                votes: newBlankofTheWeek.answers[profileData.userId]!.votes);
           }
           blankOfTheWeek = newBlankofTheWeek;
         });
       });
 
       currentUser = true;
-      Map<String, dynamic> viewerData =
-          (await HelperFunctions.getUserDataFromSF());
-      userDisplayName = viewerData["fullname"];
+      User viewerData = await Database()
+          .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
+      userDisplayName = viewerData.displayName;
+      if (!mounted) return;
       setState(() {
         profileData = viewerData;
-        numberOfFriends = viewerData["friends"].length;
+        numberOfFriends = viewerData.friends.length;
       });
-    } else if (widget.uid == FirebaseAuth.instance.currentUser!.uid) {
+    } else if (widget.uid == auth.FirebaseAuth.instance.currentUser!.uid) {
       currentUser = true;
-      userStreamSub = userStreamController.stream.listen((event) {
-        if (event == null) {
-          return;
-        }
+      currentUserStream.stream.listen((event) {
         setState(() {
           profileData = event;
-          numberOfFriends = profileData["friends"].length;
-          userDisplayName = profileData["fullname"];
+          numberOfFriends = profileData.friends.length;
+          userDisplayName = profileData.displayName;
         });
       });
-      Map<String, dynamic> viewerData =
-          (await HelperFunctions.getUserDataFromSF());
+      User viewerData = (await Database().getUserData(widget.uid));
       setState(() {
         profileData = viewerData;
-        numberOfFriends = viewerData["friends"].length;
+        numberOfFriends = viewerData.friends.length;
       });
     } else {
       Stream? viewerDataStream =
-          await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+          await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
               .getUserStream(widget.uid);
       if (viewerDataStream == null) {
         setState(() {
@@ -167,35 +152,32 @@ class _ProfilePageState extends State<ProfilePage> {
         return;
       }
       userStreamSub = viewerDataStream.listen((event) async {
-        if (event.data() == null) {
+        if (event == null) {
           setState(() {
             userExists = false;
           });
           return;
         }
-        Map<String, dynamic> viewerData = event.data() as Map<String, dynamic>;
+        User viewerData = event;
         setState(() {
           profileData = viewerData;
-          numberOfFriends = viewerData["friends"].length;
-          userDisplayName = viewerData["fullname"];
+          numberOfFriends = viewerData.friends.length;
+          userDisplayName = viewerData.displayName;
         });
         setState(() {
           profileData = viewerData;
-          numberOfFriends = viewerData["friends"].length;
+          numberOfFriends = viewerData.friends.length;
         });
       });
-      userStreamSub2 = userStreamController.stream.listen((event) {
-        if (event == null) {
-          return;
-        }
 
-        Map<String, dynamic> userData = event as Map<String, dynamic>;
-        List<dynamic> friendsList = userData["friends"];
+      currentUserStream.stream.listen((event) {
+        User userData = event;
+        List<UserMini> friendsList = userData.friends;
         int mutualFriends = 0;
-        List<Map<String, dynamic>> mutualFriendsList = [];
-        for (dynamic friend in friendsList) {
-          for (dynamic friend2 in profileData["friends"]) {
-            if (friend["userId"] == friend2["userId"]) {
+        List<UserMini> mutualFriendsList = [];
+        for (UserMini friend in friendsList) {
+          for (UserMini friend2 in profileData.friends) {
+            if (friend.userId == friend2.userId) {
               mutualFriends++;
               mutualFriendsList.add(friend);
             }
@@ -205,11 +187,11 @@ class _ProfilePageState extends State<ProfilePage> {
           numberOfMutualFriends = mutualFriends;
           this.mutualFriends = mutualFriendsList;
         });
-        userDisplayName = profileData["fullname"];
+        userDisplayName = profileData.displayName;
 
         bool areFriends = false;
-        for (dynamic friend in friendsList) {
-          if (friend["userId"] == widget.uid) {
+        for (UserMini friend in friendsList) {
+          if (friend.userId == widget.uid) {
             areFriends = true;
             break;
           }
@@ -222,11 +204,12 @@ class _ProfilePageState extends State<ProfilePage> {
           setState(() {
             isFriends = false;
           });
-          List<dynamic> outgoingFriendRequests = userData["outgoingRequests"];
+          List<UserMini> outgoingFriendRequests =
+              userData.outgoingFriendRequests;
 
           bool friendRequest = false;
-          for (dynamic request in outgoingFriendRequests) {
-            if (request["userId"] == widget.uid) {
+          for (UserMini request in outgoingFriendRequests) {
+            if (request.userId == widget.uid) {
               friendRequest = true;
               break;
             }
@@ -241,11 +224,11 @@ class _ProfilePageState extends State<ProfilePage> {
             });
           }
 
-          List<dynamic> friendRequests = userData["friendRequests"];
+          List<UserMini> friendRequests = userData.friendRequests;
 
           bool hasRequest = false;
-          for (dynamic request in friendRequests) {
-            if (request["userId"] == widget.uid) {
+          for (UserMini request in friendRequests) {
+            if (request.userId == widget.uid) {
               hasRequest = true;
               break;
             }
@@ -262,8 +245,8 @@ class _ProfilePageState extends State<ProfilePage> {
         }
       });
 
-      Map<String, dynamic>? viewerData =
-          (await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+      User? viewerData =
+          (await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
               .getUserData(widget.uid));
       if (viewerData == null) {
         setState(() {
@@ -274,15 +257,16 @@ class _ProfilePageState extends State<ProfilePage> {
       fixUserData(viewerData);
       setState(() {
         profileData = viewerData;
-        numberOfFriends = viewerData["friends"].length;
+        numberOfFriends = viewerData.friends.length;
       });
-      Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-      List<dynamic> friendsList = userData["friends"];
+      User userData = await Database()
+          .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
+      List<UserMini> friendsList = userData.friends;
       int mutualFriends = 0;
-      List<Map<String, dynamic>> mutualFriendsList = [];
-      for (dynamic friend in friendsList) {
-        for (dynamic friend2 in viewerData["friends"]) {
-          if (friend["userId"] == friend2["userId"]) {
+      List<UserMini> mutualFriendsList = [];
+      for (UserMini friend in friendsList) {
+        for (UserMini friend2 in viewerData.friends) {
+          if (friend.userId == friend2.userId) {
             mutualFriends++;
             mutualFriendsList.add(friend);
           }
@@ -292,11 +276,11 @@ class _ProfilePageState extends State<ProfilePage> {
         numberOfMutualFriends = mutualFriends;
         this.mutualFriends = mutualFriendsList;
       });
-      userDisplayName = viewerData["fullname"];
+      userDisplayName = viewerData.displayName;
 
       bool areFriends = false;
       for (dynamic friend in friendsList) {
-        if (friend["userId"] == widget.uid) {
+        if (friend.userId == widget.uid) {
           areFriends = true;
           break;
         }
@@ -309,10 +293,10 @@ class _ProfilePageState extends State<ProfilePage> {
         setState(() {
           isFriends = false;
         });
-        List<dynamic> outgoingFriendRequests = userData["outgoingRequests"];
+        List<UserMini> outgoingFriendRequests = userData.outgoingFriendRequests;
         bool friendRequest = false;
-        for (dynamic request in outgoingFriendRequests) {
-          if (request["userId"] == widget.uid) {
+        for (UserMini request in outgoingFriendRequests) {
+          if (request.userId == widget.uid) {
             friendRequest = true;
             break;
           }
@@ -327,10 +311,10 @@ class _ProfilePageState extends State<ProfilePage> {
           });
         }
 
-        List<dynamic> friendRequests = userData["friendRequests"];
+        List<UserMini> friendRequests = userData.friendRequests;
         bool hasRequest = false;
-        for (dynamic request in friendRequests) {
-          if (request["userId"] == widget.uid) {
+        for (UserMini request in friendRequests) {
+          if (request.userId == widget.uid) {
             hasRequest = true;
             break;
           }
@@ -353,39 +337,38 @@ class _ProfilePageState extends State<ProfilePage> {
         gotData = true;
       });
     }
-    checkForBlankOfTheWeek(profileData["uid"]);
+    checkForBlankOfTheWeek(profileData.userId);
   }
 
-  Future fixUserData(Map<String, dynamic> dataToFix) async {
-    List<dynamic> friends = dataToFix["friends"];
-    List<dynamic> friendRequests = dataToFix["friendRequests"];
-    List<dynamic> outgoingRequests = dataToFix["outgoingRequests"];
-    List<String> friendIds =
-        friends.map((e) => e["userId"].toString()).toList();
+  Future fixUserData(User dataToFix) async {
+    List<UserMini> friends = dataToFix.friends;
+    List<UserMini> friendRequests = dataToFix.friendRequests;
+    List<UserMini> outgoingRequests = dataToFix.outgoingFriendRequests;
+    List<String> friendIds = friends.map((e) => e.userId).toList();
     print(friendIds);
     print("Fixing user data");
     //Check if has any friend requests that are in friends list
-    for (Map<String, dynamic> request in friendRequests) {
-      if (friendIds.contains(request["userId"])) {
-        await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+    for (UserMini request in friendRequests) {
+      if (friendIds.contains(request.userId)) {
+        await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
             .removeFriendRequest(request, dataToFix);
       }
     }
 
     //Check if has any outgoing requests that are in friends list
-    for (Map<String, dynamic> request in outgoingRequests) {
+    for (UserMini request in outgoingRequests) {
       print("Checking outgoing requests");
       print("Request: $request");
-      if (friendIds.contains(request["userId"])) {
+      if (friendIds.contains(request.userId)) {
         print("Removing request");
-        await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+        await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
             .removeOutgoingFriendRequest(request, dataToFix);
       }
     }
 
     //Check for duplicate friends
     List<String> readIds = [];
-    List<Map<String, dynamic>> requestsToRemove = [];
+    List<UserMini> requestsToRemove = [];
     for (var i = 0; i < friendIds.length; i++) {
       String id = friendIds[i];
       if (readIds.contains(id)) {
@@ -397,8 +380,8 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     }
 
-    for (Map<String, dynamic> request in requestsToRemove) {
-      await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+    for (UserMini request in requestsToRemove) {
+      await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
           .removeFriendFix(request, dataToFix);
     }
   }
@@ -457,17 +440,16 @@ class _ProfilePageState extends State<ProfilePage> {
                       const SizedBox(height: 20),
                       Expanded(
                         child: ListView.builder(
-                            itemCount: profileData["friends"].length,
+                            itemCount: profileData.friends.length,
                             itemBuilder: (BuildContext context, int index) {
                               return Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: FriendTile(
-                                    displayName: profileData["friends"][index]
-                                        ["displayName"],
-                                    uid: profileData["friends"][index]
-                                        ["userId"],
-                                    username: profileData["friends"][index]
-                                        ["username"]),
+                                    displayName:
+                                        profileData.friends[index].displayName,
+                                    uid: profileData.friends[index].userId,
+                                    username:
+                                        profileData.friends[index].username),
                               );
                             }),
                       ),
@@ -509,10 +491,10 @@ class _ProfilePageState extends State<ProfilePage> {
                               return Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: FriendTile(
-                                    displayName: mutualFriends[index]
-                                        ["displayName"],
-                                    uid: mutualFriends[index]["userId"],
-                                    username: mutualFriends[index]["username"]),
+                                    displayName:
+                                        mutualFriends[index].displayName,
+                                    uid: mutualFriends[index].userId,
+                                    username: mutualFriends[index].username),
                               );
                             }),
                       ),
@@ -522,9 +504,9 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future sendFriendRequest() async {
-    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-        .sendFriendRequest(widget.uid, displayName, profileData["username"],
-            profileData["FCMToken"]);
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+        .sendFriendRequest(widget.uid, displayName, profileData.username,
+            profileData.FCMToken);
 
     setState(() {
       sentFriendRequest = true;
@@ -532,29 +514,27 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future removeFriend() async {
-    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid).removeFriend(
-        widget.uid,
-        displayName,
-        profileData["username"],
-        profileData["FCMToken"]);
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+        .removeFriend(widget.uid, displayName, profileData.username,
+            profileData.FCMToken);
     setState(() {
       isFriends = false;
     });
   }
 
   Future cancelFriendRequest() async {
-    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-        .cancelFriendRequest(widget.uid, displayName, profileData["username"],
-            profileData["FCMToken"]);
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+        .cancelFriendRequest(widget.uid, displayName, profileData.username,
+            profileData.FCMToken);
     setState(() {
       sentFriendRequest = false;
     });
   }
 
   Future acceptFriendRequest() async {
-    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-        .acceptFriendRequest(widget.uid, displayName, profileData["username"],
-            profileData["FCMToken"]);
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+        .acceptFriendRequest(widget.uid, displayName, profileData.username,
+            profileData.FCMToken);
     setState(() {
       hasFriendRequest = false;
       sentFriendRequest = false;
@@ -636,7 +616,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                             onPressed: () {
                                               HapticFeedback.mediumImpact();
                                               editDescription =
-                                                  profileData["description"];
+                                                  profileData.description;
                                               showDiscriptionPopup(context);
                                             },
                                             style: ElevatedButton.styleFrom(
@@ -689,7 +669,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
                 ),
               )
-            : gotData
+            : gotData && blankOfTheWeek.answers.containsKey(profileData.userId)
                 ? Stack(
                     children: [
                       const BackgroundTile(),
@@ -700,8 +680,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             const SizedBox(height: 20),
                             Column(
                               children: [
-                                if (profileData["description"] != null &&
-                                    profileData["description"] != "")
+                                if (profileData.description != "")
                                   SizedBox(
                                     width:
                                         MediaQuery.of(context).size.width - 50,
@@ -709,7 +688,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                       padding: const EdgeInsets.all(8.0),
                                       child: Text(
                                         //Write three sentences of filler text here
-                                        profileData["description"] ?? "",
+                                        profileData.description ?? "",
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 16,
@@ -803,20 +782,19 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ],
                               ),
                             if (!isCurrentUser) const SizedBox(height: 20),
-                            if (blankOfTheWeek.isNotEmpty)
-                              BOTWTile(
-                                blank: blankOfTheWeek["blank"],
-                                answer: blankOfTheWeek["answers"]
-                                    [profileData["uid"]],
-                                isCurrentUser: isCurrentUser,
-                                status: blankOfTheWeek["status"],
-                              ),
-                            if (blankOfTheWeek.isNotEmpty &&
-                                blankOfTheWeek["status"] == "voting" &&
+                            BOTWTile(
+                              blank: blankOfTheWeek.blank,
+                              answer:
+                                  blankOfTheWeek.answers[profileData.userId]!,
+                              isCurrentUser: isCurrentUser,
+                              status: blankOfTheWeek.status,
+                            ),
+                            if (blankOfTheWeek.status ==
+                                    BOTWStatusType.voting &&
                                 isCurrentUser)
                               const SizedBox(height: 20),
-                            if (blankOfTheWeek.isNotEmpty &&
-                                blankOfTheWeek["status"] == "voting" &&
+                            if (blankOfTheWeek.status ==
+                                    BOTWStatusType.voting &&
                                 isCurrentUser)
                               ElevatedButton(
                                   onPressed: () {
@@ -833,12 +811,10 @@ class _ProfilePageState extends State<ProfilePage> {
                                     style: TextStyle(
                                         color: Colors.black, fontSize: 16),
                                   )),
-                            if (blankOfTheWeek.isNotEmpty &&
-                                blankOfTheWeek["status"] == "done" &&
+                            if (blankOfTheWeek.status == BOTWStatusType.done &&
                                 isCurrentUser)
                               const SizedBox(height: 20),
-                            if (blankOfTheWeek.isNotEmpty &&
-                                blankOfTheWeek["status"] == "done" &&
+                            if (blankOfTheWeek.status == BOTWStatusType.done &&
                                 isCurrentUser)
                               ElevatedButton(
                                   onPressed: () {
@@ -846,8 +822,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     nextScreen(
                                         context,
                                         BotwResultsPage(
-                                            answers:
-                                                blankOfTheWeek["answers"]));
+                                            answers: blankOfTheWeek.answers));
                                   },
                                   style: elevatedButtonDecoration,
                                   child: const Text(
@@ -915,11 +890,11 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     onPressed: () async {
                       setState(() {
-                        profileData["description"] = editDescription;
+                        profileData.description = editDescription;
                       });
 
                       await FBDatabase(
-                              uid: FirebaseAuth.instance.currentUser!.uid)
+                              uid: auth.FirebaseAuth.instance.currentUser!.uid)
                           .updateUserDescription(editDescription);
                       Navigator.of(context).pop();
                     },

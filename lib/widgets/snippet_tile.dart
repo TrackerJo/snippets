@@ -20,12 +20,10 @@ class SnippetTile extends StatefulWidget {
   final String type;
   const SnippetTile({
     super.key,
-
     required this.question,
-
     required this.snippetId,
     required this.isAnswered,
-    required this.theme,
+    this.theme = "blue",
     required this.type,
   });
 
@@ -35,6 +33,7 @@ class SnippetTile extends StatefulWidget {
 
 class _SnippetTileState extends State<SnippetTile> {
   TextEditingController answerController = TextEditingController();
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -46,20 +45,17 @@ class _SnippetTileState extends State<SnippetTile> {
   Widget build(BuildContext context) {
     return Material(
       elevation: 10,
-      shadowColor: widget.type == "anonymous" ?
-        ColorSys.blackGradient.colors[0]
-      : ColorSys.blueGreenGradient.colors[1],
-
+      shadowColor: widget.type == "anonymous"
+          ? ColorSys.blackGradient.colors[0]
+          : ColorSys.blueGreenGradient.colors[1],
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: 350,
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
         decoration: ShapeDecoration(
-          gradient:  widget.type == "anonymous" ? 
-            ColorSys.blackGradient
-          
-          :ColorSys.blueGreenGradient,
-  
+          gradient: widget.type == "anonymous"
+              ? ColorSys.blackGradient
+              : ColorSys.blueGreenGradient,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -77,61 +73,88 @@ class _SnippetTileState extends State<SnippetTile> {
                 nextScreen(
                   context,
                   ResponsesPage(
-                      snippetId: widget.snippetId,
-                      question: widget.question,
-                      theme: widget.theme,
-                      isAnonymous: widget.type == "anonymous",),
+                    snippetId: widget.snippetId,
+                    question: widget.question,
+                    theme: widget.theme,
+                    isAnonymous: widget.type == "anonymous",
+                  ),
                 ),
               }
           },
-          trailing: IconButton(
-            icon: !widget.isAnswered
-                ? const Icon(Icons.send, color: Colors.black)
-                : const Icon(Icons.arrow_forward_ios, color: Colors.black),
-            onPressed: () async {
-              // show options
-              if (!widget.isAnswered) {
-                if(answerController.text.isEmpty){
-                  return;
-                }
-                if(widget.type == "anonymous") {
-                  bool hasSeenAnonymouse = await HelperFunctions.checkIfSeenAnonymousSnippetSF();
-                  if(!hasSeenAnonymouse){
-                    await HelperFunctions.saveSeenAnonymousSnippetSF();
-                    showAnonymousInfoDialog(context);
-                  } else {
-                    String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
-                    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-                      .submitAnswer(widget.snippetId, answerController.text, widget.question, widget.theme,anonymousID);
+          trailing: isLoading
+              ? CircularProgressIndicator(
+                  color: ColorSys.primaryDark,
+                )
+              : IconButton(
+                  icon: !widget.isAnswered
+                      ? const Icon(Icons.send, color: Colors.black)
+                      : const Icon(Icons.arrow_forward_ios,
+                          color: Colors.black),
+                  onPressed: () async {
+                    // show options
+                    if (!widget.isAnswered) {
+                      if (answerController.text.isEmpty) {
+                        return;
+                      }
+                      setState(() {
+                        isLoading = true;
+                      });
+                      if (widget.type == "anonymous") {
+                        String anonymousID =
+                            await HelperFunctions.saveAnonymouseIDSF();
+                        await FBDatabase(
+                                uid: FirebaseAuth.instance.currentUser!.uid)
+                            .submitAnswer(
+                                widget.snippetId,
+                                answerController.text,
+                                widget.question,
+                                widget.theme,
+                                anonymousID);
+                      } else {
+                        await FBDatabase(
+                                uid: FirebaseAuth.instance.currentUser!.uid)
+                            .submitAnswer(
+                                widget.snippetId,
+                                answerController.text,
+                                widget.question,
+                                widget.theme,
+                                null);
+                      }
+                      setState(() {
+                        isLoading = false;
+                      });
+
+                      // Navigator.of(context).pop();
+                      //Go to responses page
+                      // nextScreen(
+                      //     context,
+                      //     ResponsesPage(
+                      //       snippetId: widget.snippetId,
+                      //       userResponse: answerController.text,
+                      //       userDiscussionUsers: [
+                      //         FirebaseAuth.instance.currentUser!.uid
+                      //       ],
+                      //       question: widget.question,
+                      //       theme: widget.theme,
+                      //       isAnonymous: widget.type == "anonymous",
+                      //     ));
                       setState(() {
                         answerController.clear();
                       });
-                  }
-                  
-                } else {
-                  await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-                    .submitAnswer(widget.snippetId, answerController.text, widget.question, widget.theme, null);
-                    setState(() {
-                      answerController.clear();
-                    });
-                }
-                
-                // Navigator.of(context).pop();
-                //Go to responses page
-                
-              } else {
-                HapticFeedback.mediumImpact();
-                nextScreen(
-                  context,
-                  ResponsesPage(
-                      snippetId: widget.snippetId,
-                      question: widget.question,
-                      theme: widget.theme,
-                      isAnonymous: widget.type == "anonymous",),
-                );
-              }
-            },
-          ),
+                    } else {
+                      HapticFeedback.mediumImpact();
+                      nextScreen(
+                        context,
+                        ResponsesPage(
+                          snippetId: widget.snippetId,
+                          question: widget.question,
+                          theme: widget.theme,
+                          isAnonymous: widget.type == "anonymous",
+                        ),
+                      );
+                    }
+                  },
+                ),
           title: Text(
             widget.question,
             style: const TextStyle(
@@ -146,61 +169,29 @@ class _SnippetTileState extends State<SnippetTile> {
               ? Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextFormField(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                    },
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                      },
                       controller: answerController,
                       decoration: textInputDecoration.copyWith(
-                        hintText: "Enter answer here",
-                        //Border color: color: ColorSys.primarySolid,
-                        border: OutlineInputBorder(
+                          hintText: "Enter answer here",
+                          //Border color: color: ColorSys.primarySolid,
+                          border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20.0),
-                            
-                        ),
-                        fillColor: ColorSys.primaryInput
-                        
-                        //   borderRadius: BorderRadius.circular(20.0),
-                        //   borderSide: BorderSide(
-                        //     color: ColorSys.primarySolid,
-                        //     width: 20,
-                        //   ),
-                        // ),
-                      )),
+                          ),
+                          fillColor: ColorSys.primaryInput
+
+                          //   borderRadius: BorderRadius.circular(20.0),
+                          //   borderSide: BorderSide(
+                          //     color: ColorSys.primarySolid,
+                          //     width: 20,
+                          //   ),
+                          // ),
+                          )),
                 )
               : null,
         ),
       ),
-    );
-  }
-
-  void showAnonymousInfoDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Anonymous Snippets"),
-          content: const Text("Your response will be completely anonymous to everyone and will be public, not just to your friends."),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                
-                String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
-                await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-                  .submitAnswer(widget.snippetId, answerController.text, widget.question, widget.theme,anonymousID);
-                answerController.clear();
-              },
-              child: const Text("I understand"),
-            ),
-          ],
-        );
-      },
     );
   }
 }

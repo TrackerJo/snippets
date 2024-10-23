@@ -1,9 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:snippets/api/auth.dart';
+import 'package:snippets/api/database.dart';
 import 'package:snippets/api/fb_database.dart';
-import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/constants.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
@@ -36,12 +37,13 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
   bool isLoadingEmail = false;
 
   void getUserData() async {
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    User userData = await Database()
+        .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
     setState(() {
-      oldFullName = userData["fullname"];
-      oldUsername = userData["username"];
-      oldEmail = userData["email"];
-      oldDescription = userData["description"];
+      oldFullName = userData.displayName;
+      oldUsername = userData.username;
+      oldEmail = userData.email;
+      oldDescription = userData.description;
       fullNameController.text = oldFullName;
       usernameController.text = oldUsername;
       descriptionController.text = oldDescription;
@@ -392,8 +394,11 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
 
                                               //Change password
                                               String res = await FBDatabase(
-                                                      uid: FirebaseAuth.instance
-                                                          .currentUser!.uid)
+                                                      uid: auth
+                                                          .FirebaseAuth
+                                                          .instance
+                                                          .currentUser!
+                                                          .uid)
                                                   .changeUserEmail(
                                                       oldEmail,
                                                       emailController.text,
@@ -452,8 +457,8 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                                   oldUsername !=
                                       usernameController.text.toLowerCase()) {
                                 bool success = await FBDatabase(
-                                        uid: FirebaseAuth
-                                            .instance.currentUser!.uid)
+                                        uid: auth.FirebaseAuth.instance
+                                            .currentUser!.uid)
                                     .changeUserDisplayNameAndOrUserName(
                                         oldFullName != fullNameController.text
                                             ? fullNameController.text
@@ -480,8 +485,8 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                               if (oldDescription !=
                                   descriptionController.text) {
                                 await FBDatabase(
-                                        uid: FirebaseAuth
-                                            .instance.currentUser!.uid)
+                                        uid: auth.FirebaseAuth.instance
+                                            .currentUser!.uid)
                                     .updateUserDescription(
                                         descriptionController.text);
                                 //Show snackbar

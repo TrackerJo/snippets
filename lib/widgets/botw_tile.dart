@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:snippets/api/database.dart';
+import 'package:snippets/constants.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
 
@@ -8,9 +9,9 @@ class BOTWTile extends StatefulWidget {
   // final bool isAnswered;
 
   final String blank;
-  final Map<String, dynamic> answer;
+  final BOTWAnswer answer;
   final bool isCurrentUser;
-  final String status;
+  final BOTWStatusType status;
 
   const BOTWTile({
     super.key,
@@ -62,9 +63,9 @@ class _BOTWTileState extends State<BOTWTile> {
             ),
             textAlign: TextAlign.center,
           ),
-          subtitle: widget.status == "answering" &&
+          subtitle: widget.status == BOTWStatusType.answering &&
                   widget.isCurrentUser &&
-                  (widget.answer["answer"] == "" || isEditting)
+                  (widget.answer.answer == "" || isEditting)
               ? Column(
                   children: [
                     Padding(
@@ -93,7 +94,7 @@ class _BOTWTileState extends State<BOTWTile> {
                         setState(() {
                           isEditting = false;
                         });
-                        widget.answer["answer"] = answerController.text;
+                        widget.answer.answer = answerController.text;
                         await Database().updateUsersBOTWAnswer(widget.answer);
                       },
                       style: elevatedButtonDecorationBlue,
@@ -112,26 +113,28 @@ class _BOTWTileState extends State<BOTWTile> {
                       child: SingleChildScrollView(
                         child: Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: Text(widget.answer["answer"],
+                            child: Text(widget.answer.answer,
                                 style: const TextStyle(
                                     color: Colors.black, fontSize: 16))),
                       ),
                     ),
-                    if (widget.status == "answering" && widget.isCurrentUser)
+                    if (widget.status == BOTWStatusType.answering &&
+                        widget.isCurrentUser)
                       ElevatedButton(
                           onPressed: () {
                             HapticFeedback.mediumImpact();
                             setState(() {
                               isEditting = true;
-                              answerController.text = widget.answer["answer"];
+                              answerController.text = widget.answer.answer;
                             });
                           },
                           style: elevatedButtonDecorationBlue,
                           child: const Text("Edit",
                               style: TextStyle(
                                   color: Colors.black, fontSize: 16))),
-                    if (widget.status == "voting" && widget.isCurrentUser)
-                      Text("Votes: ${widget.answer["votes"]}",
+                    if (widget.status == BOTWStatusType.voting &&
+                        widget.isCurrentUser)
+                      Text("Votes: ${widget.answer.votes}",
                           style: const TextStyle(
                               color: Colors.black, fontSize: 16))
                   ],

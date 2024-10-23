@@ -1,9 +1,11 @@
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
+import 'package:snippets/api/database.dart';
 
 import 'package:snippets/api/local_database.dart';
+import 'package:snippets/constants.dart';
 import 'package:snippets/helper/helper_function.dart';
 
 import 'package:snippets/widgets/snippet_tile.dart';
@@ -24,13 +26,24 @@ class _HomePageState extends State<HomePage> {
   StreamController localController = StreamController();
   StreamController firebaseController = StreamController();
 
-  void getCurrentSnippets() async {
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-    await HelperFunctions.saveOpenedPageSF("snippets");
-    Snippet? latestSnippet = await LocalDatabase().getMostRecentSnippet();
-    DateTime? latestSnippetDate = latestSnippet?.lastRecieved;
+  String anonymousId = "";
+  String userId = "";
 
-    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+  void getCurrentSnippets() async {
+    User userData = await Database()
+        .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
+    await HelperFunctions.saveOpenedPageSF("snippets");
+    String aID = await HelperFunctions.getAnonymousIDFromSF() ?? "";
+    if (!mounted) return;
+    setState(() {
+      userId = userData.userId;
+      anonymousId = aID;
+    });
+    print("User ID: $userId");
+
+    Snippet? latestSnippet = await LocalDatabase().getMostRecentSnippet();
+
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
         .getCurrentSnippets(latestSnippet?.lastRecievedMillis,
             firebaseController, snippetsStreamController);
 
@@ -47,9 +60,17 @@ class _HomePageState extends State<HomePage> {
       for (var element in localSnippets) {
         //Check if is anonymous
         if (element.type == "anonymous") {
-          DateTime lastRecieved = element.lastRecieved;
+          bool hasSeenAnonymous =
+              await HelperFunctions.checkIfSeenAnonymousSnippetSF();
+          if (!hasSeenAnonymous) {
+            showAnonymousInfoDialog(context);
+          }
+          int lastRecieved = element.lastRecievedMillis;
           DateTime now = DateTime.now();
-          if (now.difference(lastRecieved).inDays > 1) {
+          if (now
+                  .difference(DateTime.fromMillisecondsSinceEpoch(lastRecieved))
+                  .inDays >
+              1) {
             await LocalDatabase().deleteSnippetById(element.snippetId);
             duplicates.add(element.snippetId); // Collect duplicate IDs
           }
@@ -63,39 +84,45 @@ class _HomePageState extends State<HomePage> {
       }
       localSnippets
           .removeWhere((element) => duplicates.contains(element.snippetId));
+      print("Local Snippets: $localSnippets");
 
       snippetsStreamController.add(localSnippets);
     });
     firebaseController.stream.listen((event) async {
       if (snippetsStreamController.isClosed) return;
 
-      if (event.docs.isNotEmpty) {
+      if (event.isNotEmpty) {
         //Go through each chat and add to local database
-        for (var i = 0; i < event.docs.length; i++) {
-          Map<String, dynamic> data =
-              event.docs[i].data() as Map<String, dynamic>;
-          String id = userData["uid"];
-          if (data["type"] == "anonymous") {
-            id = await HelperFunctions.getAnonymousIDFromSF() ?? "";
-          }
+        for (var i = 0; i < event.length; i++) {
+          Snippet snippet = event[i];
 
-          Map<String, dynamic> snippetMap = {
-            "snippetId": event.docs[i].id,
-            "lastRecieved": data["lastRecieved"].toDate(),
-            "question": data["question"],
-            "answered": data["answered"].contains(id),
-            "theme": data["theme"],
-            "index": data["index"],
-            "type": data["type"],
-            "lastUpdated": data["lastUpdated"].toDate(),
-            "lastUpdatedMillis": data['lastUpdatedMillis']
-          };
-
-          await LocalDatabase().addSnippet(snippetMap,
-              snippetMap["lastUpdated"], snippetMap["lastUpdatedMillis"]);
+          await LocalDatabase().addSnippet(snippet, snippet.lastUpdatedMillis);
         }
       }
     });
+  }
+
+  void showAnonymousInfoDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Anonymous Snippets"),
+          content: const Text(
+              "Your response will be completely anonymous to everyone and will be public, not just to your friends."),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () async {
+                await HelperFunctions.saveSeenAnonymousSnippetSF(true);
+
+                Navigator.of(context).pop();
+              },
+              child: const Text("I understand"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -209,15 +236,15 @@ class _HomePageState extends State<HomePage> {
                     //     isWinner = value;
                     //   });
                     // });
+                    Snippet snippet = snapshot.data[index];
                     return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: SnippetTile(
-                          question: snapshot.data[index].question,
-                          theme: snapshot.data[index].theme,
-                          type: snapshot.data[index].type,
-                          snippetId: snapshot.data[index].snippetId,
-                          isAnswered: snapshot.data[index].answered),
-                    );
+                        padding: const EdgeInsets.all(8.0),
+                        child: SnippetTile(
+                          question: snippet.question,
+                          type: snippet.type,
+                          snippetId: snippet.snippetId,
+                          isAnswered: snippet.answered,
+                        ));
                   });
             } else {
               return const Center();

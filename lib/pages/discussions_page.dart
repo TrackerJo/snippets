@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'package:snippets/api/fb_database.dart';
+import 'package:snippets/constants.dart';
 
 import 'package:snippets/widgets/discussion_tile.dart';
 
@@ -17,8 +18,8 @@ class DiscussionsPage extends StatefulWidget {
 }
 
 class _DiscussionsPageState extends State<DiscussionsPage> {
-  List<Map<String, dynamic>> discussions = [];
-  List<Map<String, dynamic>> oldDiscussions = [];
+  List<DiscussionFull> discussions = [];
+  List<DiscussionFull> oldDiscussions = [];
   StreamSubscription? discSub;
   bool isLoading = false;
 
@@ -27,7 +28,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
     setState(() {
       isLoading = true;
     });
-    StreamController discStream = StreamController();
+    StreamController<DiscussionFull> discStream = StreamController();
 
     await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
         .getDiscussions(FirebaseAuth.instance.currentUser!.uid, discStream);
@@ -40,18 +41,18 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
         setState(() {
           // discussions.add(discussionsMap);
           if (discussions.any((element) =>
-              element["snippetId"] == discussionsMap["snippetId"] &&
-              element["answerId"] == discussionsMap["answerId"])) {
+              element.snippetId == discussionsMap.snippetId &&
+              element.answerId == discussionsMap.answerId)) {
             //Get one that exists
             var existing = discussions.firstWhere((element) =>
-                element["snippetId"] == discussionsMap["snippetId"] &&
-                element["answerId"] == discussionsMap["answerId"]);
+                element.snippetId == discussionsMap.snippetId &&
+                element.answerId == discussionsMap.answerId);
             print("REMOVING");
-            discussionsMap["snippetQuestion"] = existing["snippetQuestion"];
-            discussionsMap["isAnonymous"] = existing["isAnonymous"];
+            discussionsMap.snippetQuestion = existing.snippetQuestion;
+            discussionsMap.isAnonymous = existing.isAnonymous;
             discussions.removeWhere((element) =>
-                element["snippetId"] == discussionsMap["snippetId"] &&
-                element["answerId"] == discussionsMap["answerId"]);
+                element.snippetId == discussionsMap.snippetId &&
+                element.answerId == discussionsMap.answerId);
 
             // discussions.add(existing);
           }
@@ -59,23 +60,18 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
           discussions.add(discussionsMap);
           //Sort by last message
           discussions.sort((a, b) {
-            var aTime = a["lastMessage"]["date"];
-            var bTime = b["lastMessage"]["date"];
+            var aTime = a.lastMessage.date;
+            var bTime = b.lastMessage.date;
             //Chech type of aTime and bTime
-            if (aTime is Timestamp) {
-              aTime = aTime.toDate();
-            }
-            if (bTime is Timestamp) {
-              bTime = bTime.toDate();
-            }
-            if (a["lastMessage"]["message"] == "No messages" &&
-                b["lastMessage"]["message"] == "No messages") {
+
+            if (a.lastMessage.message == "No messages" &&
+                b.lastMessage.message == "No messages") {
               //Rank b higher
               return 0;
-            } else if (b["lastMessage"]["message"] == "No messages") {
+            } else if (b.lastMessage.message == "No messages") {
               //Rank a higher
               return -1;
-            } else if (a["lastMessage"]["message"] == "No messages") {
+            } else if (a.lastMessage.message == "No messages") {
               //Rank b higher
               return 1;
             }
@@ -154,25 +150,20 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
                   ),
                 ),
                 for (var discussion in oldDiscussions)
-                  if (discussion["snippetId"] != null &&
-                      discussion["answerId"] != null &&
-                      discussion["snippetQuestion"] != null &&
-                      discussion["answerUser"] != null &&
-                      discussion["lastMessage"] != null)
-                    DiscussionTile(
-                      snippetId: discussion["snippetId"],
-                      discussionId: discussion["answerId"],
-                      question: discussion["snippetQuestion"],
-                      answerUser: discussion["answerUser"],
-                      lastMessageSender: discussion["lastMessage"]
-                          ["senderDisplayName"],
-                      lastMessage: discussion["lastMessage"]["message"],
-                      hasBeenRead: discussion["lastMessage"]["readBy"]
-                          .contains(FirebaseAuth.instance.currentUser!.uid),
-                      theme: "blue",
-                      answerResponse: discussion["answerResponse"],
-                      isAnonymous: discussion["isAnonymous"],
-                    )
+                  DiscussionTile(
+                    snippetId: discussion.snippetId,
+                    discussionId: discussion.answerId,
+                    question: discussion.snippetQuestion,
+                    answerUser: discussion.answerDisplayName,
+                    lastMessageSender:
+                        discussion.lastMessage.senderDisplayName,
+                    lastMessage: discussion.lastMessage.message,
+                    hasBeenRead: discussion.lastMessage.readBy
+                        .contains(FirebaseAuth.instance.currentUser!.uid),
+                    theme: "blue",
+                    answerResponse: discussion.answer,
+                    isAnonymous: discussion.isAnonymous,
+                  )
               ],
             )
           : ListView(
@@ -197,25 +188,20 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
                   ),
                 ),
                 for (var discussion in discussions)
-                  if (discussion["snippetId"] != null &&
-                      discussion["answerId"] != null &&
-                      discussion["snippetQuestion"] != null &&
-                      discussion["answerUser"] != null &&
-                      discussion["lastMessage"] != null)
-                    DiscussionTile(
-                      snippetId: discussion["snippetId"],
-                      discussionId: discussion["answerId"],
-                      question: discussion["snippetQuestion"],
-                      answerUser: discussion["answerUser"],
-                      lastMessageSender: discussion["lastMessage"]
-                          ["senderDisplayName"],
-                      lastMessage: discussion["lastMessage"]["message"],
-                      hasBeenRead: discussion["lastMessage"]["readBy"]
-                          .contains(FirebaseAuth.instance.currentUser!.uid),
-                      theme: "blue",
-                      answerResponse: discussion["answerResponse"],
-                      isAnonymous: discussion["isAnonymous"],
-                    )
+                  DiscussionTile(
+                    snippetId: discussion.snippetId,
+                    discussionId: discussion.answerId,
+                    question: discussion.snippetQuestion,
+                    answerUser: discussion.answerDisplayName,
+                    lastMessageSender:
+                        discussion.lastMessage.senderDisplayName,
+                    lastMessage: discussion.lastMessage.message,
+                    hasBeenRead: discussion.lastMessage.readBy
+                        .contains(FirebaseAuth.instance.currentUser!.uid),
+                    theme: "blue",
+                    answerResponse: discussion.answer,
+                    isAnonymous: discussion.isAnonymous,
+                  )
               ],
             ),
     );

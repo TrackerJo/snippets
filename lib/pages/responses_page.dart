@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/material.dart';
 import 'package:snippets/api/database.dart';
-import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/api/local_database.dart';
+import 'package:snippets/constants.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 
@@ -40,10 +40,10 @@ class _ResponsesPageState extends State<ResponsesPage> {
   List<dynamic> discussionUsers = [];
   StreamController responsesStream = StreamController();
 
-  List<String> toStringList(List<dynamic> oldList) {
+  List<String> toStringList(List<UserMini> oldList) {
     List<String> newList = [];
     for (var item in oldList) {
-      newList.add(item["userId"]);
+      newList.add(item.userId);
     }
     return newList;
   }
@@ -62,9 +62,8 @@ class _ResponsesPageState extends State<ResponsesPage> {
 
   void getResponsesList() async {
     await HelperFunctions.saveOpenedPageSF("responses-${widget.snippetId}");
-    List<Map<String, dynamic>> snippets = await Database().getSnippetsList();
-    bool snippetExists =
-        snippets.any((e) => e["snippetId"] == widget.snippetId);
+    List<Snippet> snippets = await Database().getSnippetsList();
+    bool snippetExists = snippets.any((e) => e.snippetId == widget.snippetId);
     if (!snippetExists) {
       router.pushReplacement("/");
     }
@@ -73,8 +72,10 @@ class _ResponsesPageState extends State<ResponsesPage> {
     List<String> removedFriends = [];
     List<String> friends = [];
     if (!widget.isAnonymous) {
-      Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-      friends = toStringList(userData["friends"]);
+      User userData = await Database()
+          .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
+      friends = toStringList(userData.friends);
+      friends.add(auth.FirebaseAuth.instance.currentUser!.uid);
       List<String> responsesIDs =
           await LocalDatabase().getCachedResponsesIDs(widget.snippetId);
       print("Friends: $friends");
@@ -96,22 +97,35 @@ class _ResponsesPageState extends State<ResponsesPage> {
         }
       }
     }
-    StreamController responsesList = StreamController();
+    friends.remove(auth.FirebaseAuth.instance.currentUser!.uid);
+    StreamController<List<SnippetResponse>> responsesList = StreamController();
     await Database().getSnippetResponses(responsesList, widget.snippetId,
         widget.isAnonymous, newFriends.isNotEmpty, newFriends, friends);
 
     responsesList.stream.listen((event) {
       if (responsesStream.isClosed) return;
       print("Local Responses: $event");
-      responsesStream.add(event);
+      //Check for duplicates
+      List<SnippetResponse> newResponses = [];
+      List<String> responseIDs = [];
+      for (var response in event) {
+        if (!responseIDs.contains(response.userId)) {
+          responseIDs.add(response.userId);
+          newResponses.add(response);
+        } else {
+          LocalDatabase().removeResponse(widget.snippetId, response.userId);
+        }
+      }
+      responsesStream.add(newResponses);
     });
   }
 
   void getUserDisplayName() async {
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    User userData = await Database()
+        .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
     if (mounted) {
       setState(() {
-        userDisplayName = userData["fullname"];
+        userDisplayName = userData.displayName;
       });
     }
     if (widget.userResponse != "~~~") {
@@ -123,13 +137,13 @@ class _ResponsesPageState extends State<ResponsesPage> {
       if (widget.isAnonymous) {
         return;
       }
-      Map<String, dynamic> response =
-          (await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-              .getUserResponse(widget.snippetId));
+      print("Getting user response");
+      SnippetResponse response = (await Database().getSnippetResponse(
+          widget.snippetId, auth.FirebaseAuth.instance.currentUser!.uid));
       if (mounted) {
         setState(() {
-          userResponse = response["answer"];
-          discussionUsers = response["discussionUsers"];
+          userResponse = response.answer;
+          discussionUsers = response.discussionUsers;
         });
       }
     }
@@ -218,7 +232,8 @@ class _ResponsesPageState extends State<ResponsesPage> {
                               response: userResponse,
                               displayName: userDisplayName,
                               snippetId: widget.snippetId,
-                              userId: FirebaseAuth.instance.currentUser!.uid,
+                              userId:
+                                  auth.FirebaseAuth.instance.currentUser!.uid,
                               isDisplayOnly: false,
                               theme: widget.theme,
                               isAnonymous: widget.isAnonymous,
@@ -231,15 +246,16 @@ class _ResponsesPageState extends State<ResponsesPage> {
                         //     child: Text("No responses yet"),
                         //   );
                         // }
+                        SnippetResponse response = snapshot.data[index];
                         return Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: ResponseTile(
                             question: widget.question,
-                            response: snapshot.data[index].answer,
-                            displayName: snapshot.data[index].displayName,
+                            response: response.answer,
+                            displayName: response.displayName,
                             snippetId: widget.snippetId,
                             theme: widget.theme,
-                            userId: snapshot.data[index].uid,
+                            userId: response.userId,
                             isAnonymous: widget.isAnonymous,
                           ),
                         );

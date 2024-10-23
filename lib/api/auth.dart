@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_widgetkit/flutter_widgetkit.dart';
 import 'package:phone_input/phone_input_package.dart';
+import 'package:snippets/api/local_database.dart';
 import 'package:snippets/api/notifications.dart';
+import 'package:snippets/main.dart';
 
-import '../helper/helper_function.dart';
 import 'fb_database.dart';
 
 class Auth {
@@ -18,10 +18,6 @@ class Auth {
               email: email, password: password))
           .user!;
 
-      var userInfoMap =
-          (await FBDatabase(uid: user.uid).getUserData(user.uid))!;
-
-      await HelperFunctions.saveUserDataSF(jsonEncode(userInfoMap));
       await PushNotifications().initNotifications();
       await PushNotifications().subscribeToTopic("all");
 
@@ -57,8 +53,7 @@ class Auth {
               email: email, password: password))
           .user!;
 
-      await FBDatabase(uid: user.uid)
-          .savingUserData(fullName, email, username, phoneNumber);
+      await FBDatabase(uid: user.uid).savingUserData(fullName, email, username);
 
       await PushNotifications().subscribeToTopic("all");
       return true;
@@ -72,22 +67,28 @@ class Auth {
     try {
       // router.pushReplacement("/login");
 
-      await HelperFunctions.saveUserDataSF("");
+      print("Step 2");
       await PushNotifications().unsubscribeFromTopic("all");
+      print("Step 3");
       //Clear widgetData
       WidgetKit.removeItem("botwData", "group.kazoom_snippets");
       WidgetKit.removeItem("snippetsData", "group.kazoom_snippets");
       WidgetKit.removeItem("snippetsResponsesData", "group.kazoom_snippets");
 
       WidgetKit.reloadAllTimelines();
+      print("Step 3.5");
+      await LocalDatabase().clearDB();
+      print("Step 4");
       await _auth.signOut();
+      print("Step 5");
+      router.pushReplacement("/login");
+      print("Signed out");
     } catch (e) {
       return null;
     }
   }
 
   Future<void> deleteAccount() async {
-    await HelperFunctions.saveUserDataSF("");
     await PushNotifications().unsubscribeFromTopic("all");
     //Clear widgetData
     WidgetKit.removeItem("botwData", "group.kazoom_snippets");
@@ -95,7 +96,7 @@ class Auth {
     WidgetKit.removeItem("snippetsResponsesData", "group.kazoom_snippets");
 
     WidgetKit.reloadAllTimelines();
-
+    await LocalDatabase().clearDB();
     await FirebaseAuth.instance.currentUser!.delete();
   }
 
@@ -103,24 +104,6 @@ class Auth {
     User? user = _auth.currentUser;
     // return false;
     return user != null;
-  }
-
-  void listenToAuthState(StreamController streamController) {
-    StreamSubscription stream = const Stream.empty().listen((event) {});
-    if (FirebaseAuth.instance.currentUser != null) {
-      stream = FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-          .userDataStream(streamController);
-    }
-
-    _auth.authStateChanges().listen((User? user) {
-      if (user == null) {
-        // router.pushReplacement("/login");
-        stream.cancel();
-      } else {
-        stream = FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-            .userDataStream(streamController);
-      }
-    });
   }
 
   Future<String?> reauthenticateUser(String email, String password) async {
@@ -167,5 +150,24 @@ class Auth {
     }
     await FirebaseAuth.instance.currentUser!.verifyBeforeUpdateEmail(newEmail);
     return "Done";
+  }
+
+  void listenToAuthState(StreamController streamController) {
+    StreamSubscription stream = const Stream.empty().listen((event) {});
+    if (FirebaseAuth.instance.currentUser != null) {
+      stream = FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+          .userDataStream(streamController);
+    }
+
+    _auth.authStateChanges().listen((User? user) {
+      if (user == null) {
+        // router.pushReplacement("/login");
+        stream.cancel();
+      } else {
+        print("Reloading user data");
+        stream = FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+            .userDataStream(streamController);
+      }
+    });
   }
 }

@@ -1,18 +1,18 @@
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/api/local_database.dart';
-import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/constants.dart';
 
 class Database {
-  Future<Stream<Map<String, dynamic>>> getBOTWStream(
-      StreamController controller) async {
-    int? lastUpdated = (await LocalDatabase().getBOTW())["lastUpdatedMillis"];
+  Future<Stream<BOTW>> getBOTWStream(StreamController controller) async {
+    int? lastUpdated = (await LocalDatabase().getBOTW())?.lastUpdatedMillis;
+    print("GETTING BOTW STREAM");
 
-    StreamController<Map<String, dynamic>> fbcontroller = StreamController();
+    StreamController<BOTW> fbcontroller = StreamController();
 
-    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
         .getBlankOfTheWeek(fbcontroller, lastUpdated);
 
     fbcontroller.stream.listen((event) async {
@@ -24,205 +24,194 @@ class Database {
     return await LocalDatabase().getBOTWStream();
   }
 
-  Future<Map<String, dynamic>> getBOTW() async {
-    int? lastUpdated = (await LocalDatabase().getBOTW())["lastUpdatedMillis"];
+  Future<BOTW> getBOTW() async {
+    int? lastUpdated = (await LocalDatabase().getBOTW())?.lastUpdatedMillis;
+    print("GETTING BOTW");
 
-    Map<String, dynamic>? fbBotw =
-        await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+    BOTW? fbBotw =
+        await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
             .getBlankOfTheWeekData(lastUpdated);
     if (fbBotw != null) {
       await LocalDatabase().deleteBOTW();
       await LocalDatabase().addBOTW(fbBotw);
     }
-    return await LocalDatabase().getBOTW();
+    return (await LocalDatabase().getBOTW())!;
   }
 
-  Future<void> updateUsersBOTWAnswer(Map<String, dynamic> answer) async {
+  Future<void> updateUsersBOTWAnswer(BOTWAnswer answer) async {
     //Get user data
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-    answer["displayName"] = userData["displayName"];
-    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+    User userData =
+        await getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
+    answer.displayName = userData.displayName;
+    answer.FCMToken = userData.FCMToken;
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
         .updateUsersBOTWAnswer(answer);
     await LocalDatabase().updateUsersBOTWAnswer(answer);
   }
 
-  Future<void> updateBOTWAnswer(Map<String, dynamic> answer) async {
-    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+  Future<void> updateBOTWAnswer(BOTWAnswer answer) async {
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
         .updateBOTWAnswer(answer);
     await LocalDatabase().updateUsersBOTWAnswer(answer);
   }
 
-  Future<List<Map<String, dynamic>>> getSnippetsList() async {
+  Future<List<Snippet>> getSnippetsList() async {
     Snippet? lastSnippet = (await LocalDatabase().getMostRecentSnippet());
-    List<Map<String, dynamic>> snippets = await FBDatabase(
-            uid: FirebaseAuth.instance.currentUser!.uid)
+    print("LAST SNIPPET: ${lastSnippet?.lastUpdatedMillis}");
+    List<Snippet> snippets = await FBDatabase(
+            uid: auth.FirebaseAuth.instance.currentUser!.uid)
         .getSnippetsList(
             lastSnippet?.lastUpdatedMillis, lastSnippet?.lastRecievedMillis);
     print("SNIPPETS FROM FB: ${snippets.length}");
     for (var i = 0; i < snippets.length; i++) {
       print("Adding snippet to local db BACKEND");
-      await LocalDatabase().addSnippet(snippets[i], snippets[i]["lastUpdated"],
-          snippets[i]["lastUpdatedMillis"]);
+      //if snippet is anonymous
+      print("SNIPPET: ${snippets[i].snippetId}");
+      await LocalDatabase()
+          .addSnippet(snippets[i], snippets[i].lastUpdatedMillis);
     }
     return await LocalDatabase().getSnippetsList();
   }
 
-  Future<List<Map<String, dynamic>>> getSnippetsResponses() async {
-    List<Map<String, dynamic>> snippets = await getSnippetsList();
-    List<Map<String, dynamic>> responses = [];
+  Future<List<SnippetResponse>> getSnippetsResponses() async {
+    List<Snippet> snippets = await getSnippetsList();
+    List<SnippetResponse> responses = [];
     for (var i = 0; i < snippets.length; i++) {
-      SnipResponse? latestResponse =
-          await LocalDatabase().getLatestResponse(snippets[i]["snippetId"]);
+      SnippetResponse? latestResponse =
+          await LocalDatabase().getLatestResponse(snippets[i].snippetId);
       print("LATEST RESPONSE: ${latestResponse?.lastUpdatedMillis}");
       // DateTime? lastUpdated = latestResponse?.lastUpdated;
-      List<Map<String, dynamic>> response =
-          await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+      List<SnippetResponse> response =
+          await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
               .getSnippetResponses(
-                  snippets[i]["snippetId"],
+                  snippets[i].snippetId,
                   latestResponse?.lastUpdatedMillis,
-                  snippets[i]["snippetType"] == "anonymous");
+                  snippets[i].type == "anonymous");
       print("***RESPONSES FROM FB: ${response.length} ");
       for (var j = 0; j < response.length; j++) {
-        response[j]["snippetId"] = snippets[i]["snippetId"];
+        response[j].snippetId = snippets[i].snippetId;
 
         await LocalDatabase().addResponse(response[j]);
       }
       responses.addAll(
-          await LocalDatabase().getSnippetResponses(snippets[i]["snippetId"]));
+          await LocalDatabase().getSnippetResponses(snippets[i].snippetId));
     }
     //Delete duplicates
     List<String> responseIDs = [];
-    List<Map<String, dynamic>> newResponses = [];
+    List<SnippetResponse> newResponses = [];
     for (var item in responses) {
-      if (!responseIDs.contains("${item["uid"]}-${item["snippetId"]}")) {
+      if (!responseIDs.contains("${item.userId}-${item.snippetId}")) {
         newResponses.add(item);
-        responseIDs.add("${item["uid"]}-${item["snippetId"]}");
+        responseIDs.add("${item.userId}-${item.snippetId}");
       } else {
-        LocalDatabase().removeResponse(item["snippetId"], item["uid"]);
+        LocalDatabase().removeResponse(item.snippetId, item.userId);
       }
     }
     return newResponses;
   }
 
-  Future getDiscussionChats(
-      StreamController controller, String snippetId, String answerId) async {
-    Chat? latestChat =
+  Future getDiscussionChats(StreamController<List<Message>> controller,
+      String snippetId, String answerId) async {
+    Message? latestChat =
         await LocalDatabase().getMostRecentChat("$snippetId-$answerId");
     int? latestChatDate = latestChat?.lastUpdatedMillis;
     print("LATEST CHAT DATE: $latestChatDate");
 
-    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
         .loadDiscussion(snippetId, answerId, latestChatDate);
     latestChat =
         await LocalDatabase().getMostRecentChat("$snippetId-$answerId");
     latestChatDate = latestChat?.lastUpdatedMillis;
-    StreamController fbcontroller = StreamController();
+    StreamController<List<Message>> fbcontroller = StreamController();
     print("LATEST CHAT DATE NEW: $latestChatDate");
 
-    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
         .getDiscussion(snippetId, answerId, latestChatDate, fbcontroller);
 
     fbcontroller.stream.listen((event) async {
       if (controller.isClosed) return;
 
-      if (event.docs.isNotEmpty) {
+      if (event.isNotEmpty) {
         print("ADDING CHATS TO LOCAL DATABASE");
-        print("EVENT LENGTH: ${event.docs.length}");
+        print("EVENT LENGTH: ${event.length}");
         //Go through each chat and add to local database
-        for (var i = 0; i < event.docs.length; i++) {
-          Map<String, dynamic> data =
-              event.docs[i].data() as Map<String, dynamic>;
-
-          Map<String, dynamic> chatMessageMap = {
-            "messageId": event.docs[i].id,
-            "message": data['message'],
-            "senderUsername": data['senderUsername'],
-            "senderId": data['senderId'],
-            "senderDisplayName": data['senderDisplayName'],
-            "date": data['date'].toDate(),
-            "readBy": data['readBy'].join(","),
-            "chatId": "$snippetId-$answerId",
-            "snippetId": snippetId,
-            "lastUpdatedMillis": data['lastUpdatedMillis']
-          };
-          await LocalDatabase().insertChat(chatMessageMap);
+        for (var i = 0; i < event.length; i++) {
+          await LocalDatabase().insertChat(event[i]);
         }
       }
     });
 
-    var localChats = await LocalDatabase().getChats("$snippetId-$answerId");
-    localChats.listen((event) {
-      if (controller.isClosed) return;
-      controller.add(event);
-    });
+    await LocalDatabase().getChats("$snippetId-$answerId", controller);
   }
 
   Future getSnippetResponses(
-      StreamController controller,
+      StreamController<List<SnippetResponse>> controller,
       String snippetId,
       bool isAnonymous,
       bool getFriends,
       List<String> friendsToGet,
       List<String> friends) async {
-    SnipResponse? latestResponse =
+    SnippetResponse? latestResponse =
         await LocalDatabase().getLatestResponse(snippetId);
     // DateTime? lastUpdated = latestResponse?.date;
 
     print("Last updated FIRST: ${latestResponse?.lastUpdatedMillis}");
-    StreamController fbcontroller = StreamController();
-    List<Map<String, dynamic>> responses =
-        await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+    StreamController<List<SnippetResponse>> fbcontroller = StreamController();
+    List<SnippetResponse> responses =
+        await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
             .getSnippetResponses(
                 snippetId, latestResponse?.lastUpdatedMillis, isAnonymous);
     print("RESPONSES FROM FB: ${responses.length} LIST");
     for (var response in responses) {
       print("Adding response to local db");
-      response["snippetId"] = snippetId;
+      response.snippetId = snippetId;
 
       await LocalDatabase().addResponse(response);
     }
     latestResponse = await LocalDatabase().getLatestResponse(snippetId);
     // lastUpdated = latestResponse?.date;
     print("Last updated SECOND: ${latestResponse?.lastUpdatedMillis}");
-    await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
         .getResponsesList(snippetId, latestResponse?.lastUpdatedMillis,
             getFriends, friendsToGet, isAnonymous, fbcontroller);
 
     fbcontroller.stream.listen((event) async {
       if (controller.isClosed) return;
-      print("RESPONSES FROM STREAM FB: ${event.docs.length}");
-      for (var element in event.docs) {
-        Map<String, dynamic> data = element.data() as Map<String, dynamic>;
-
-        Map<String, dynamic> responseMap = {
-          "snippetId": snippetId,
-          "uid": data["uid"],
-          "displayName": data["displayName"],
-          "answer": data["answer"],
-          "date": data["date"].toDate(),
-          "lastUpdated": data["lastUpdated"].toDate(),
-          "lastUpdatedMillis": data['lastUpdatedMillis']
-        };
-        LocalDatabase().addResponse(responseMap);
+      print("RESPONSES FROM STREAM FB: ${event.length}");
+      for (var element in event) {
+        LocalDatabase().addResponse(element);
       }
     });
-    Stream<List<SnipResponse>> responsesStream =
-        await LocalDatabase().getResponses(snippetId, friends, isAnonymous);
-    responsesStream.listen((event) {
-      if (controller.isClosed) return;
-      //Remove duplicates
-      List<SnipResponse> newResponses = [];
-      List<String> responsesIDs = [];
-      for (var item in event) {
-        if (!responsesIDs.contains(item.uid)) {
-          newResponses.add(item);
-          responsesIDs.add(item.uid);
-        } else {
-          // LocalDatabase().removeResponse(snippetId, item.uid);
-        }
-      }
 
-      controller.add(newResponses);
-    });
+    await LocalDatabase()
+        .getResponses(snippetId, friends, isAnonymous, controller);
+  }
+
+  Future<SnippetResponse> getSnippetResponse(
+      String snippetId, String userId) async {
+    SnippetResponse? response =
+        await LocalDatabase().getSnippetResponse(snippetId, userId);
+    if (response == null) {
+      print("USERRESPONSE IS NULL");
+      response =
+          await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+              .getSnippetResponse(snippetId, userId);
+      await LocalDatabase().addResponse(response);
+    } else {
+      int lastUpdated = response.lastUpdatedMillis;
+      SnippetResponse? fbResponse =
+          await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+              .getSnippetResponseLatest(snippetId, userId, lastUpdated);
+      if (fbResponse != null) {
+        print("ADDING NEW RESPONSE TO LOCAL DB");
+        await LocalDatabase().addResponse(fbResponse);
+        response = fbResponse;
+      }
+    }
+    return response;
+  }
+
+  Future<User> getUserData(String userId) async {
+    return (await LocalDatabase().getUserData(userId));
   }
 }

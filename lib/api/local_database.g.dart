@@ -580,11 +580,6 @@ class $SnipResponsesTable extends SnipResponses
   late final GeneratedColumn<String> snippetId = GeneratedColumn<String>(
       'snippet_id', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _uidMeta = const VerificationMeta('uid');
-  @override
-  late final GeneratedColumn<String> uid = GeneratedColumn<String>(
-      'uid', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _displayNameMeta =
       const VerificationMeta('displayName');
   @override
@@ -596,28 +591,33 @@ class $SnipResponsesTable extends SnipResponses
   late final GeneratedColumn<DateTime> date = GeneratedColumn<DateTime>(
       'date', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
-  static const VerificationMeta _lastUpdatedMeta =
-      const VerificationMeta('lastUpdated');
+  static const VerificationMeta _uidMeta = const VerificationMeta('uid');
   @override
-  late final GeneratedColumn<DateTime> lastUpdated = GeneratedColumn<DateTime>(
-      'last_updated', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  late final GeneratedColumn<String> uid = GeneratedColumn<String>(
+      'uid', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _lastUpdatedMillisMeta =
       const VerificationMeta('lastUpdatedMillis');
   @override
   late final GeneratedColumn<int> lastUpdatedMillis = GeneratedColumn<int>(
       'last_updated_millis', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _discussionUsersMeta =
+      const VerificationMeta('discussionUsers');
+  @override
+  late final GeneratedColumn<String> discussionUsers = GeneratedColumn<String>(
+      'discussion_users', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns => [
         id,
         answer,
         snippetId,
-        uid,
         displayName,
         date,
-        lastUpdated,
-        lastUpdatedMillis
+        uid,
+        lastUpdatedMillis,
+        discussionUsers
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -644,12 +644,6 @@ class $SnipResponsesTable extends SnipResponses
     } else if (isInserting) {
       context.missing(_snippetIdMeta);
     }
-    if (data.containsKey('uid')) {
-      context.handle(
-          _uidMeta, uid.isAcceptableOrUnknown(data['uid']!, _uidMeta));
-    } else if (isInserting) {
-      context.missing(_uidMeta);
-    }
     if (data.containsKey('display_name')) {
       context.handle(
           _displayNameMeta,
@@ -664,13 +658,11 @@ class $SnipResponsesTable extends SnipResponses
     } else if (isInserting) {
       context.missing(_dateMeta);
     }
-    if (data.containsKey('last_updated')) {
+    if (data.containsKey('uid')) {
       context.handle(
-          _lastUpdatedMeta,
-          lastUpdated.isAcceptableOrUnknown(
-              data['last_updated']!, _lastUpdatedMeta));
+          _uidMeta, uid.isAcceptableOrUnknown(data['uid']!, _uidMeta));
     } else if (isInserting) {
-      context.missing(_lastUpdatedMeta);
+      context.missing(_uidMeta);
     }
     if (data.containsKey('last_updated_millis')) {
       context.handle(
@@ -679,6 +671,14 @@ class $SnipResponsesTable extends SnipResponses
               data['last_updated_millis']!, _lastUpdatedMillisMeta));
     } else if (isInserting) {
       context.missing(_lastUpdatedMillisMeta);
+    }
+    if (data.containsKey('discussion_users')) {
+      context.handle(
+          _discussionUsersMeta,
+          discussionUsers.isAcceptableOrUnknown(
+              data['discussion_users']!, _discussionUsersMeta));
+    } else if (isInserting) {
+      context.missing(_discussionUsersMeta);
     }
     return context;
   }
@@ -695,16 +695,16 @@ class $SnipResponsesTable extends SnipResponses
           .read(DriftSqlType.string, data['${effectivePrefix}answer'])!,
       snippetId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}snippet_id'])!,
-      uid: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}uid'])!,
       displayName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}display_name'])!,
       date: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}date'])!,
-      lastUpdated: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_updated'])!,
+      uid: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}uid'])!,
       lastUpdatedMillis: attachedDatabase.typeMapping.read(
           DriftSqlType.int, data['${effectivePrefix}last_updated_millis'])!,
+      discussionUsers: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}discussion_users'])!,
     );
   }
 
@@ -718,31 +718,31 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
   final int id;
   final String answer;
   final String snippetId;
-  final String uid;
   final String displayName;
   final DateTime date;
-  final DateTime lastUpdated;
+  final String uid;
   final int lastUpdatedMillis;
+  final String discussionUsers;
   const SnipResponse(
       {required this.id,
       required this.answer,
       required this.snippetId,
-      required this.uid,
       required this.displayName,
       required this.date,
-      required this.lastUpdated,
-      required this.lastUpdatedMillis});
+      required this.uid,
+      required this.lastUpdatedMillis,
+      required this.discussionUsers});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['answer'] = Variable<String>(answer);
     map['snippet_id'] = Variable<String>(snippetId);
-    map['uid'] = Variable<String>(uid);
     map['display_name'] = Variable<String>(displayName);
     map['date'] = Variable<DateTime>(date);
-    map['last_updated'] = Variable<DateTime>(lastUpdated);
+    map['uid'] = Variable<String>(uid);
     map['last_updated_millis'] = Variable<int>(lastUpdatedMillis);
+    map['discussion_users'] = Variable<String>(discussionUsers);
     return map;
   }
 
@@ -751,11 +751,11 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
       id: Value(id),
       answer: Value(answer),
       snippetId: Value(snippetId),
-      uid: Value(uid),
       displayName: Value(displayName),
       date: Value(date),
-      lastUpdated: Value(lastUpdated),
+      uid: Value(uid),
       lastUpdatedMillis: Value(lastUpdatedMillis),
+      discussionUsers: Value(discussionUsers),
     );
   }
 
@@ -766,11 +766,11 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
       id: serializer.fromJson<int>(json['id']),
       answer: serializer.fromJson<String>(json['answer']),
       snippetId: serializer.fromJson<String>(json['snippetId']),
-      uid: serializer.fromJson<String>(json['uid']),
       displayName: serializer.fromJson<String>(json['displayName']),
       date: serializer.fromJson<DateTime>(json['date']),
-      lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
+      uid: serializer.fromJson<String>(json['uid']),
       lastUpdatedMillis: serializer.fromJson<int>(json['lastUpdatedMillis']),
+      discussionUsers: serializer.fromJson<String>(json['discussionUsers']),
     );
   }
   @override
@@ -780,11 +780,11 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
       'id': serializer.toJson<int>(id),
       'answer': serializer.toJson<String>(answer),
       'snippetId': serializer.toJson<String>(snippetId),
-      'uid': serializer.toJson<String>(uid),
       'displayName': serializer.toJson<String>(displayName),
       'date': serializer.toJson<DateTime>(date),
-      'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
+      'uid': serializer.toJson<String>(uid),
       'lastUpdatedMillis': serializer.toJson<int>(lastUpdatedMillis),
+      'discussionUsers': serializer.toJson<String>(discussionUsers),
     };
   }
 
@@ -792,35 +792,36 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
           {int? id,
           String? answer,
           String? snippetId,
-          String? uid,
           String? displayName,
           DateTime? date,
-          DateTime? lastUpdated,
-          int? lastUpdatedMillis}) =>
+          String? uid,
+          int? lastUpdatedMillis,
+          String? discussionUsers}) =>
       SnipResponse(
         id: id ?? this.id,
         answer: answer ?? this.answer,
         snippetId: snippetId ?? this.snippetId,
-        uid: uid ?? this.uid,
         displayName: displayName ?? this.displayName,
         date: date ?? this.date,
-        lastUpdated: lastUpdated ?? this.lastUpdated,
+        uid: uid ?? this.uid,
         lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
+        discussionUsers: discussionUsers ?? this.discussionUsers,
       );
   SnipResponse copyWithCompanion(SnipResponsesCompanion data) {
     return SnipResponse(
       id: data.id.present ? data.id.value : this.id,
       answer: data.answer.present ? data.answer.value : this.answer,
       snippetId: data.snippetId.present ? data.snippetId.value : this.snippetId,
-      uid: data.uid.present ? data.uid.value : this.uid,
       displayName:
           data.displayName.present ? data.displayName.value : this.displayName,
       date: data.date.present ? data.date.value : this.date,
-      lastUpdated:
-          data.lastUpdated.present ? data.lastUpdated.value : this.lastUpdated,
+      uid: data.uid.present ? data.uid.value : this.uid,
       lastUpdatedMillis: data.lastUpdatedMillis.present
           ? data.lastUpdatedMillis.value
           : this.lastUpdatedMillis,
+      discussionUsers: data.discussionUsers.present
+          ? data.discussionUsers.value
+          : this.discussionUsers,
     );
   }
 
@@ -830,18 +831,18 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
           ..write('id: $id, ')
           ..write('answer: $answer, ')
           ..write('snippetId: $snippetId, ')
-          ..write('uid: $uid, ')
           ..write('displayName: $displayName, ')
           ..write('date: $date, ')
-          ..write('lastUpdated: $lastUpdated, ')
-          ..write('lastUpdatedMillis: $lastUpdatedMillis')
+          ..write('uid: $uid, ')
+          ..write('lastUpdatedMillis: $lastUpdatedMillis, ')
+          ..write('discussionUsers: $discussionUsers')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, answer, snippetId, uid, displayName, date,
-      lastUpdated, lastUpdatedMillis);
+  int get hashCode => Object.hash(id, answer, snippetId, displayName, date, uid,
+      lastUpdatedMillis, discussionUsers);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -849,67 +850,67 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
           other.id == this.id &&
           other.answer == this.answer &&
           other.snippetId == this.snippetId &&
-          other.uid == this.uid &&
           other.displayName == this.displayName &&
           other.date == this.date &&
-          other.lastUpdated == this.lastUpdated &&
-          other.lastUpdatedMillis == this.lastUpdatedMillis);
+          other.uid == this.uid &&
+          other.lastUpdatedMillis == this.lastUpdatedMillis &&
+          other.discussionUsers == this.discussionUsers);
 }
 
 class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
   final Value<int> id;
   final Value<String> answer;
   final Value<String> snippetId;
-  final Value<String> uid;
   final Value<String> displayName;
   final Value<DateTime> date;
-  final Value<DateTime> lastUpdated;
+  final Value<String> uid;
   final Value<int> lastUpdatedMillis;
+  final Value<String> discussionUsers;
   const SnipResponsesCompanion({
     this.id = const Value.absent(),
     this.answer = const Value.absent(),
     this.snippetId = const Value.absent(),
-    this.uid = const Value.absent(),
     this.displayName = const Value.absent(),
     this.date = const Value.absent(),
-    this.lastUpdated = const Value.absent(),
+    this.uid = const Value.absent(),
     this.lastUpdatedMillis = const Value.absent(),
+    this.discussionUsers = const Value.absent(),
   });
   SnipResponsesCompanion.insert({
     this.id = const Value.absent(),
     required String answer,
     required String snippetId,
-    required String uid,
     required String displayName,
     required DateTime date,
-    required DateTime lastUpdated,
+    required String uid,
     required int lastUpdatedMillis,
+    required String discussionUsers,
   })  : answer = Value(answer),
         snippetId = Value(snippetId),
-        uid = Value(uid),
         displayName = Value(displayName),
         date = Value(date),
-        lastUpdated = Value(lastUpdated),
-        lastUpdatedMillis = Value(lastUpdatedMillis);
+        uid = Value(uid),
+        lastUpdatedMillis = Value(lastUpdatedMillis),
+        discussionUsers = Value(discussionUsers);
   static Insertable<SnipResponse> custom({
     Expression<int>? id,
     Expression<String>? answer,
     Expression<String>? snippetId,
-    Expression<String>? uid,
     Expression<String>? displayName,
     Expression<DateTime>? date,
-    Expression<DateTime>? lastUpdated,
+    Expression<String>? uid,
     Expression<int>? lastUpdatedMillis,
+    Expression<String>? discussionUsers,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (answer != null) 'answer': answer,
       if (snippetId != null) 'snippet_id': snippetId,
-      if (uid != null) 'uid': uid,
       if (displayName != null) 'display_name': displayName,
       if (date != null) 'date': date,
-      if (lastUpdated != null) 'last_updated': lastUpdated,
+      if (uid != null) 'uid': uid,
       if (lastUpdatedMillis != null) 'last_updated_millis': lastUpdatedMillis,
+      if (discussionUsers != null) 'discussion_users': discussionUsers,
     });
   }
 
@@ -917,20 +918,20 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
       {Value<int>? id,
       Value<String>? answer,
       Value<String>? snippetId,
-      Value<String>? uid,
       Value<String>? displayName,
       Value<DateTime>? date,
-      Value<DateTime>? lastUpdated,
-      Value<int>? lastUpdatedMillis}) {
+      Value<String>? uid,
+      Value<int>? lastUpdatedMillis,
+      Value<String>? discussionUsers}) {
     return SnipResponsesCompanion(
       id: id ?? this.id,
       answer: answer ?? this.answer,
       snippetId: snippetId ?? this.snippetId,
-      uid: uid ?? this.uid,
       displayName: displayName ?? this.displayName,
       date: date ?? this.date,
-      lastUpdated: lastUpdated ?? this.lastUpdated,
+      uid: uid ?? this.uid,
       lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
+      discussionUsers: discussionUsers ?? this.discussionUsers,
     );
   }
 
@@ -946,20 +947,20 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
     if (snippetId.present) {
       map['snippet_id'] = Variable<String>(snippetId.value);
     }
-    if (uid.present) {
-      map['uid'] = Variable<String>(uid.value);
-    }
     if (displayName.present) {
       map['display_name'] = Variable<String>(displayName.value);
     }
     if (date.present) {
       map['date'] = Variable<DateTime>(date.value);
     }
-    if (lastUpdated.present) {
-      map['last_updated'] = Variable<DateTime>(lastUpdated.value);
+    if (uid.present) {
+      map['uid'] = Variable<String>(uid.value);
     }
     if (lastUpdatedMillis.present) {
       map['last_updated_millis'] = Variable<int>(lastUpdatedMillis.value);
+    }
+    if (discussionUsers.present) {
+      map['discussion_users'] = Variable<String>(discussionUsers.value);
     }
     return map;
   }
@@ -970,21 +971,22 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
           ..write('id: $id, ')
           ..write('answer: $answer, ')
           ..write('snippetId: $snippetId, ')
-          ..write('uid: $uid, ')
           ..write('displayName: $displayName, ')
           ..write('date: $date, ')
-          ..write('lastUpdated: $lastUpdated, ')
-          ..write('lastUpdatedMillis: $lastUpdatedMillis')
+          ..write('uid: $uid, ')
+          ..write('lastUpdatedMillis: $lastUpdatedMillis, ')
+          ..write('discussionUsers: $discussionUsers')
           ..write(')'))
         .toString();
   }
 }
 
-class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
+class $SnippetsDataTable extends SnippetsData
+    with TableInfo<$SnippetsDataTable, SnippetsDataData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $SnippetsTable(this.attachedDatabase, [this._alias]);
+  $SnippetsDataTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -994,12 +996,6 @@ class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
       requiredDuringInsert: false,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
-  static const VerificationMeta _lastRecievedMeta =
-      const VerificationMeta('lastRecieved');
-  @override
-  late final GeneratedColumn<DateTime> lastRecieved = GeneratedColumn<DateTime>(
-      'last_recieved', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
   static const VerificationMeta _snippetIdMeta =
       const VerificationMeta('snippetId');
   @override
@@ -1011,11 +1007,6 @@ class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
   @override
   late final GeneratedColumn<String> question = GeneratedColumn<String>(
       'question', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _themeMeta = const VerificationMeta('theme');
-  @override
-  late final GeneratedColumn<String> theme = GeneratedColumn<String>(
-      'theme', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _indexMeta = const VerificationMeta('index');
   @override
@@ -1031,22 +1022,11 @@ class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
       requiredDuringInsert: true,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("answered" IN (0, 1))'));
-  static const VerificationMeta _uidMeta = const VerificationMeta('uid');
-  @override
-  late final GeneratedColumn<String> uid = GeneratedColumn<String>(
-      'uid', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _typeMeta = const VerificationMeta('type');
   @override
   late final GeneratedColumn<String> type = GeneratedColumn<String>(
       'type', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _lastUpdatedMeta =
-      const VerificationMeta('lastUpdated');
-  @override
-  late final GeneratedColumn<DateTime> lastUpdated = GeneratedColumn<DateTime>(
-      'last_updated', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
   static const VerificationMeta _lastUpdatedMillisMeta =
       const VerificationMeta('lastUpdatedMillis');
   @override
@@ -1062,15 +1042,11 @@ class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
   @override
   List<GeneratedColumn> get $columns => [
         id,
-        lastRecieved,
         snippetId,
         question,
-        theme,
         index,
         answered,
-        uid,
         type,
-        lastUpdated,
         lastUpdatedMillis,
         lastRecievedMillis
       ];
@@ -1078,22 +1054,14 @@ class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'snippets';
+  static const String $name = 'snippets_data';
   @override
-  VerificationContext validateIntegrity(Insertable<Snippet> instance,
+  VerificationContext validateIntegrity(Insertable<SnippetsDataData> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('last_recieved')) {
-      context.handle(
-          _lastRecievedMeta,
-          lastRecieved.isAcceptableOrUnknown(
-              data['last_recieved']!, _lastRecievedMeta));
-    } else if (isInserting) {
-      context.missing(_lastRecievedMeta);
     }
     if (data.containsKey('snippet_id')) {
       context.handle(_snippetIdMeta,
@@ -1107,12 +1075,6 @@ class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
     } else if (isInserting) {
       context.missing(_questionMeta);
     }
-    if (data.containsKey('theme')) {
-      context.handle(
-          _themeMeta, theme.isAcceptableOrUnknown(data['theme']!, _themeMeta));
-    } else if (isInserting) {
-      context.missing(_themeMeta);
-    }
     if (data.containsKey('index')) {
       context.handle(
           _indexMeta, index.isAcceptableOrUnknown(data['index']!, _indexMeta));
@@ -1125,25 +1087,11 @@ class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
     } else if (isInserting) {
       context.missing(_answeredMeta);
     }
-    if (data.containsKey('uid')) {
-      context.handle(
-          _uidMeta, uid.isAcceptableOrUnknown(data['uid']!, _uidMeta));
-    } else if (isInserting) {
-      context.missing(_uidMeta);
-    }
     if (data.containsKey('type')) {
       context.handle(
           _typeMeta, type.isAcceptableOrUnknown(data['type']!, _typeMeta));
     } else if (isInserting) {
       context.missing(_typeMeta);
-    }
-    if (data.containsKey('last_updated')) {
-      context.handle(
-          _lastUpdatedMeta,
-          lastUpdated.isAcceptableOrUnknown(
-              data['last_updated']!, _lastUpdatedMeta));
-    } else if (isInserting) {
-      context.missing(_lastUpdatedMeta);
     }
     if (data.containsKey('last_updated_millis')) {
       context.handle(
@@ -1167,29 +1115,21 @@ class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Snippet map(Map<String, dynamic> data, {String? tablePrefix}) {
+  SnippetsDataData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Snippet(
+    return SnippetsDataData(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      lastRecieved: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime, data['${effectivePrefix}last_recieved'])!,
       snippetId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}snippet_id'])!,
       question: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}question'])!,
-      theme: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}theme'])!,
       index: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}index'])!,
       answered: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}answered'])!,
-      uid: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}uid'])!,
       type: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}type'])!,
-      lastUpdated: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_updated'])!,
       lastUpdatedMillis: attachedDatabase.typeMapping.read(
           DriftSqlType.int, data['${effectivePrefix}last_updated_millis'])!,
       lastRecievedMillis: attachedDatabase.typeMapping.read(
@@ -1198,86 +1138,67 @@ class $SnippetsTable extends Snippets with TableInfo<$SnippetsTable, Snippet> {
   }
 
   @override
-  $SnippetsTable createAlias(String alias) {
-    return $SnippetsTable(attachedDatabase, alias);
+  $SnippetsDataTable createAlias(String alias) {
+    return $SnippetsDataTable(attachedDatabase, alias);
   }
 }
 
-class Snippet extends DataClass implements Insertable<Snippet> {
+class SnippetsDataData extends DataClass
+    implements Insertable<SnippetsDataData> {
   final int id;
-  final DateTime lastRecieved;
   final String snippetId;
   final String question;
-  final String theme;
   final int index;
   final bool answered;
-  final String uid;
   final String type;
-  final DateTime lastUpdated;
   final int lastUpdatedMillis;
   final int lastRecievedMillis;
-  const Snippet(
+  const SnippetsDataData(
       {required this.id,
-      required this.lastRecieved,
       required this.snippetId,
       required this.question,
-      required this.theme,
       required this.index,
       required this.answered,
-      required this.uid,
       required this.type,
-      required this.lastUpdated,
       required this.lastUpdatedMillis,
       required this.lastRecievedMillis});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    map['last_recieved'] = Variable<DateTime>(lastRecieved);
     map['snippet_id'] = Variable<String>(snippetId);
     map['question'] = Variable<String>(question);
-    map['theme'] = Variable<String>(theme);
     map['index'] = Variable<int>(index);
     map['answered'] = Variable<bool>(answered);
-    map['uid'] = Variable<String>(uid);
     map['type'] = Variable<String>(type);
-    map['last_updated'] = Variable<DateTime>(lastUpdated);
     map['last_updated_millis'] = Variable<int>(lastUpdatedMillis);
     map['last_recieved_millis'] = Variable<int>(lastRecievedMillis);
     return map;
   }
 
-  SnippetsCompanion toCompanion(bool nullToAbsent) {
-    return SnippetsCompanion(
+  SnippetsDataCompanion toCompanion(bool nullToAbsent) {
+    return SnippetsDataCompanion(
       id: Value(id),
-      lastRecieved: Value(lastRecieved),
       snippetId: Value(snippetId),
       question: Value(question),
-      theme: Value(theme),
       index: Value(index),
       answered: Value(answered),
-      uid: Value(uid),
       type: Value(type),
-      lastUpdated: Value(lastUpdated),
       lastUpdatedMillis: Value(lastUpdatedMillis),
       lastRecievedMillis: Value(lastRecievedMillis),
     );
   }
 
-  factory Snippet.fromJson(Map<String, dynamic> json,
+  factory SnippetsDataData.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Snippet(
+    return SnippetsDataData(
       id: serializer.fromJson<int>(json['id']),
-      lastRecieved: serializer.fromJson<DateTime>(json['lastRecieved']),
       snippetId: serializer.fromJson<String>(json['snippetId']),
       question: serializer.fromJson<String>(json['question']),
-      theme: serializer.fromJson<String>(json['theme']),
       index: serializer.fromJson<int>(json['index']),
       answered: serializer.fromJson<bool>(json['answered']),
-      uid: serializer.fromJson<String>(json['uid']),
       type: serializer.fromJson<String>(json['type']),
-      lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
       lastUpdatedMillis: serializer.fromJson<int>(json['lastUpdatedMillis']),
       lastRecievedMillis: serializer.fromJson<int>(json['lastRecievedMillis']),
     );
@@ -1287,62 +1208,43 @@ class Snippet extends DataClass implements Insertable<Snippet> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'lastRecieved': serializer.toJson<DateTime>(lastRecieved),
       'snippetId': serializer.toJson<String>(snippetId),
       'question': serializer.toJson<String>(question),
-      'theme': serializer.toJson<String>(theme),
       'index': serializer.toJson<int>(index),
       'answered': serializer.toJson<bool>(answered),
-      'uid': serializer.toJson<String>(uid),
       'type': serializer.toJson<String>(type),
-      'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
       'lastUpdatedMillis': serializer.toJson<int>(lastUpdatedMillis),
       'lastRecievedMillis': serializer.toJson<int>(lastRecievedMillis),
     };
   }
 
-  Snippet copyWith(
+  SnippetsDataData copyWith(
           {int? id,
-          DateTime? lastRecieved,
           String? snippetId,
           String? question,
-          String? theme,
           int? index,
           bool? answered,
-          String? uid,
           String? type,
-          DateTime? lastUpdated,
           int? lastUpdatedMillis,
           int? lastRecievedMillis}) =>
-      Snippet(
+      SnippetsDataData(
         id: id ?? this.id,
-        lastRecieved: lastRecieved ?? this.lastRecieved,
         snippetId: snippetId ?? this.snippetId,
         question: question ?? this.question,
-        theme: theme ?? this.theme,
         index: index ?? this.index,
         answered: answered ?? this.answered,
-        uid: uid ?? this.uid,
         type: type ?? this.type,
-        lastUpdated: lastUpdated ?? this.lastUpdated,
         lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
         lastRecievedMillis: lastRecievedMillis ?? this.lastRecievedMillis,
       );
-  Snippet copyWithCompanion(SnippetsCompanion data) {
-    return Snippet(
+  SnippetsDataData copyWithCompanion(SnippetsDataCompanion data) {
+    return SnippetsDataData(
       id: data.id.present ? data.id.value : this.id,
-      lastRecieved: data.lastRecieved.present
-          ? data.lastRecieved.value
-          : this.lastRecieved,
       snippetId: data.snippetId.present ? data.snippetId.value : this.snippetId,
       question: data.question.present ? data.question.value : this.question,
-      theme: data.theme.present ? data.theme.value : this.theme,
       index: data.index.present ? data.index.value : this.index,
       answered: data.answered.present ? data.answered.value : this.answered,
-      uid: data.uid.present ? data.uid.value : this.uid,
       type: data.type.present ? data.type.value : this.type,
-      lastUpdated:
-          data.lastUpdated.present ? data.lastUpdated.value : this.lastUpdated,
       lastUpdatedMillis: data.lastUpdatedMillis.present
           ? data.lastUpdatedMillis.value
           : this.lastUpdatedMillis,
@@ -1354,17 +1256,13 @@ class Snippet extends DataClass implements Insertable<Snippet> {
 
   @override
   String toString() {
-    return (StringBuffer('Snippet(')
+    return (StringBuffer('SnippetsDataData(')
           ..write('id: $id, ')
-          ..write('lastRecieved: $lastRecieved, ')
           ..write('snippetId: $snippetId, ')
           ..write('question: $question, ')
-          ..write('theme: $theme, ')
           ..write('index: $index, ')
           ..write('answered: $answered, ')
-          ..write('uid: $uid, ')
           ..write('type: $type, ')
-          ..write('lastUpdated: $lastUpdated, ')
           ..write('lastUpdatedMillis: $lastUpdatedMillis, ')
           ..write('lastRecievedMillis: $lastRecievedMillis')
           ..write(')'))
@@ -1372,143 +1270,96 @@ class Snippet extends DataClass implements Insertable<Snippet> {
   }
 
   @override
-  int get hashCode => Object.hash(
-      id,
-      lastRecieved,
-      snippetId,
-      question,
-      theme,
-      index,
-      answered,
-      uid,
-      type,
-      lastUpdated,
-      lastUpdatedMillis,
-      lastRecievedMillis);
+  int get hashCode => Object.hash(id, snippetId, question, index, answered,
+      type, lastUpdatedMillis, lastRecievedMillis);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Snippet &&
+      (other is SnippetsDataData &&
           other.id == this.id &&
-          other.lastRecieved == this.lastRecieved &&
           other.snippetId == this.snippetId &&
           other.question == this.question &&
-          other.theme == this.theme &&
           other.index == this.index &&
           other.answered == this.answered &&
-          other.uid == this.uid &&
           other.type == this.type &&
-          other.lastUpdated == this.lastUpdated &&
           other.lastUpdatedMillis == this.lastUpdatedMillis &&
           other.lastRecievedMillis == this.lastRecievedMillis);
 }
 
-class SnippetsCompanion extends UpdateCompanion<Snippet> {
+class SnippetsDataCompanion extends UpdateCompanion<SnippetsDataData> {
   final Value<int> id;
-  final Value<DateTime> lastRecieved;
   final Value<String> snippetId;
   final Value<String> question;
-  final Value<String> theme;
   final Value<int> index;
   final Value<bool> answered;
-  final Value<String> uid;
   final Value<String> type;
-  final Value<DateTime> lastUpdated;
   final Value<int> lastUpdatedMillis;
   final Value<int> lastRecievedMillis;
-  const SnippetsCompanion({
+  const SnippetsDataCompanion({
     this.id = const Value.absent(),
-    this.lastRecieved = const Value.absent(),
     this.snippetId = const Value.absent(),
     this.question = const Value.absent(),
-    this.theme = const Value.absent(),
     this.index = const Value.absent(),
     this.answered = const Value.absent(),
-    this.uid = const Value.absent(),
     this.type = const Value.absent(),
-    this.lastUpdated = const Value.absent(),
     this.lastUpdatedMillis = const Value.absent(),
     this.lastRecievedMillis = const Value.absent(),
   });
-  SnippetsCompanion.insert({
+  SnippetsDataCompanion.insert({
     this.id = const Value.absent(),
-    required DateTime lastRecieved,
     required String snippetId,
     required String question,
-    required String theme,
     required int index,
     required bool answered,
-    required String uid,
     required String type,
-    required DateTime lastUpdated,
     required int lastUpdatedMillis,
     required int lastRecievedMillis,
-  })  : lastRecieved = Value(lastRecieved),
-        snippetId = Value(snippetId),
+  })  : snippetId = Value(snippetId),
         question = Value(question),
-        theme = Value(theme),
         index = Value(index),
         answered = Value(answered),
-        uid = Value(uid),
         type = Value(type),
-        lastUpdated = Value(lastUpdated),
         lastUpdatedMillis = Value(lastUpdatedMillis),
         lastRecievedMillis = Value(lastRecievedMillis);
-  static Insertable<Snippet> custom({
+  static Insertable<SnippetsDataData> custom({
     Expression<int>? id,
-    Expression<DateTime>? lastRecieved,
     Expression<String>? snippetId,
     Expression<String>? question,
-    Expression<String>? theme,
     Expression<int>? index,
     Expression<bool>? answered,
-    Expression<String>? uid,
     Expression<String>? type,
-    Expression<DateTime>? lastUpdated,
     Expression<int>? lastUpdatedMillis,
     Expression<int>? lastRecievedMillis,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (lastRecieved != null) 'last_recieved': lastRecieved,
       if (snippetId != null) 'snippet_id': snippetId,
       if (question != null) 'question': question,
-      if (theme != null) 'theme': theme,
       if (index != null) 'index': index,
       if (answered != null) 'answered': answered,
-      if (uid != null) 'uid': uid,
       if (type != null) 'type': type,
-      if (lastUpdated != null) 'last_updated': lastUpdated,
       if (lastUpdatedMillis != null) 'last_updated_millis': lastUpdatedMillis,
       if (lastRecievedMillis != null)
         'last_recieved_millis': lastRecievedMillis,
     });
   }
 
-  SnippetsCompanion copyWith(
+  SnippetsDataCompanion copyWith(
       {Value<int>? id,
-      Value<DateTime>? lastRecieved,
       Value<String>? snippetId,
       Value<String>? question,
-      Value<String>? theme,
       Value<int>? index,
       Value<bool>? answered,
-      Value<String>? uid,
       Value<String>? type,
-      Value<DateTime>? lastUpdated,
       Value<int>? lastUpdatedMillis,
       Value<int>? lastRecievedMillis}) {
-    return SnippetsCompanion(
+    return SnippetsDataCompanion(
       id: id ?? this.id,
-      lastRecieved: lastRecieved ?? this.lastRecieved,
       snippetId: snippetId ?? this.snippetId,
       question: question ?? this.question,
-      theme: theme ?? this.theme,
       index: index ?? this.index,
       answered: answered ?? this.answered,
-      uid: uid ?? this.uid,
       type: type ?? this.type,
-      lastUpdated: lastUpdated ?? this.lastUpdated,
       lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
       lastRecievedMillis: lastRecievedMillis ?? this.lastRecievedMillis,
     );
@@ -1520,17 +1371,11 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
-    if (lastRecieved.present) {
-      map['last_recieved'] = Variable<DateTime>(lastRecieved.value);
-    }
     if (snippetId.present) {
       map['snippet_id'] = Variable<String>(snippetId.value);
     }
     if (question.present) {
       map['question'] = Variable<String>(question.value);
-    }
-    if (theme.present) {
-      map['theme'] = Variable<String>(theme.value);
     }
     if (index.present) {
       map['index'] = Variable<int>(index.value);
@@ -1538,14 +1383,8 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
     if (answered.present) {
       map['answered'] = Variable<bool>(answered.value);
     }
-    if (uid.present) {
-      map['uid'] = Variable<String>(uid.value);
-    }
     if (type.present) {
       map['type'] = Variable<String>(type.value);
-    }
-    if (lastUpdated.present) {
-      map['last_updated'] = Variable<DateTime>(lastUpdated.value);
     }
     if (lastUpdatedMillis.present) {
       map['last_updated_millis'] = Variable<int>(lastUpdatedMillis.value);
@@ -1558,17 +1397,13 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
 
   @override
   String toString() {
-    return (StringBuffer('SnippetsCompanion(')
+    return (StringBuffer('SnippetsDataCompanion(')
           ..write('id: $id, ')
-          ..write('lastRecieved: $lastRecieved, ')
           ..write('snippetId: $snippetId, ')
           ..write('question: $question, ')
-          ..write('theme: $theme, ')
           ..write('index: $index, ')
           ..write('answered: $answered, ')
-          ..write('uid: $uid, ')
           ..write('type: $type, ')
-          ..write('lastUpdated: $lastUpdated, ')
           ..write('lastUpdatedMillis: $lastUpdatedMillis, ')
           ..write('lastRecievedMillis: $lastRecievedMillis')
           ..write(')'))
@@ -1576,11 +1411,12 @@ class SnippetsCompanion extends UpdateCompanion<Snippet> {
   }
 }
 
-class $BOTWTable extends BOTW with TableInfo<$BOTWTable, BOTWData> {
+class $BOTWDataTableTable extends BOTWDataTable
+    with TableInfo<$BOTWDataTableTable, BOTWDataTableData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $BOTWTable(this.attachedDatabase, [this._alias]);
+  $BOTWDataTableTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -1606,12 +1442,6 @@ class $BOTWTable extends BOTW with TableInfo<$BOTWTable, BOTWData> {
   late final GeneratedColumn<String> answers = GeneratedColumn<String>(
       'answers', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _lastUpdatedMeta =
-      const VerificationMeta('lastUpdated');
-  @override
-  late final GeneratedColumn<DateTime> lastUpdated = GeneratedColumn<DateTime>(
-      'last_updated', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
   static const VerificationMeta _weekMeta = const VerificationMeta('week');
   @override
   late final GeneratedColumn<DateTime> week = GeneratedColumn<DateTime>(
@@ -1625,14 +1455,14 @@ class $BOTWTable extends BOTW with TableInfo<$BOTWTable, BOTWData> {
       type: DriftSqlType.int, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, blank, status, answers, lastUpdated, week, lastUpdatedMillis];
+      [id, blank, status, answers, week, lastUpdatedMillis];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'botw';
+  static const String $name = 'b_o_t_w_data_table';
   @override
-  VerificationContext validateIntegrity(Insertable<BOTWData> instance,
+  VerificationContext validateIntegrity(Insertable<BOTWDataTableData> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -1657,14 +1487,6 @@ class $BOTWTable extends BOTW with TableInfo<$BOTWTable, BOTWData> {
     } else if (isInserting) {
       context.missing(_answersMeta);
     }
-    if (data.containsKey('last_updated')) {
-      context.handle(
-          _lastUpdatedMeta,
-          lastUpdated.isAcceptableOrUnknown(
-              data['last_updated']!, _lastUpdatedMeta));
-    } else if (isInserting) {
-      context.missing(_lastUpdatedMeta);
-    }
     if (data.containsKey('week')) {
       context.handle(
           _weekMeta, week.isAcceptableOrUnknown(data['week']!, _weekMeta));
@@ -1685,9 +1507,9 @@ class $BOTWTable extends BOTW with TableInfo<$BOTWTable, BOTWData> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  BOTWData map(Map<String, dynamic> data, {String? tablePrefix}) {
+  BOTWDataTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return BOTWData(
+    return BOTWDataTableData(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       blank: attachedDatabase.typeMapping
@@ -1696,8 +1518,6 @@ class $BOTWTable extends BOTW with TableInfo<$BOTWTable, BOTWData> {
           .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
       answers: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}answers'])!,
-      lastUpdated: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_updated'])!,
       week: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}week'])!,
       lastUpdatedMillis: attachedDatabase.typeMapping.read(
@@ -1706,25 +1526,24 @@ class $BOTWTable extends BOTW with TableInfo<$BOTWTable, BOTWData> {
   }
 
   @override
-  $BOTWTable createAlias(String alias) {
-    return $BOTWTable(attachedDatabase, alias);
+  $BOTWDataTableTable createAlias(String alias) {
+    return $BOTWDataTableTable(attachedDatabase, alias);
   }
 }
 
-class BOTWData extends DataClass implements Insertable<BOTWData> {
+class BOTWDataTableData extends DataClass
+    implements Insertable<BOTWDataTableData> {
   final int id;
   final String blank;
   final String status;
   final String answers;
-  final DateTime lastUpdated;
   final DateTime week;
   final int lastUpdatedMillis;
-  const BOTWData(
+  const BOTWDataTableData(
       {required this.id,
       required this.blank,
       required this.status,
       required this.answers,
-      required this.lastUpdated,
       required this.week,
       required this.lastUpdatedMillis});
   @override
@@ -1734,33 +1553,30 @@ class BOTWData extends DataClass implements Insertable<BOTWData> {
     map['blank'] = Variable<String>(blank);
     map['status'] = Variable<String>(status);
     map['answers'] = Variable<String>(answers);
-    map['last_updated'] = Variable<DateTime>(lastUpdated);
     map['week'] = Variable<DateTime>(week);
     map['last_updated_millis'] = Variable<int>(lastUpdatedMillis);
     return map;
   }
 
-  BOTWCompanion toCompanion(bool nullToAbsent) {
-    return BOTWCompanion(
+  BOTWDataTableCompanion toCompanion(bool nullToAbsent) {
+    return BOTWDataTableCompanion(
       id: Value(id),
       blank: Value(blank),
       status: Value(status),
       answers: Value(answers),
-      lastUpdated: Value(lastUpdated),
       week: Value(week),
       lastUpdatedMillis: Value(lastUpdatedMillis),
     );
   }
 
-  factory BOTWData.fromJson(Map<String, dynamic> json,
+  factory BOTWDataTableData.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return BOTWData(
+    return BOTWDataTableData(
       id: serializer.fromJson<int>(json['id']),
       blank: serializer.fromJson<String>(json['blank']),
       status: serializer.fromJson<String>(json['status']),
       answers: serializer.fromJson<String>(json['answers']),
-      lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
       week: serializer.fromJson<DateTime>(json['week']),
       lastUpdatedMillis: serializer.fromJson<int>(json['lastUpdatedMillis']),
     );
@@ -1773,37 +1589,32 @@ class BOTWData extends DataClass implements Insertable<BOTWData> {
       'blank': serializer.toJson<String>(blank),
       'status': serializer.toJson<String>(status),
       'answers': serializer.toJson<String>(answers),
-      'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
       'week': serializer.toJson<DateTime>(week),
       'lastUpdatedMillis': serializer.toJson<int>(lastUpdatedMillis),
     };
   }
 
-  BOTWData copyWith(
+  BOTWDataTableData copyWith(
           {int? id,
           String? blank,
           String? status,
           String? answers,
-          DateTime? lastUpdated,
           DateTime? week,
           int? lastUpdatedMillis}) =>
-      BOTWData(
+      BOTWDataTableData(
         id: id ?? this.id,
         blank: blank ?? this.blank,
         status: status ?? this.status,
         answers: answers ?? this.answers,
-        lastUpdated: lastUpdated ?? this.lastUpdated,
         week: week ?? this.week,
         lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
       );
-  BOTWData copyWithCompanion(BOTWCompanion data) {
-    return BOTWData(
+  BOTWDataTableData copyWithCompanion(BOTWDataTableCompanion data) {
+    return BOTWDataTableData(
       id: data.id.present ? data.id.value : this.id,
       blank: data.blank.present ? data.blank.value : this.blank,
       status: data.status.present ? data.status.value : this.status,
       answers: data.answers.present ? data.answers.value : this.answers,
-      lastUpdated:
-          data.lastUpdated.present ? data.lastUpdated.value : this.lastUpdated,
       week: data.week.present ? data.week.value : this.week,
       lastUpdatedMillis: data.lastUpdatedMillis.present
           ? data.lastUpdatedMillis.value
@@ -1813,12 +1624,11 @@ class BOTWData extends DataClass implements Insertable<BOTWData> {
 
   @override
   String toString() {
-    return (StringBuffer('BOTWData(')
+    return (StringBuffer('BOTWDataTableData(')
           ..write('id: $id, ')
           ..write('blank: $blank, ')
           ..write('status: $status, ')
           ..write('answers: $answers, ')
-          ..write('lastUpdated: $lastUpdated, ')
           ..write('week: $week, ')
           ..write('lastUpdatedMillis: $lastUpdatedMillis')
           ..write(')'))
@@ -1826,58 +1636,52 @@ class BOTWData extends DataClass implements Insertable<BOTWData> {
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, blank, status, answers, lastUpdated, week, lastUpdatedMillis);
+  int get hashCode =>
+      Object.hash(id, blank, status, answers, week, lastUpdatedMillis);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is BOTWData &&
+      (other is BOTWDataTableData &&
           other.id == this.id &&
           other.blank == this.blank &&
           other.status == this.status &&
           other.answers == this.answers &&
-          other.lastUpdated == this.lastUpdated &&
           other.week == this.week &&
           other.lastUpdatedMillis == this.lastUpdatedMillis);
 }
 
-class BOTWCompanion extends UpdateCompanion<BOTWData> {
+class BOTWDataTableCompanion extends UpdateCompanion<BOTWDataTableData> {
   final Value<int> id;
   final Value<String> blank;
   final Value<String> status;
   final Value<String> answers;
-  final Value<DateTime> lastUpdated;
   final Value<DateTime> week;
   final Value<int> lastUpdatedMillis;
-  const BOTWCompanion({
+  const BOTWDataTableCompanion({
     this.id = const Value.absent(),
     this.blank = const Value.absent(),
     this.status = const Value.absent(),
     this.answers = const Value.absent(),
-    this.lastUpdated = const Value.absent(),
     this.week = const Value.absent(),
     this.lastUpdatedMillis = const Value.absent(),
   });
-  BOTWCompanion.insert({
+  BOTWDataTableCompanion.insert({
     this.id = const Value.absent(),
     required String blank,
     required String status,
     required String answers,
-    required DateTime lastUpdated,
     required DateTime week,
     required int lastUpdatedMillis,
   })  : blank = Value(blank),
         status = Value(status),
         answers = Value(answers),
-        lastUpdated = Value(lastUpdated),
         week = Value(week),
         lastUpdatedMillis = Value(lastUpdatedMillis);
-  static Insertable<BOTWData> custom({
+  static Insertable<BOTWDataTableData> custom({
     Expression<int>? id,
     Expression<String>? blank,
     Expression<String>? status,
     Expression<String>? answers,
-    Expression<DateTime>? lastUpdated,
     Expression<DateTime>? week,
     Expression<int>? lastUpdatedMillis,
   }) {
@@ -1886,26 +1690,23 @@ class BOTWCompanion extends UpdateCompanion<BOTWData> {
       if (blank != null) 'blank': blank,
       if (status != null) 'status': status,
       if (answers != null) 'answers': answers,
-      if (lastUpdated != null) 'last_updated': lastUpdated,
       if (week != null) 'week': week,
       if (lastUpdatedMillis != null) 'last_updated_millis': lastUpdatedMillis,
     });
   }
 
-  BOTWCompanion copyWith(
+  BOTWDataTableCompanion copyWith(
       {Value<int>? id,
       Value<String>? blank,
       Value<String>? status,
       Value<String>? answers,
-      Value<DateTime>? lastUpdated,
       Value<DateTime>? week,
       Value<int>? lastUpdatedMillis}) {
-    return BOTWCompanion(
+    return BOTWDataTableCompanion(
       id: id ?? this.id,
       blank: blank ?? this.blank,
       status: status ?? this.status,
       answers: answers ?? this.answers,
-      lastUpdated: lastUpdated ?? this.lastUpdated,
       week: week ?? this.week,
       lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
     );
@@ -1926,9 +1727,6 @@ class BOTWCompanion extends UpdateCompanion<BOTWData> {
     if (answers.present) {
       map['answers'] = Variable<String>(answers.value);
     }
-    if (lastUpdated.present) {
-      map['last_updated'] = Variable<DateTime>(lastUpdated.value);
-    }
     if (week.present) {
       map['week'] = Variable<DateTime>(week.value);
     }
@@ -1940,14 +1738,742 @@ class BOTWCompanion extends UpdateCompanion<BOTWData> {
 
   @override
   String toString() {
-    return (StringBuffer('BOTWCompanion(')
+    return (StringBuffer('BOTWDataTableCompanion(')
           ..write('id: $id, ')
           ..write('blank: $blank, ')
           ..write('status: $status, ')
           ..write('answers: $answers, ')
-          ..write('lastUpdated: $lastUpdated, ')
           ..write('week: $week, ')
           ..write('lastUpdatedMillis: $lastUpdatedMillis')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $UserDataTableTable extends UserDataTable
+    with TableInfo<$UserDataTableTable, UserDataTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UserDataTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _FCMTokenMeta =
+      const VerificationMeta('FCMToken');
+  @override
+  late final GeneratedColumn<String> FCMToken = GeneratedColumn<String>(
+      'f_c_m_token', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _displayNameMeta =
+      const VerificationMeta('displayName');
+  @override
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+      'display_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _BOTWStatusMeta =
+      const VerificationMeta('BOTWStatus');
+  @override
+  late final GeneratedColumn<String> BOTWStatus = GeneratedColumn<String>(
+      'b_o_t_w_status', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _descriptionMeta =
+      const VerificationMeta('description');
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+      'description', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _discussionsMeta =
+      const VerificationMeta('discussions');
+  @override
+  late final GeneratedColumn<String> discussions = GeneratedColumn<String>(
+      'discussions', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+      'email', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _friendsMeta =
+      const VerificationMeta('friends');
+  @override
+  late final GeneratedColumn<String> friends = GeneratedColumn<String>(
+      'friends', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _friendRequestsMeta =
+      const VerificationMeta('friendRequests');
+  @override
+  late final GeneratedColumn<String> friendRequests = GeneratedColumn<String>(
+      'friend_requests', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _outgoingFriendRequestsMeta =
+      const VerificationMeta('outgoingFriendRequests');
+  @override
+  late final GeneratedColumn<String> outgoingFriendRequests =
+      GeneratedColumn<String>('outgoing_friend_requests', aliasedName, false,
+          type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _usernameMeta =
+      const VerificationMeta('username');
+  @override
+  late final GeneratedColumn<String> username = GeneratedColumn<String>(
+      'username', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _searchKeyMeta =
+      const VerificationMeta('searchKey');
+  @override
+  late final GeneratedColumn<String> searchKey = GeneratedColumn<String>(
+      'search_key', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+      'user_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _lastUpdatedMillisMeta =
+      const VerificationMeta('lastUpdatedMillis');
+  @override
+  late final GeneratedColumn<int> lastUpdatedMillis = GeneratedColumn<int>(
+      'last_updated_millis', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _votesLeftMeta =
+      const VerificationMeta('votesLeft');
+  @override
+  late final GeneratedColumn<int> votesLeft = GeneratedColumn<int>(
+      'votes_left', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        FCMToken,
+        displayName,
+        BOTWStatus,
+        description,
+        discussions,
+        email,
+        friends,
+        friendRequests,
+        outgoingFriendRequests,
+        username,
+        searchKey,
+        userId,
+        lastUpdatedMillis,
+        votesLeft
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'user_data_table';
+  @override
+  VerificationContext validateIntegrity(Insertable<UserDataTableData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('f_c_m_token')) {
+      context.handle(_FCMTokenMeta,
+          FCMToken.isAcceptableOrUnknown(data['f_c_m_token']!, _FCMTokenMeta));
+    } else if (isInserting) {
+      context.missing(_FCMTokenMeta);
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+          _displayNameMeta,
+          displayName.isAcceptableOrUnknown(
+              data['display_name']!, _displayNameMeta));
+    } else if (isInserting) {
+      context.missing(_displayNameMeta);
+    }
+    if (data.containsKey('b_o_t_w_status')) {
+      context.handle(
+          _BOTWStatusMeta,
+          BOTWStatus.isAcceptableOrUnknown(
+              data['b_o_t_w_status']!, _BOTWStatusMeta));
+    } else if (isInserting) {
+      context.missing(_BOTWStatusMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+          _descriptionMeta,
+          description.isAcceptableOrUnknown(
+              data['description']!, _descriptionMeta));
+    } else if (isInserting) {
+      context.missing(_descriptionMeta);
+    }
+    if (data.containsKey('discussions')) {
+      context.handle(
+          _discussionsMeta,
+          discussions.isAcceptableOrUnknown(
+              data['discussions']!, _discussionsMeta));
+    } else if (isInserting) {
+      context.missing(_discussionsMeta);
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+          _emailMeta, email.isAcceptableOrUnknown(data['email']!, _emailMeta));
+    } else if (isInserting) {
+      context.missing(_emailMeta);
+    }
+    if (data.containsKey('friends')) {
+      context.handle(_friendsMeta,
+          friends.isAcceptableOrUnknown(data['friends']!, _friendsMeta));
+    } else if (isInserting) {
+      context.missing(_friendsMeta);
+    }
+    if (data.containsKey('friend_requests')) {
+      context.handle(
+          _friendRequestsMeta,
+          friendRequests.isAcceptableOrUnknown(
+              data['friend_requests']!, _friendRequestsMeta));
+    } else if (isInserting) {
+      context.missing(_friendRequestsMeta);
+    }
+    if (data.containsKey('outgoing_friend_requests')) {
+      context.handle(
+          _outgoingFriendRequestsMeta,
+          outgoingFriendRequests.isAcceptableOrUnknown(
+              data['outgoing_friend_requests']!, _outgoingFriendRequestsMeta));
+    } else if (isInserting) {
+      context.missing(_outgoingFriendRequestsMeta);
+    }
+    if (data.containsKey('username')) {
+      context.handle(_usernameMeta,
+          username.isAcceptableOrUnknown(data['username']!, _usernameMeta));
+    } else if (isInserting) {
+      context.missing(_usernameMeta);
+    }
+    if (data.containsKey('search_key')) {
+      context.handle(_searchKeyMeta,
+          searchKey.isAcceptableOrUnknown(data['search_key']!, _searchKeyMeta));
+    } else if (isInserting) {
+      context.missing(_searchKeyMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(_userIdMeta,
+          userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta));
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('last_updated_millis')) {
+      context.handle(
+          _lastUpdatedMillisMeta,
+          lastUpdatedMillis.isAcceptableOrUnknown(
+              data['last_updated_millis']!, _lastUpdatedMillisMeta));
+    } else if (isInserting) {
+      context.missing(_lastUpdatedMillisMeta);
+    }
+    if (data.containsKey('votes_left')) {
+      context.handle(_votesLeftMeta,
+          votesLeft.isAcceptableOrUnknown(data['votes_left']!, _votesLeftMeta));
+    } else if (isInserting) {
+      context.missing(_votesLeftMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  UserDataTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UserDataTableData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      FCMToken: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}f_c_m_token'])!,
+      displayName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}display_name'])!,
+      BOTWStatus: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}b_o_t_w_status'])!,
+      description: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}description'])!,
+      discussions: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}discussions'])!,
+      email: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}email'])!,
+      friends: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}friends'])!,
+      friendRequests: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}friend_requests'])!,
+      outgoingFriendRequests: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}outgoing_friend_requests'])!,
+      username: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}username'])!,
+      searchKey: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}search_key'])!,
+      userId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}user_id'])!,
+      lastUpdatedMillis: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}last_updated_millis'])!,
+      votesLeft: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}votes_left'])!,
+    );
+  }
+
+  @override
+  $UserDataTableTable createAlias(String alias) {
+    return $UserDataTableTable(attachedDatabase, alias);
+  }
+}
+
+class UserDataTableData extends DataClass
+    implements Insertable<UserDataTableData> {
+  final int id;
+  final String FCMToken;
+  final String displayName;
+  final String BOTWStatus;
+  final String description;
+  final String discussions;
+  final String email;
+  final String friends;
+  final String friendRequests;
+  final String outgoingFriendRequests;
+  final String username;
+  final String searchKey;
+  final String userId;
+  final int lastUpdatedMillis;
+  final int votesLeft;
+  const UserDataTableData(
+      {required this.id,
+      required this.FCMToken,
+      required this.displayName,
+      required this.BOTWStatus,
+      required this.description,
+      required this.discussions,
+      required this.email,
+      required this.friends,
+      required this.friendRequests,
+      required this.outgoingFriendRequests,
+      required this.username,
+      required this.searchKey,
+      required this.userId,
+      required this.lastUpdatedMillis,
+      required this.votesLeft});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['f_c_m_token'] = Variable<String>(FCMToken);
+    map['display_name'] = Variable<String>(displayName);
+    map['b_o_t_w_status'] = Variable<String>(BOTWStatus);
+    map['description'] = Variable<String>(description);
+    map['discussions'] = Variable<String>(discussions);
+    map['email'] = Variable<String>(email);
+    map['friends'] = Variable<String>(friends);
+    map['friend_requests'] = Variable<String>(friendRequests);
+    map['outgoing_friend_requests'] = Variable<String>(outgoingFriendRequests);
+    map['username'] = Variable<String>(username);
+    map['search_key'] = Variable<String>(searchKey);
+    map['user_id'] = Variable<String>(userId);
+    map['last_updated_millis'] = Variable<int>(lastUpdatedMillis);
+    map['votes_left'] = Variable<int>(votesLeft);
+    return map;
+  }
+
+  UserDataTableCompanion toCompanion(bool nullToAbsent) {
+    return UserDataTableCompanion(
+      id: Value(id),
+      FCMToken: Value(FCMToken),
+      displayName: Value(displayName),
+      BOTWStatus: Value(BOTWStatus),
+      description: Value(description),
+      discussions: Value(discussions),
+      email: Value(email),
+      friends: Value(friends),
+      friendRequests: Value(friendRequests),
+      outgoingFriendRequests: Value(outgoingFriendRequests),
+      username: Value(username),
+      searchKey: Value(searchKey),
+      userId: Value(userId),
+      lastUpdatedMillis: Value(lastUpdatedMillis),
+      votesLeft: Value(votesLeft),
+    );
+  }
+
+  factory UserDataTableData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UserDataTableData(
+      id: serializer.fromJson<int>(json['id']),
+      FCMToken: serializer.fromJson<String>(json['FCMToken']),
+      displayName: serializer.fromJson<String>(json['displayName']),
+      BOTWStatus: serializer.fromJson<String>(json['BOTWStatus']),
+      description: serializer.fromJson<String>(json['description']),
+      discussions: serializer.fromJson<String>(json['discussions']),
+      email: serializer.fromJson<String>(json['email']),
+      friends: serializer.fromJson<String>(json['friends']),
+      friendRequests: serializer.fromJson<String>(json['friendRequests']),
+      outgoingFriendRequests:
+          serializer.fromJson<String>(json['outgoingFriendRequests']),
+      username: serializer.fromJson<String>(json['username']),
+      searchKey: serializer.fromJson<String>(json['searchKey']),
+      userId: serializer.fromJson<String>(json['userId']),
+      lastUpdatedMillis: serializer.fromJson<int>(json['lastUpdatedMillis']),
+      votesLeft: serializer.fromJson<int>(json['votesLeft']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'FCMToken': serializer.toJson<String>(FCMToken),
+      'displayName': serializer.toJson<String>(displayName),
+      'BOTWStatus': serializer.toJson<String>(BOTWStatus),
+      'description': serializer.toJson<String>(description),
+      'discussions': serializer.toJson<String>(discussions),
+      'email': serializer.toJson<String>(email),
+      'friends': serializer.toJson<String>(friends),
+      'friendRequests': serializer.toJson<String>(friendRequests),
+      'outgoingFriendRequests':
+          serializer.toJson<String>(outgoingFriendRequests),
+      'username': serializer.toJson<String>(username),
+      'searchKey': serializer.toJson<String>(searchKey),
+      'userId': serializer.toJson<String>(userId),
+      'lastUpdatedMillis': serializer.toJson<int>(lastUpdatedMillis),
+      'votesLeft': serializer.toJson<int>(votesLeft),
+    };
+  }
+
+  UserDataTableData copyWith(
+          {int? id,
+          String? FCMToken,
+          String? displayName,
+          String? BOTWStatus,
+          String? description,
+          String? discussions,
+          String? email,
+          String? friends,
+          String? friendRequests,
+          String? outgoingFriendRequests,
+          String? username,
+          String? searchKey,
+          String? userId,
+          int? lastUpdatedMillis,
+          int? votesLeft}) =>
+      UserDataTableData(
+        id: id ?? this.id,
+        FCMToken: FCMToken ?? this.FCMToken,
+        displayName: displayName ?? this.displayName,
+        BOTWStatus: BOTWStatus ?? this.BOTWStatus,
+        description: description ?? this.description,
+        discussions: discussions ?? this.discussions,
+        email: email ?? this.email,
+        friends: friends ?? this.friends,
+        friendRequests: friendRequests ?? this.friendRequests,
+        outgoingFriendRequests:
+            outgoingFriendRequests ?? this.outgoingFriendRequests,
+        username: username ?? this.username,
+        searchKey: searchKey ?? this.searchKey,
+        userId: userId ?? this.userId,
+        lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
+        votesLeft: votesLeft ?? this.votesLeft,
+      );
+  UserDataTableData copyWithCompanion(UserDataTableCompanion data) {
+    return UserDataTableData(
+      id: data.id.present ? data.id.value : this.id,
+      FCMToken: data.FCMToken.present ? data.FCMToken.value : this.FCMToken,
+      displayName:
+          data.displayName.present ? data.displayName.value : this.displayName,
+      BOTWStatus:
+          data.BOTWStatus.present ? data.BOTWStatus.value : this.BOTWStatus,
+      description:
+          data.description.present ? data.description.value : this.description,
+      discussions:
+          data.discussions.present ? data.discussions.value : this.discussions,
+      email: data.email.present ? data.email.value : this.email,
+      friends: data.friends.present ? data.friends.value : this.friends,
+      friendRequests: data.friendRequests.present
+          ? data.friendRequests.value
+          : this.friendRequests,
+      outgoingFriendRequests: data.outgoingFriendRequests.present
+          ? data.outgoingFriendRequests.value
+          : this.outgoingFriendRequests,
+      username: data.username.present ? data.username.value : this.username,
+      searchKey: data.searchKey.present ? data.searchKey.value : this.searchKey,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      lastUpdatedMillis: data.lastUpdatedMillis.present
+          ? data.lastUpdatedMillis.value
+          : this.lastUpdatedMillis,
+      votesLeft: data.votesLeft.present ? data.votesLeft.value : this.votesLeft,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserDataTableData(')
+          ..write('id: $id, ')
+          ..write('FCMToken: $FCMToken, ')
+          ..write('displayName: $displayName, ')
+          ..write('BOTWStatus: $BOTWStatus, ')
+          ..write('description: $description, ')
+          ..write('discussions: $discussions, ')
+          ..write('email: $email, ')
+          ..write('friends: $friends, ')
+          ..write('friendRequests: $friendRequests, ')
+          ..write('outgoingFriendRequests: $outgoingFriendRequests, ')
+          ..write('username: $username, ')
+          ..write('searchKey: $searchKey, ')
+          ..write('userId: $userId, ')
+          ..write('lastUpdatedMillis: $lastUpdatedMillis, ')
+          ..write('votesLeft: $votesLeft')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      FCMToken,
+      displayName,
+      BOTWStatus,
+      description,
+      discussions,
+      email,
+      friends,
+      friendRequests,
+      outgoingFriendRequests,
+      username,
+      searchKey,
+      userId,
+      lastUpdatedMillis,
+      votesLeft);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UserDataTableData &&
+          other.id == this.id &&
+          other.FCMToken == this.FCMToken &&
+          other.displayName == this.displayName &&
+          other.BOTWStatus == this.BOTWStatus &&
+          other.description == this.description &&
+          other.discussions == this.discussions &&
+          other.email == this.email &&
+          other.friends == this.friends &&
+          other.friendRequests == this.friendRequests &&
+          other.outgoingFriendRequests == this.outgoingFriendRequests &&
+          other.username == this.username &&
+          other.searchKey == this.searchKey &&
+          other.userId == this.userId &&
+          other.lastUpdatedMillis == this.lastUpdatedMillis &&
+          other.votesLeft == this.votesLeft);
+}
+
+class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
+  final Value<int> id;
+  final Value<String> FCMToken;
+  final Value<String> displayName;
+  final Value<String> BOTWStatus;
+  final Value<String> description;
+  final Value<String> discussions;
+  final Value<String> email;
+  final Value<String> friends;
+  final Value<String> friendRequests;
+  final Value<String> outgoingFriendRequests;
+  final Value<String> username;
+  final Value<String> searchKey;
+  final Value<String> userId;
+  final Value<int> lastUpdatedMillis;
+  final Value<int> votesLeft;
+  const UserDataTableCompanion({
+    this.id = const Value.absent(),
+    this.FCMToken = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.BOTWStatus = const Value.absent(),
+    this.description = const Value.absent(),
+    this.discussions = const Value.absent(),
+    this.email = const Value.absent(),
+    this.friends = const Value.absent(),
+    this.friendRequests = const Value.absent(),
+    this.outgoingFriendRequests = const Value.absent(),
+    this.username = const Value.absent(),
+    this.searchKey = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.lastUpdatedMillis = const Value.absent(),
+    this.votesLeft = const Value.absent(),
+  });
+  UserDataTableCompanion.insert({
+    this.id = const Value.absent(),
+    required String FCMToken,
+    required String displayName,
+    required String BOTWStatus,
+    required String description,
+    required String discussions,
+    required String email,
+    required String friends,
+    required String friendRequests,
+    required String outgoingFriendRequests,
+    required String username,
+    required String searchKey,
+    required String userId,
+    required int lastUpdatedMillis,
+    required int votesLeft,
+  })  : FCMToken = Value(FCMToken),
+        displayName = Value(displayName),
+        BOTWStatus = Value(BOTWStatus),
+        description = Value(description),
+        discussions = Value(discussions),
+        email = Value(email),
+        friends = Value(friends),
+        friendRequests = Value(friendRequests),
+        outgoingFriendRequests = Value(outgoingFriendRequests),
+        username = Value(username),
+        searchKey = Value(searchKey),
+        userId = Value(userId),
+        lastUpdatedMillis = Value(lastUpdatedMillis),
+        votesLeft = Value(votesLeft);
+  static Insertable<UserDataTableData> custom({
+    Expression<int>? id,
+    Expression<String>? FCMToken,
+    Expression<String>? displayName,
+    Expression<String>? BOTWStatus,
+    Expression<String>? description,
+    Expression<String>? discussions,
+    Expression<String>? email,
+    Expression<String>? friends,
+    Expression<String>? friendRequests,
+    Expression<String>? outgoingFriendRequests,
+    Expression<String>? username,
+    Expression<String>? searchKey,
+    Expression<String>? userId,
+    Expression<int>? lastUpdatedMillis,
+    Expression<int>? votesLeft,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (FCMToken != null) 'f_c_m_token': FCMToken,
+      if (displayName != null) 'display_name': displayName,
+      if (BOTWStatus != null) 'b_o_t_w_status': BOTWStatus,
+      if (description != null) 'description': description,
+      if (discussions != null) 'discussions': discussions,
+      if (email != null) 'email': email,
+      if (friends != null) 'friends': friends,
+      if (friendRequests != null) 'friend_requests': friendRequests,
+      if (outgoingFriendRequests != null)
+        'outgoing_friend_requests': outgoingFriendRequests,
+      if (username != null) 'username': username,
+      if (searchKey != null) 'search_key': searchKey,
+      if (userId != null) 'user_id': userId,
+      if (lastUpdatedMillis != null) 'last_updated_millis': lastUpdatedMillis,
+      if (votesLeft != null) 'votes_left': votesLeft,
+    });
+  }
+
+  UserDataTableCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? FCMToken,
+      Value<String>? displayName,
+      Value<String>? BOTWStatus,
+      Value<String>? description,
+      Value<String>? discussions,
+      Value<String>? email,
+      Value<String>? friends,
+      Value<String>? friendRequests,
+      Value<String>? outgoingFriendRequests,
+      Value<String>? username,
+      Value<String>? searchKey,
+      Value<String>? userId,
+      Value<int>? lastUpdatedMillis,
+      Value<int>? votesLeft}) {
+    return UserDataTableCompanion(
+      id: id ?? this.id,
+      FCMToken: FCMToken ?? this.FCMToken,
+      displayName: displayName ?? this.displayName,
+      BOTWStatus: BOTWStatus ?? this.BOTWStatus,
+      description: description ?? this.description,
+      discussions: discussions ?? this.discussions,
+      email: email ?? this.email,
+      friends: friends ?? this.friends,
+      friendRequests: friendRequests ?? this.friendRequests,
+      outgoingFriendRequests:
+          outgoingFriendRequests ?? this.outgoingFriendRequests,
+      username: username ?? this.username,
+      searchKey: searchKey ?? this.searchKey,
+      userId: userId ?? this.userId,
+      lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
+      votesLeft: votesLeft ?? this.votesLeft,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (FCMToken.present) {
+      map['f_c_m_token'] = Variable<String>(FCMToken.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (BOTWStatus.present) {
+      map['b_o_t_w_status'] = Variable<String>(BOTWStatus.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (discussions.present) {
+      map['discussions'] = Variable<String>(discussions.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (friends.present) {
+      map['friends'] = Variable<String>(friends.value);
+    }
+    if (friendRequests.present) {
+      map['friend_requests'] = Variable<String>(friendRequests.value);
+    }
+    if (outgoingFriendRequests.present) {
+      map['outgoing_friend_requests'] =
+          Variable<String>(outgoingFriendRequests.value);
+    }
+    if (username.present) {
+      map['username'] = Variable<String>(username.value);
+    }
+    if (searchKey.present) {
+      map['search_key'] = Variable<String>(searchKey.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (lastUpdatedMillis.present) {
+      map['last_updated_millis'] = Variable<int>(lastUpdatedMillis.value);
+    }
+    if (votesLeft.present) {
+      map['votes_left'] = Variable<int>(votesLeft.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UserDataTableCompanion(')
+          ..write('id: $id, ')
+          ..write('FCMToken: $FCMToken, ')
+          ..write('displayName: $displayName, ')
+          ..write('BOTWStatus: $BOTWStatus, ')
+          ..write('description: $description, ')
+          ..write('discussions: $discussions, ')
+          ..write('email: $email, ')
+          ..write('friends: $friends, ')
+          ..write('friendRequests: $friendRequests, ')
+          ..write('outgoingFriendRequests: $outgoingFriendRequests, ')
+          ..write('username: $username, ')
+          ..write('searchKey: $searchKey, ')
+          ..write('userId: $userId, ')
+          ..write('lastUpdatedMillis: $lastUpdatedMillis, ')
+          ..write('votesLeft: $votesLeft')
           ..write(')'))
         .toString();
   }
@@ -1958,14 +2484,15 @@ abstract class _$AppDb extends GeneratedDatabase {
   $AppDbManager get managers => $AppDbManager(this);
   late final $ChatsTable chats = $ChatsTable(this);
   late final $SnipResponsesTable snipResponses = $SnipResponsesTable(this);
-  late final $SnippetsTable snippets = $SnippetsTable(this);
-  late final $BOTWTable botw = $BOTWTable(this);
+  late final $SnippetsDataTable snippetsData = $SnippetsDataTable(this);
+  late final $BOTWDataTableTable bOTWDataTable = $BOTWDataTableTable(this);
+  late final $UserDataTableTable userDataTable = $UserDataTableTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [chats, snipResponses, snippets, botw];
+      [chats, snipResponses, snippetsData, bOTWDataTable, userDataTable];
 }
 
 typedef $$ChatsTableCreateCompanionBuilder = ChatsCompanion Function({
@@ -2188,22 +2715,22 @@ typedef $$SnipResponsesTableCreateCompanionBuilder = SnipResponsesCompanion
   Value<int> id,
   required String answer,
   required String snippetId,
-  required String uid,
   required String displayName,
   required DateTime date,
-  required DateTime lastUpdated,
+  required String uid,
   required int lastUpdatedMillis,
+  required String discussionUsers,
 });
 typedef $$SnipResponsesTableUpdateCompanionBuilder = SnipResponsesCompanion
     Function({
   Value<int> id,
   Value<String> answer,
   Value<String> snippetId,
-  Value<String> uid,
   Value<String> displayName,
   Value<DateTime> date,
-  Value<DateTime> lastUpdated,
+  Value<String> uid,
   Value<int> lastUpdatedMillis,
+  Value<String> discussionUsers,
 });
 
 class $$SnipResponsesTableTableManager extends RootTableManager<
@@ -2226,41 +2753,41 @@ class $$SnipResponsesTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<String> answer = const Value.absent(),
             Value<String> snippetId = const Value.absent(),
-            Value<String> uid = const Value.absent(),
             Value<String> displayName = const Value.absent(),
             Value<DateTime> date = const Value.absent(),
-            Value<DateTime> lastUpdated = const Value.absent(),
+            Value<String> uid = const Value.absent(),
             Value<int> lastUpdatedMillis = const Value.absent(),
+            Value<String> discussionUsers = const Value.absent(),
           }) =>
               SnipResponsesCompanion(
             id: id,
             answer: answer,
             snippetId: snippetId,
-            uid: uid,
             displayName: displayName,
             date: date,
-            lastUpdated: lastUpdated,
+            uid: uid,
             lastUpdatedMillis: lastUpdatedMillis,
+            discussionUsers: discussionUsers,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String answer,
             required String snippetId,
-            required String uid,
             required String displayName,
             required DateTime date,
-            required DateTime lastUpdated,
+            required String uid,
             required int lastUpdatedMillis,
+            required String discussionUsers,
           }) =>
               SnipResponsesCompanion.insert(
             id: id,
             answer: answer,
             snippetId: snippetId,
-            uid: uid,
             displayName: displayName,
             date: date,
-            lastUpdated: lastUpdated,
+            uid: uid,
             lastUpdatedMillis: lastUpdatedMillis,
+            discussionUsers: discussionUsers,
           ),
         ));
 }
@@ -2283,11 +2810,6 @@ class $$SnipResponsesTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  ColumnFilters<String> get uid => $state.composableBuilder(
-      column: $state.table.uid,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
   ColumnFilters<String> get displayName => $state.composableBuilder(
       column: $state.table.displayName,
       builder: (column, joinBuilders) =>
@@ -2298,13 +2820,18 @@ class $$SnipResponsesTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  ColumnFilters<DateTime> get lastUpdated => $state.composableBuilder(
-      column: $state.table.lastUpdated,
+  ColumnFilters<String> get uid => $state.composableBuilder(
+      column: $state.table.uid,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
   ColumnFilters<int> get lastUpdatedMillis => $state.composableBuilder(
       column: $state.table.lastUpdatedMillis,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get discussionUsers => $state.composableBuilder(
+      column: $state.table.discussionUsers,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 }
@@ -2327,11 +2854,6 @@ class $$SnipResponsesTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
-  ColumnOrderings<String> get uid => $state.composableBuilder(
-      column: $state.table.uid,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
   ColumnOrderings<String> get displayName => $state.composableBuilder(
       column: $state.table.displayName,
       builder: (column, joinBuilders) =>
@@ -2342,8 +2864,8 @@ class $$SnipResponsesTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
-  ColumnOrderings<DateTime> get lastUpdated => $state.composableBuilder(
-      column: $state.table.lastUpdated,
+  ColumnOrderings<String> get uid => $state.composableBuilder(
+      column: $state.table.uid,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
@@ -2351,122 +2873,100 @@ class $$SnipResponsesTableOrderingComposer
       column: $state.table.lastUpdatedMillis,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get discussionUsers => $state.composableBuilder(
+      column: $state.table.discussionUsers,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
 }
 
-typedef $$SnippetsTableCreateCompanionBuilder = SnippetsCompanion Function({
+typedef $$SnippetsDataTableCreateCompanionBuilder = SnippetsDataCompanion
+    Function({
   Value<int> id,
-  required DateTime lastRecieved,
   required String snippetId,
   required String question,
-  required String theme,
   required int index,
   required bool answered,
-  required String uid,
   required String type,
-  required DateTime lastUpdated,
   required int lastUpdatedMillis,
   required int lastRecievedMillis,
 });
-typedef $$SnippetsTableUpdateCompanionBuilder = SnippetsCompanion Function({
+typedef $$SnippetsDataTableUpdateCompanionBuilder = SnippetsDataCompanion
+    Function({
   Value<int> id,
-  Value<DateTime> lastRecieved,
   Value<String> snippetId,
   Value<String> question,
-  Value<String> theme,
   Value<int> index,
   Value<bool> answered,
-  Value<String> uid,
   Value<String> type,
-  Value<DateTime> lastUpdated,
   Value<int> lastUpdatedMillis,
   Value<int> lastRecievedMillis,
 });
 
-class $$SnippetsTableTableManager extends RootTableManager<
+class $$SnippetsDataTableTableManager extends RootTableManager<
     _$AppDb,
-    $SnippetsTable,
-    Snippet,
-    $$SnippetsTableFilterComposer,
-    $$SnippetsTableOrderingComposer,
-    $$SnippetsTableCreateCompanionBuilder,
-    $$SnippetsTableUpdateCompanionBuilder> {
-  $$SnippetsTableTableManager(_$AppDb db, $SnippetsTable table)
+    $SnippetsDataTable,
+    SnippetsDataData,
+    $$SnippetsDataTableFilterComposer,
+    $$SnippetsDataTableOrderingComposer,
+    $$SnippetsDataTableCreateCompanionBuilder,
+    $$SnippetsDataTableUpdateCompanionBuilder> {
+  $$SnippetsDataTableTableManager(_$AppDb db, $SnippetsDataTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           filteringComposer:
-              $$SnippetsTableFilterComposer(ComposerState(db, table)),
+              $$SnippetsDataTableFilterComposer(ComposerState(db, table)),
           orderingComposer:
-              $$SnippetsTableOrderingComposer(ComposerState(db, table)),
+              $$SnippetsDataTableOrderingComposer(ComposerState(db, table)),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
-            Value<DateTime> lastRecieved = const Value.absent(),
             Value<String> snippetId = const Value.absent(),
             Value<String> question = const Value.absent(),
-            Value<String> theme = const Value.absent(),
             Value<int> index = const Value.absent(),
             Value<bool> answered = const Value.absent(),
-            Value<String> uid = const Value.absent(),
             Value<String> type = const Value.absent(),
-            Value<DateTime> lastUpdated = const Value.absent(),
             Value<int> lastUpdatedMillis = const Value.absent(),
             Value<int> lastRecievedMillis = const Value.absent(),
           }) =>
-              SnippetsCompanion(
+              SnippetsDataCompanion(
             id: id,
-            lastRecieved: lastRecieved,
             snippetId: snippetId,
             question: question,
-            theme: theme,
             index: index,
             answered: answered,
-            uid: uid,
             type: type,
-            lastUpdated: lastUpdated,
             lastUpdatedMillis: lastUpdatedMillis,
             lastRecievedMillis: lastRecievedMillis,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
-            required DateTime lastRecieved,
             required String snippetId,
             required String question,
-            required String theme,
             required int index,
             required bool answered,
-            required String uid,
             required String type,
-            required DateTime lastUpdated,
             required int lastUpdatedMillis,
             required int lastRecievedMillis,
           }) =>
-              SnippetsCompanion.insert(
+              SnippetsDataCompanion.insert(
             id: id,
-            lastRecieved: lastRecieved,
             snippetId: snippetId,
             question: question,
-            theme: theme,
             index: index,
             answered: answered,
-            uid: uid,
             type: type,
-            lastUpdated: lastUpdated,
             lastUpdatedMillis: lastUpdatedMillis,
             lastRecievedMillis: lastRecievedMillis,
           ),
         ));
 }
 
-class $$SnippetsTableFilterComposer
-    extends FilterComposer<_$AppDb, $SnippetsTable> {
-  $$SnippetsTableFilterComposer(super.$state);
+class $$SnippetsDataTableFilterComposer
+    extends FilterComposer<_$AppDb, $SnippetsDataTable> {
+  $$SnippetsDataTableFilterComposer(super.$state);
   ColumnFilters<int> get id => $state.composableBuilder(
       column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<DateTime> get lastRecieved => $state.composableBuilder(
-      column: $state.table.lastRecieved,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
@@ -2480,11 +2980,6 @@ class $$SnippetsTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  ColumnFilters<String> get theme => $state.composableBuilder(
-      column: $state.table.theme,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
   ColumnFilters<int> get index => $state.composableBuilder(
       column: $state.table.index,
       builder: (column, joinBuilders) =>
@@ -2495,18 +2990,8 @@ class $$SnippetsTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  ColumnFilters<String> get uid => $state.composableBuilder(
-      column: $state.table.uid,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
   ColumnFilters<String> get type => $state.composableBuilder(
       column: $state.table.type,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<DateTime> get lastUpdated => $state.composableBuilder(
-      column: $state.table.lastUpdated,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
@@ -2521,16 +3006,11 @@ class $$SnippetsTableFilterComposer
           ColumnFilters(column, joinBuilders: joinBuilders));
 }
 
-class $$SnippetsTableOrderingComposer
-    extends OrderingComposer<_$AppDb, $SnippetsTable> {
-  $$SnippetsTableOrderingComposer(super.$state);
+class $$SnippetsDataTableOrderingComposer
+    extends OrderingComposer<_$AppDb, $SnippetsDataTable> {
+  $$SnippetsDataTableOrderingComposer(super.$state);
   ColumnOrderings<int> get id => $state.composableBuilder(
       column: $state.table.id,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<DateTime> get lastRecieved => $state.composableBuilder(
-      column: $state.table.lastRecieved,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
@@ -2544,11 +3024,6 @@ class $$SnippetsTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
-  ColumnOrderings<String> get theme => $state.composableBuilder(
-      column: $state.table.theme,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
   ColumnOrderings<int> get index => $state.composableBuilder(
       column: $state.table.index,
       builder: (column, joinBuilders) =>
@@ -2559,18 +3034,8 @@ class $$SnippetsTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
-  ColumnOrderings<String> get uid => $state.composableBuilder(
-      column: $state.table.uid,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
   ColumnOrderings<String> get type => $state.composableBuilder(
       column: $state.table.type,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<DateTime> get lastUpdated => $state.composableBuilder(
-      column: $state.table.lastUpdated,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
@@ -2585,56 +3050,54 @@ class $$SnippetsTableOrderingComposer
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }
 
-typedef $$BOTWTableCreateCompanionBuilder = BOTWCompanion Function({
+typedef $$BOTWDataTableTableCreateCompanionBuilder = BOTWDataTableCompanion
+    Function({
   Value<int> id,
   required String blank,
   required String status,
   required String answers,
-  required DateTime lastUpdated,
   required DateTime week,
   required int lastUpdatedMillis,
 });
-typedef $$BOTWTableUpdateCompanionBuilder = BOTWCompanion Function({
+typedef $$BOTWDataTableTableUpdateCompanionBuilder = BOTWDataTableCompanion
+    Function({
   Value<int> id,
   Value<String> blank,
   Value<String> status,
   Value<String> answers,
-  Value<DateTime> lastUpdated,
   Value<DateTime> week,
   Value<int> lastUpdatedMillis,
 });
 
-class $$BOTWTableTableManager extends RootTableManager<
+class $$BOTWDataTableTableTableManager extends RootTableManager<
     _$AppDb,
-    $BOTWTable,
-    BOTWData,
-    $$BOTWTableFilterComposer,
-    $$BOTWTableOrderingComposer,
-    $$BOTWTableCreateCompanionBuilder,
-    $$BOTWTableUpdateCompanionBuilder> {
-  $$BOTWTableTableManager(_$AppDb db, $BOTWTable table)
+    $BOTWDataTableTable,
+    BOTWDataTableData,
+    $$BOTWDataTableTableFilterComposer,
+    $$BOTWDataTableTableOrderingComposer,
+    $$BOTWDataTableTableCreateCompanionBuilder,
+    $$BOTWDataTableTableUpdateCompanionBuilder> {
+  $$BOTWDataTableTableTableManager(_$AppDb db, $BOTWDataTableTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           filteringComposer:
-              $$BOTWTableFilterComposer(ComposerState(db, table)),
+              $$BOTWDataTableTableFilterComposer(ComposerState(db, table)),
           orderingComposer:
-              $$BOTWTableOrderingComposer(ComposerState(db, table)),
+              $$BOTWDataTableTableOrderingComposer(ComposerState(db, table)),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> blank = const Value.absent(),
             Value<String> status = const Value.absent(),
             Value<String> answers = const Value.absent(),
-            Value<DateTime> lastUpdated = const Value.absent(),
             Value<DateTime> week = const Value.absent(),
             Value<int> lastUpdatedMillis = const Value.absent(),
           }) =>
-              BOTWCompanion(
+              BOTWDataTableCompanion(
             id: id,
             blank: blank,
             status: status,
             answers: answers,
-            lastUpdated: lastUpdated,
             week: week,
             lastUpdatedMillis: lastUpdatedMillis,
           ),
@@ -2643,24 +3106,23 @@ class $$BOTWTableTableManager extends RootTableManager<
             required String blank,
             required String status,
             required String answers,
-            required DateTime lastUpdated,
             required DateTime week,
             required int lastUpdatedMillis,
           }) =>
-              BOTWCompanion.insert(
+              BOTWDataTableCompanion.insert(
             id: id,
             blank: blank,
             status: status,
             answers: answers,
-            lastUpdated: lastUpdated,
             week: week,
             lastUpdatedMillis: lastUpdatedMillis,
           ),
         ));
 }
 
-class $$BOTWTableFilterComposer extends FilterComposer<_$AppDb, $BOTWTable> {
-  $$BOTWTableFilterComposer(super.$state);
+class $$BOTWDataTableTableFilterComposer
+    extends FilterComposer<_$AppDb, $BOTWDataTableTable> {
+  $$BOTWDataTableTableFilterComposer(super.$state);
   ColumnFilters<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -2681,11 +3143,6 @@ class $$BOTWTableFilterComposer extends FilterComposer<_$AppDb, $BOTWTable> {
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  ColumnFilters<DateTime> get lastUpdated => $state.composableBuilder(
-      column: $state.table.lastUpdated,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
   ColumnFilters<DateTime> get week => $state.composableBuilder(
       column: $state.table.week,
       builder: (column, joinBuilders) =>
@@ -2697,9 +3154,9 @@ class $$BOTWTableFilterComposer extends FilterComposer<_$AppDb, $BOTWTable> {
           ColumnFilters(column, joinBuilders: joinBuilders));
 }
 
-class $$BOTWTableOrderingComposer
-    extends OrderingComposer<_$AppDb, $BOTWTable> {
-  $$BOTWTableOrderingComposer(super.$state);
+class $$BOTWDataTableTableOrderingComposer
+    extends OrderingComposer<_$AppDb, $BOTWDataTableTable> {
+  $$BOTWDataTableTableOrderingComposer(super.$state);
   ColumnOrderings<int> get id => $state.composableBuilder(
       column: $state.table.id,
       builder: (column, joinBuilders) =>
@@ -2720,11 +3177,6 @@ class $$BOTWTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
-  ColumnOrderings<DateTime> get lastUpdated => $state.composableBuilder(
-      column: $state.table.lastUpdated,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
   ColumnOrderings<DateTime> get week => $state.composableBuilder(
       column: $state.table.week,
       builder: (column, joinBuilders) =>
@@ -2736,6 +3188,289 @@ class $$BOTWTableOrderingComposer
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }
 
+typedef $$UserDataTableTableCreateCompanionBuilder = UserDataTableCompanion
+    Function({
+  Value<int> id,
+  required String FCMToken,
+  required String displayName,
+  required String BOTWStatus,
+  required String description,
+  required String discussions,
+  required String email,
+  required String friends,
+  required String friendRequests,
+  required String outgoingFriendRequests,
+  required String username,
+  required String searchKey,
+  required String userId,
+  required int lastUpdatedMillis,
+  required int votesLeft,
+});
+typedef $$UserDataTableTableUpdateCompanionBuilder = UserDataTableCompanion
+    Function({
+  Value<int> id,
+  Value<String> FCMToken,
+  Value<String> displayName,
+  Value<String> BOTWStatus,
+  Value<String> description,
+  Value<String> discussions,
+  Value<String> email,
+  Value<String> friends,
+  Value<String> friendRequests,
+  Value<String> outgoingFriendRequests,
+  Value<String> username,
+  Value<String> searchKey,
+  Value<String> userId,
+  Value<int> lastUpdatedMillis,
+  Value<int> votesLeft,
+});
+
+class $$UserDataTableTableTableManager extends RootTableManager<
+    _$AppDb,
+    $UserDataTableTable,
+    UserDataTableData,
+    $$UserDataTableTableFilterComposer,
+    $$UserDataTableTableOrderingComposer,
+    $$UserDataTableTableCreateCompanionBuilder,
+    $$UserDataTableTableUpdateCompanionBuilder> {
+  $$UserDataTableTableTableManager(_$AppDb db, $UserDataTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          filteringComposer:
+              $$UserDataTableTableFilterComposer(ComposerState(db, table)),
+          orderingComposer:
+              $$UserDataTableTableOrderingComposer(ComposerState(db, table)),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> FCMToken = const Value.absent(),
+            Value<String> displayName = const Value.absent(),
+            Value<String> BOTWStatus = const Value.absent(),
+            Value<String> description = const Value.absent(),
+            Value<String> discussions = const Value.absent(),
+            Value<String> email = const Value.absent(),
+            Value<String> friends = const Value.absent(),
+            Value<String> friendRequests = const Value.absent(),
+            Value<String> outgoingFriendRequests = const Value.absent(),
+            Value<String> username = const Value.absent(),
+            Value<String> searchKey = const Value.absent(),
+            Value<String> userId = const Value.absent(),
+            Value<int> lastUpdatedMillis = const Value.absent(),
+            Value<int> votesLeft = const Value.absent(),
+          }) =>
+              UserDataTableCompanion(
+            id: id,
+            FCMToken: FCMToken,
+            displayName: displayName,
+            BOTWStatus: BOTWStatus,
+            description: description,
+            discussions: discussions,
+            email: email,
+            friends: friends,
+            friendRequests: friendRequests,
+            outgoingFriendRequests: outgoingFriendRequests,
+            username: username,
+            searchKey: searchKey,
+            userId: userId,
+            lastUpdatedMillis: lastUpdatedMillis,
+            votesLeft: votesLeft,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String FCMToken,
+            required String displayName,
+            required String BOTWStatus,
+            required String description,
+            required String discussions,
+            required String email,
+            required String friends,
+            required String friendRequests,
+            required String outgoingFriendRequests,
+            required String username,
+            required String searchKey,
+            required String userId,
+            required int lastUpdatedMillis,
+            required int votesLeft,
+          }) =>
+              UserDataTableCompanion.insert(
+            id: id,
+            FCMToken: FCMToken,
+            displayName: displayName,
+            BOTWStatus: BOTWStatus,
+            description: description,
+            discussions: discussions,
+            email: email,
+            friends: friends,
+            friendRequests: friendRequests,
+            outgoingFriendRequests: outgoingFriendRequests,
+            username: username,
+            searchKey: searchKey,
+            userId: userId,
+            lastUpdatedMillis: lastUpdatedMillis,
+            votesLeft: votesLeft,
+          ),
+        ));
+}
+
+class $$UserDataTableTableFilterComposer
+    extends FilterComposer<_$AppDb, $UserDataTableTable> {
+  $$UserDataTableTableFilterComposer(super.$state);
+  ColumnFilters<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get FCMToken => $state.composableBuilder(
+      column: $state.table.FCMToken,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get displayName => $state.composableBuilder(
+      column: $state.table.displayName,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get BOTWStatus => $state.composableBuilder(
+      column: $state.table.BOTWStatus,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get description => $state.composableBuilder(
+      column: $state.table.description,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get discussions => $state.composableBuilder(
+      column: $state.table.discussions,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get email => $state.composableBuilder(
+      column: $state.table.email,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get friends => $state.composableBuilder(
+      column: $state.table.friends,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get friendRequests => $state.composableBuilder(
+      column: $state.table.friendRequests,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get outgoingFriendRequests => $state.composableBuilder(
+      column: $state.table.outgoingFriendRequests,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get username => $state.composableBuilder(
+      column: $state.table.username,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get searchKey => $state.composableBuilder(
+      column: $state.table.searchKey,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get userId => $state.composableBuilder(
+      column: $state.table.userId,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get lastUpdatedMillis => $state.composableBuilder(
+      column: $state.table.lastUpdatedMillis,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get votesLeft => $state.composableBuilder(
+      column: $state.table.votesLeft,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+}
+
+class $$UserDataTableTableOrderingComposer
+    extends OrderingComposer<_$AppDb, $UserDataTableTable> {
+  $$UserDataTableTableOrderingComposer(super.$state);
+  ColumnOrderings<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get FCMToken => $state.composableBuilder(
+      column: $state.table.FCMToken,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get displayName => $state.composableBuilder(
+      column: $state.table.displayName,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get BOTWStatus => $state.composableBuilder(
+      column: $state.table.BOTWStatus,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get description => $state.composableBuilder(
+      column: $state.table.description,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get discussions => $state.composableBuilder(
+      column: $state.table.discussions,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get email => $state.composableBuilder(
+      column: $state.table.email,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get friends => $state.composableBuilder(
+      column: $state.table.friends,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get friendRequests => $state.composableBuilder(
+      column: $state.table.friendRequests,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get outgoingFriendRequests =>
+      $state.composableBuilder(
+          column: $state.table.outgoingFriendRequests,
+          builder: (column, joinBuilders) =>
+              ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get username => $state.composableBuilder(
+      column: $state.table.username,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get searchKey => $state.composableBuilder(
+      column: $state.table.searchKey,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get userId => $state.composableBuilder(
+      column: $state.table.userId,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get lastUpdatedMillis => $state.composableBuilder(
+      column: $state.table.lastUpdatedMillis,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get votesLeft => $state.composableBuilder(
+      column: $state.table.votesLeft,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+}
+
 class $AppDbManager {
   final _$AppDb _db;
   $AppDbManager(this._db);
@@ -2743,7 +3478,10 @@ class $AppDbManager {
       $$ChatsTableTableManager(_db, _db.chats);
   $$SnipResponsesTableTableManager get snipResponses =>
       $$SnipResponsesTableTableManager(_db, _db.snipResponses);
-  $$SnippetsTableTableManager get snippets =>
-      $$SnippetsTableTableManager(_db, _db.snippets);
-  $$BOTWTableTableManager get botw => $$BOTWTableTableManager(_db, _db.botw);
+  $$SnippetsDataTableTableManager get snippetsData =>
+      $$SnippetsDataTableTableManager(_db, _db.snippetsData);
+  $$BOTWDataTableTableTableManager get bOTWDataTable =>
+      $$BOTWDataTableTableTableManager(_db, _db.bOTWDataTable);
+  $$UserDataTableTableTableManager get userDataTable =>
+      $$UserDataTableTableTableManager(_db, _db.userDataTable);
 }

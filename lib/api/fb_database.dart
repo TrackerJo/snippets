@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 
 import 'package:flutter_widgetkit/flutter_widgetkit.dart';
-import 'package:phone_input/phone_input_package.dart';
 import 'package:snippets/api/auth.dart';
+import 'package:snippets/api/database.dart';
 import 'package:snippets/api/local_database.dart';
+import 'package:snippets/api/remote_config.dart';
+import 'package:snippets/constants.dart';
 
 import '../helper/helper_function.dart';
 import 'notifications.dart';
@@ -26,50 +30,30 @@ class FBDatabase {
   final CollectionReference botwCollection =
       FirebaseFirestore.instance.collection("blankOfTheWeek");
 
-  Future savingUserData(String fullName, String email, String username,
-      PhoneNumber? phoneNumber) async {
-    await userCollection.doc(uid).set({
-      "fullname": fullName,
-      "email": email,
-      "username": username,
-      "searchKey": fullName.toLowerCase(),
-      "uid": uid,
-      "phoneNumber": phoneNumber != null ? phoneNumber.international : "none",
-      "friends": [],
-      "description": "Hey there! I'm using Snippets.",
-      "friendRequests": [],
-      "answeredSnippets": [],
-      "discussions": [],
-      "FCMToken": await PushNotifications().getDeviceToken(),
-      "outgoingRequests": [],
-      "botwStatus": {
-        "date": "",
-        "hasAnswered": false,
-        "hasSeenResults": false,
-      },
-      "votesLeft": 3,
-    });
-    await HelperFunctions.saveUserDataSF(jsonEncode({
-      "fullname": fullName,
-      "email": email,
-      "username": username,
-      "searchKey": fullName.toLowerCase(),
-      "uid": uid,
-      "phoneNumber": phoneNumber != null ? phoneNumber.international : "none",
-      "friends": [],
-      "description": "Hey there! I'm using Snippets.",
-      "friendRequests": [],
-      "answeredSnippets": [],
-      "discussions": [],
-      "FCMToken": await PushNotifications().getDeviceToken(),
-      "outgoingRequests": [],
-      "botwStatus": {
-        "date": "",
-        "hasAnswered": false,
-        "hasSeenResults": false,
-      },
-      "votesLeft": 3,
-    }));
+  Future savingUserData(String fullName, String email, String username) async {
+    int timestamp = DateTime.now().millisecondsSinceEpoch;
+    User newUser = User(
+      FCMToken: await PushNotifications().getDeviceToken(),
+      description: "Hey there! I'm using Snippets.",
+      displayName: fullName,
+      email: email,
+      friends: [],
+      friendRequests: [],
+      outgoingFriendRequests: [],
+      discussions: [],
+      userId: uid!,
+      username: username,
+      searchKey: fullName.toLowerCase(),
+      votesLeft: 3,
+      botwStatus: BOTWStatus(
+        date: "",
+        hasAnswered: false,
+        hasSeenResults: false,
+      ),
+      lastUpdatedMillis: timestamp,
+    );
+    await userCollection.doc(uid).set(newUser.toMap());
+    await LocalDatabase().addUserData(newUser, timestamp);
 
     DocumentSnapshot snapshot = await publicCollection.doc("usernames").get();
     List<dynamic> usernames = snapshot["usernames"];
@@ -79,12 +63,34 @@ class FBDatabase {
     });
   }
 
-  Future<Map<String, dynamic>?> getUserData(String uid) async {
+  Future<User?> getUserData(String uid) async {
     DocumentSnapshot snapshot = await userCollection.doc(uid).get();
     if (!snapshot.exists) {
       return null;
     }
-    return snapshot.data() as Map<String, dynamic>;
+    Map<String, dynamic> userData = snapshot.data() as Map<String, dynamic>;
+    return User.fromMap(userData);
+  }
+
+  Future<User?> getCurrentUserData(String uid, int? lastUpdatedMillis) async {
+    if (lastUpdatedMillis == null) {
+      DocumentSnapshot snapshot = await userCollection.doc(uid).get();
+      if (!snapshot.exists) {
+        return null;
+      }
+      Map<String, dynamic> userData = snapshot.data() as Map<String, dynamic>;
+      return User.fromMap(userData);
+    }
+    QuerySnapshot snapshot = await userCollection
+        .where("uid", isEqualTo: uid)
+        .where("lastUpdatedMillis", isGreaterThan: lastUpdatedMillis)
+        .get();
+    if (snapshot.docs.isEmpty) {
+      return null;
+    }
+    Map<String, dynamic> userData =
+        snapshot.docs[0].data() as Map<String, dynamic>;
+    return User.fromMap(userData);
   }
 
   Future<bool> didUserAnswerSnippet(String snippetId) async {
@@ -98,20 +104,20 @@ class FBDatabase {
     }
   }
 
-  Future<Stream?> getUserStream(String userId) async {
+  Future<Stream<User>?> getUserStream(String userId) async {
     //Check if doc exists
 
     try {
       Stream snapshot = userCollection.doc(userId).snapshots();
-      return snapshot;
+      Stream<User> userStream = snapshot.map((event) {
+        return User.fromMap(event.data() as Map<String, dynamic>);
+      });
+
+      return userStream;
     } on FirebaseException catch (_) {
       //Check if doc doesn't exist
       return null;
     }
-  }
-
-  Future updateUserData(Map<String, dynamic> updatedData) async {
-    await userCollection.doc(uid).update(updatedData);
   }
 
   Future<bool> checkUsername(String username) async {
@@ -130,42 +136,65 @@ class FBDatabase {
       currentSnippetsCollection
           .where("lastRecievedMillis", isGreaterThan: latestSnippetDate)
           .snapshots()
-          .listen((event) {
+          .listen((event) async {
         if (mainController.isClosed) return;
-        controller.add(event);
+        List<Snippet> snippets = [];
+        for (var element in event.docs) {
+          Map<String, dynamic> data = element.data() as Map<String, dynamic>;
+          data["snippetId"] = element.id;
+          String id = auth.FirebaseAuth.instance.currentUser!.uid;
+          if (data["type"] == "anonymous") {
+            id = await HelperFunctions.getAnonymousIDFromSF() ?? "";
+          }
+          data["answered"] = data["answered"].contains(id);
+          snippets.add(Snippet.fromMap(data));
+        }
+        controller.add(snippets);
       });
       return;
     }
-    currentSnippetsCollection.snapshots().listen((event) {
+    currentSnippetsCollection.snapshots().listen((event) async {
       if (mainController.isClosed) return;
-      controller.add(event);
+      List<Snippet> snippets = [];
+      for (var element in event.docs) {
+        Map<String, dynamic> data = element.data() as Map<String, dynamic>;
+        data["snippetId"] = element.id;
+        String id = auth.FirebaseAuth.instance.currentUser!.uid;
+        if (data["type"] == "anonymous") {
+          id = await HelperFunctions.getAnonymousIDFromSF() ?? "";
+        }
+        data["answered"] = data["answered"].contains(id);
+        snippets.add(Snippet.fromMap(data));
+      }
+
+      controller.add(snippets);
     });
   }
 
   Future submitAnswer(String snippetId, String answer, String question,
       String theme, String? id) async {
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    User userData = await Database().getUserData(uid!);
+    DateTime now = DateTime.now();
     await currentSnippetsCollection
         .doc(snippetId)
         .collection("answers")
         .doc(id ?? uid)
         .set({
       "answer": answer,
-      "displayName": id == null ? userData["fullname"] : "Anonymous",
+      "displayName": id == null ? userData.displayName : "Anonymous",
       "uid": id ?? uid,
       "discussionUsers": id == null
           ? [
               {
                 "userId": uid,
-                "FCMToken": userData["FCMToken"],
+                "FCMToken": userData.FCMToken,
               }
             ]
           : [],
-      "date": DateTime.now(),
-      "lastUpdated": DateTime.now(),
-      "lastUpdatedMillis": DateTime.now().millisecondsSinceEpoch,
+      "date": now,
+      "lastUpdated": now,
+      "lastUpdatedMillis": now.millisecondsSinceEpoch,
     });
-    DateTime now = DateTime.now();
     LocalDatabase().answerSnippet(snippetId, now);
 
     //Update user's discussion list
@@ -180,7 +209,16 @@ class FBDatabase {
             "isAnonymous": id != null,
           }
         ]),
+        "lastUpdatedMillis": now.millisecondsSinceEpoch,
       });
+      await LocalDatabase().addDiscussionToUser(
+          uid!,
+          Discussion(
+              answerId: uid!,
+              isAnonymous: false,
+              snippetId: snippetId,
+              snippetQuestion: question),
+          now.millisecondsSinceEpoch);
     }
 
     //Add uid to snippet's answered list
@@ -195,12 +233,37 @@ class FBDatabase {
 
     if (id == null) {
       print("Sending notification");
-      List<dynamic> friendsList = userData["friends"];
-      List<dynamic> friendsFCMTokens =
-          friendsList.map((e) => e["FCMToken"]).toList();
+      List<UserMini> friendsList = userData.friends;
+      List<String> friendsFCMTokens =
+          friendsList.map((e) => e.FCMToken).toList();
+      List<NotificationText> possibleNotifications =
+          await RemoteConfig(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+              .getPossibleSnippetResponseNotifications();
+      if (possibleNotifications.isEmpty) {
+        possibleNotifications = [
+          NotificationText(
+              title: "Look who answered a snippet!",
+              body: "{displayName} answered the snippet: {question}"),
+          NotificationText(
+              title: "New snippet response!",
+              body: "{displayName} answered the snippet: {question}"),
+        ];
+      }
+      int randomIndex = Random().nextInt(possibleNotifications.length);
+      NotificationText notification = possibleNotifications[randomIndex];
+      String notificationTitle = notification.title
+          .replaceAll("{displayName}", userData.displayName)
+          .replaceAll("{question}", question);
+      String notificationBody = notification.body
+          .replaceAll("{displayName}", userData.displayName)
+          .replaceAll("{question}", question);
+      print("Sending notification to friends");
+      print("Title: $notificationTitle");
+      print("Body: $notificationBody");
+
       await PushNotifications().sendNotification(
-          title: "Look who answered a snippet!",
-          body: "${userData["fullname"]} did!",
+          title: notificationTitle,
+          body: notificationBody,
           targetIds: [
             ...friendsFCMTokens,
           ],
@@ -210,8 +273,8 @@ class FBDatabase {
             "question": question.replaceAll("?", "~"),
             "theme": "blue",
             "snippetType": id != null ? "anonymous" : "normal",
-            "displayName": userData["fullname"],
-            "uid": userData["uid"],
+            "displayName": userData.displayName,
+            "uid": userData.userId,
             "response": answer,
             "answered": "false"
           });
@@ -222,7 +285,7 @@ class FBDatabase {
         null) {
       List<String> oldResponses = [];
       String responseString =
-          "${userData["fullname"]}|$question|$answer|$snippetId|${id ?? uid}|${id != null ? "anonymous" : "normal"}|${true}";
+          "${userData.displayName}|$question|$answer|$snippetId|${id ?? uid}|${id != null ? "anonymous" : "normal"}|${true}";
       if (!oldResponses.contains(responseString)) {
         oldResponses.add(responseString);
         WidgetKit.setItem('snippetsResponsesData',
@@ -235,7 +298,7 @@ class FBDatabase {
               'snippetsResponsesData', 'group.kazoom_snippets'));
       List<String> oldResponses = oldResponsesMap["responses"].cast<String>();
       String responseString =
-          "${userData["fullname"]}|$question|$answer|$snippetId|${id ?? uid}|${id != null ? "anonymous" : "normal"}|${true}";
+          "${userData.displayName}|$question|$answer|$snippetId|${id ?? uid}|${id != null ? "anonymous" : "normal"}|${true}";
       if (!oldResponses.contains(responseString)) {
         //Mark other responses from the same snippet as read
         for (var element in oldResponses) {
@@ -254,17 +317,16 @@ class FBDatabase {
   }
 
   Future<List<String>> getFriendsList() async {
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-    List<dynamic> friendsList = userData["friends"];
+    User userData = await Database().getUserData(uid!);
+    List<UserMini> friendsList = userData.friends;
     //Map each element to a string
-    friendsList = friendsList.map((e) => e["userId"]).toList();
-    return friendsList.cast<String>();
+    return friendsList.map((e) => e.userId).toList();
   }
 
-  Future<List<Map<String, dynamic>>> getFriendsListMap() async {
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-    List<dynamic> friendsList = userData["friends"];
-    return friendsList.cast<Map<String, dynamic>>();
+  Future<List<UserMini>> getFriendsListMap() async {
+    User userData = await Database().getUserData(uid!);
+
+    return userData.friends;
   }
 
   Future<void> getResponsesList(
@@ -273,7 +335,7 @@ class FBDatabase {
       bool getFriends,
       List<String> friendsToGet,
       bool isAnonymous,
-      StreamController controller) async {
+      StreamController<List<SnippetResponse>> controller) async {
     //Then the rest of the responses from friends
     List<String> friendsList = [];
     if (!isAnonymous) {
@@ -299,7 +361,14 @@ class FBDatabase {
 
       querySnapshot.listen((event) {
         if (controller.isClosed) return;
-        controller.add(event);
+        List<SnippetResponse> responses = [];
+        for (var element in event.docs) {
+          Map<String, dynamic> data = element.data() as Map<String, dynamic>;
+          data["snippetId"] = snippetId;
+          responses.add(SnippetResponse.fromMap(data));
+        }
+
+        controller.add(responses);
       });
     }
     if (getFriends && !isAnonymous) {
@@ -313,7 +382,13 @@ class FBDatabase {
 
       querySnapshot.listen((event) {
         if (controller.isClosed) return;
-        controller.add(event);
+        List<SnippetResponse> responses = [];
+        for (var element in event.docs) {
+          Map<String, dynamic> data = element.data() as Map<String, dynamic>;
+          data["snippetId"] = snippetId;
+          responses.add(SnippetResponse.fromMap(data));
+        }
+        controller.add(responses);
       });
     }
     Stream querySnapshot;
@@ -334,43 +409,60 @@ class FBDatabase {
 
     querySnapshot.listen((event) {
       if (controller.isClosed) return;
-      controller.add(event);
+      List<SnippetResponse> responses = [];
+      for (var element in event.docs) {
+        Map<String, dynamic> data = element.data() as Map<String, dynamic>;
+        data["snippetId"] = snippetId;
+        responses.add(SnippetResponse.fromMap(data));
+      }
+      controller.add(responses);
     });
   }
 
-  Future<Map<String, dynamic>> getUserResponse(String snippetId) async {
+  Future<SnippetResponse> getSnippetResponse(
+      String snippetId, String userId) async {
     DocumentSnapshot snapshot = await currentSnippetsCollection
         .doc(snippetId)
         .collection("answers")
-        .doc(uid)
+        .doc(userId)
         .get();
-    return snapshot.data() as Map<String, dynamic>;
+    Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
+    data["snippetId"] = snippetId;
+    return SnippetResponse.fromMap(data);
   }
 
-  Future<Stream> getComments(String snippetId, String userId) async {
-    Stream snapshot = currentSnippetsCollection
+  Future<SnippetResponse?> getSnippetResponseLatest(
+      String snippetId, String userId, int lastUpdatedMillis) async {
+    QuerySnapshot snapshot = await currentSnippetsCollection
         .doc(snippetId)
         .collection("answers")
-        .doc(userId)
-        .collection("comments")
-        .orderBy("date", descending: false)
-        .snapshots();
-
-    return snapshot;
+        .where("uid", isEqualTo: userId)
+        .where("lastUpdatedMillis", isGreaterThan: lastUpdatedMillis)
+        .get();
+    if (snapshot.docs.isEmpty) {
+      return null;
+    }
+    Map<String, dynamic> data = snapshot.docs[0].data() as Map<String, dynamic>;
+    data["snippetId"] = snippetId;
+    return SnippetResponse.fromMap(data);
   }
 
   Future sendFriendRequest(String friendUid, String friendDisplayName,
       String friendUsername, String friendFCMToken) async {
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    User userData = await Database().getUserData(uid!);
+    int lastUpdated = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(friendUid).update({
-      "friendRequests": FieldValue.arrayUnion([
-        {
-          "userId": uid,
-          "FCMToken": userData["FCMToken"],
-          "displayName": userData["fullname"],
-          "username": userData["username"],
-        }
-      ]),
+      "friendRequests": FieldValue.arrayUnion(
+        [
+          {
+            "userId": uid,
+            "FCMToken": userData.FCMToken,
+            "displayName": userData.displayName,
+            "username": userData.username,
+          }
+        ],
+      ),
+      "lastUpdatedMillis": lastUpdated,
     });
 
     await userCollection.doc(uid).update({
@@ -382,26 +474,38 @@ class FBDatabase {
           "FCMToken": friendFCMToken,
         }
       ]),
+      "lastUpdatedMillis": lastUpdated,
     });
+
+    await LocalDatabase().addOutgoingFriendToUser(
+        uid!,
+        UserMini(
+          userId: friendUid,
+          displayName: friendDisplayName,
+          username: friendUsername,
+          FCMToken: friendFCMToken,
+        ),
+        lastUpdated);
 
     PushNotifications().sendNotification(
         title: "New friend request!",
-        body: "${userData["fullname"]} wants to be your friend!",
+        body: "${userData.displayName} wants to be your friend!",
         targetIds: [
           friendFCMToken
         ],
         data: {
           "type": "friendRequest",
           "userId": uid,
-          "displayName": userData["fullname"],
-          "username": userData["username"],
-          "FCMToken": userData["FCMToken"],
+          "displayName": userData.displayName,
+          "username": userData.username,
+          "FCMToken": userData.FCMToken,
         });
   }
 
   Future acceptFriendRequest(String friendUid, String friendDisplayName,
       String friendUsername, String friendFCMToken) async {
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    User userData = await Database().getUserData(uid!);
+    int lastUpdated = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(uid).update({
       "friends": FieldValue.arrayUnion([
         {
@@ -418,45 +522,60 @@ class FBDatabase {
           "displayName": friendDisplayName,
           "username": friendUsername,
         }
-      ])
+      ]),
+      "lastUpdatedMillis": lastUpdated,
     });
+
+    await LocalDatabase().addFriendToUser(
+        uid!,
+        UserMini(
+          userId: friendUid,
+          displayName: friendDisplayName,
+          username: friendUsername,
+          FCMToken: friendFCMToken,
+        ),
+        lastUpdated);
+    await LocalDatabase()
+        .removeOutgoingFriendFromUser(uid!, friendUid, lastUpdated);
 
     await userCollection.doc(friendUid).update({
       "friends": FieldValue.arrayUnion([
         {
           "userId": uid,
-          "displayName": userData["fullname"],
-          "username": userData["username"],
-          "FCMToken": userData["FCMToken"],
+          "displayName": userData.displayName,
+          "username": userData.username,
+          "FCMToken": userData.FCMToken,
         }
       ]),
       "outgoingRequests": FieldValue.arrayRemove([
         {
           "userId": uid,
-          "displayName": userData["fullname"],
-          "username": userData["username"],
-          "FCMToken": userData["FCMToken"],
+          "displayName": userData.displayName,
+          "username": userData.username,
+          "FCMToken": userData.FCMToken,
         }
-      ])
+      ]),
+      "lastUpdatedMillis": lastUpdated,
     });
 
     await PushNotifications().sendNotification(
         title: "Friend request accepted!",
-        body: "${userData["fullname"]} accepted your friend request!",
+        body: "${userData.displayName} accepted your friend request!",
         targetIds: [
           friendFCMToken
         ],
         data: {
           "type": "friendRequestAccepted",
           "userId": uid,
-          "displayName": userData["fullname"],
-          "username": userData["username"],
+          "displayName": userData.displayName,
+          "username": userData.username,
         });
   }
 
   Future declineFriendRequest(String friendUid, String friendFCMToken,
       String friendDisplayName, String friendUsername) async {
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    User userData = await Database().getUserData(uid!);
+    int lastUpdated = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(uid).update({
       "friendRequests": FieldValue.arrayRemove([
         {
@@ -466,32 +585,29 @@ class FBDatabase {
           "username": friendUsername,
         }
       ]),
+      "lastUpdatedMillis": lastUpdated,
     });
+
+    await LocalDatabase()
+        .removeIncomingFriendRequestFromUser(uid!, friendUid, lastUpdated);
+
     await userCollection.doc(friendUid).update({
       "outgoingRequests": FieldValue.arrayRemove([
         {
           "userId": uid,
-          "displayName": userData["fullname"],
-          "username": userData["username"],
-          "FCMToken": userData["FCMToken"],
+          "displayName": userData.displayName,
+          "username": userData.username,
+          "FCMToken": userData.FCMToken,
         }
       ]),
+      "lastUpdatedMillis": lastUpdated,
     });
-  }
-
-  Future<Stream> getFriendRequests() async {
-    Stream snapshot = userCollection
-        .doc(uid)
-        .collection("friendRequests")
-        .orderBy("date", descending: false)
-        .snapshots();
-
-    return snapshot;
   }
 
   Future removeFriend(String friendUid, String friendDisplayName,
       String friendUsername, String friendFCMToken) async {
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    User userData = await Database().getUserData(uid!);
+    int lastUpdated = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(uid).update({
       "friends": FieldValue.arrayRemove([
         {
@@ -501,25 +617,29 @@ class FBDatabase {
           "FCMToken": friendFCMToken,
         }
       ]),
+      "lastUpdatedMillis": lastUpdated,
     });
+
+    await LocalDatabase().removeFriendFromUser(uid!, friendUid, lastUpdated);
 
     await userCollection.doc(friendUid).update({
       "friends": FieldValue.arrayRemove([
         {
           "userId": uid,
-          "displayName": userData["fullname"],
-          "username": userData["username"],
-          "FCMToken": userData["FCMToken"],
+          "displayName": userData.displayName,
+          "username": userData.username,
+          "FCMToken": userData.FCMToken,
         }
       ]),
+      "lastUpdatedMillis": lastUpdated,
     });
   }
 
   Future<bool> checkFriendRequest(String friendUid) async {
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-    List<dynamic> friendRequests = userData["friendRequests"];
+    User userData = await Database().getUserData(uid!);
+    List<UserMini> friendRequests = userData.friendRequests;
     for (var element in friendRequests) {
-      if (element["userId"] == friendUid) {
+      if (element.userId == friendUid) {
         return true;
       }
     }
@@ -528,16 +648,18 @@ class FBDatabase {
 
   Future cancelFriendRequest(String friendUid, String friendDisplayName,
       String friendUsername, String friendFCMToken) async {
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    User userData = await Database().getUserData(uid!);
+    int lastUpdated = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(friendUid).update({
       "friendRequests": FieldValue.arrayRemove([
         {
           "userId": uid,
-          "FCMToken": userData["FCMToken"],
-          "displayName": userData["fullname"],
-          "username": userData["username"],
+          "FCMToken": userData.FCMToken,
+          "displayName": userData.displayName,
+          "username": userData.username,
         }
       ]),
+      "lastUpdatedMillis": lastUpdated,
     });
 
     await userCollection.doc(uid).update({
@@ -549,16 +671,28 @@ class FBDatabase {
           "FCMToken": friendFCMToken,
         }
       ]),
+      "lastUpdatedMillis": lastUpdated,
     });
+
+    await LocalDatabase()
+        .removeOutgoingFriendFromUser(uid!, friendUid, lastUpdated);
   }
 
-  Future searchUsers(String search) async {
+  Future<Stream<List<User>>> searchUsers(String search) async {
     //Order alphabetically
-    Stream<QuerySnapshot<Object?>> snapshot = userCollection
+    Stream<List<User>> snapshot = userCollection
         .where("searchKey", isGreaterThanOrEqualTo: search.toLowerCase())
         .where("searchKey",
             isLessThanOrEqualTo: "${search.toLowerCase()}\uf8ff")
-        .snapshots();
+        .snapshots()
+        .map((event) {
+      List<User> users = [];
+      for (var element in event.docs) {
+        users.add(User.fromMap(element.data() as Map<String, dynamic>));
+      }
+      return users;
+    });
+
     return snapshot;
   }
 
@@ -582,12 +716,12 @@ class FBDatabase {
           "senderId": data['senderId'],
           "senderDisplayName": data['senderDisplayName'],
           "date": data['date'].toDate(),
-          "readBy": data['readBy'].join(","),
-          "chatId": "$snippetId-$userId",
+          "readBy": data['readBy'],
+          "discussionId": "$snippetId-$userId",
           "snippetId": snippetId,
           "lastUpdatedMillis": data['lastUpdatedMillis']
         };
-        await LocalDatabase().insertChat(chatMessageMap);
+        await LocalDatabase().insertChat(Message.fromMap(chatMessageMap));
       }
     } else {
       //add one millisecond to the latest chat
@@ -609,18 +743,18 @@ class FBDatabase {
           "senderId": data['senderId'],
           "senderDisplayName": data['senderDisplayName'],
           "date": data['date'].toDate(),
-          "readBy": data['readBy'].join(","),
-          "chatId": "$snippetId-$userId",
+          "readBy": data['readBy'],
+          "discussionId": "$snippetId-$userId",
           "snippetId": snippetId,
           "lastUpdatedMillis": data['lastUpdatedMillis']
         };
-        await LocalDatabase().insertChat(chatMessageMap);
+        await LocalDatabase().insertChat(Message.fromMap(chatMessageMap));
       }
     }
   }
 
   Future getDiscussion(String snippetId, String userId, int? latestChat,
-      StreamController controller) async {
+      StreamController<List<Message>> controller) async {
     if (latestChat == null) {
       Stream<QuerySnapshot> snapshot = currentSnippetsCollection
           .doc(snippetId)
@@ -632,7 +766,25 @@ class FBDatabase {
 
       snapshot.listen((event) {
         if (controller.isClosed) return;
-        controller.add(event);
+        List<Message> messages = [];
+        for (var element in event.docs) {
+          Map<String, dynamic> data = element.data() as Map<String, dynamic>;
+
+          Map<String, dynamic> chatMessageMap = {
+            "messageId": element.id,
+            "message": data['message'],
+            "senderUsername": data['senderUsername'],
+            "senderId": data['senderId'],
+            "senderDisplayName": data['senderDisplayName'],
+            "date": data['date'].toDate(),
+            "readBy": data['readBy'],
+            "discussionId": "$snippetId-$userId",
+            "snippetId": snippetId,
+            "lastUpdatedMillis": data['lastUpdatedMillis']
+          };
+          messages.add(Message.fromMap(chatMessageMap));
+        }
+        controller.add(messages);
       });
     } else {
       //add one millisecond to the latest chat
@@ -648,7 +800,25 @@ class FBDatabase {
 
       snapshot.listen((event) {
         if (controller.isClosed) return;
-        controller.add(event);
+        List<Message> messages = [];
+        for (var element in event.docs) {
+          Map<String, dynamic> data = element.data() as Map<String, dynamic>;
+
+          Map<String, dynamic> chatMessageMap = {
+            "messageId": element.id,
+            "message": data['message'],
+            "senderUsername": data['senderUsername'],
+            "senderId": data['senderId'],
+            "senderDisplayName": data['senderDisplayName'],
+            "date": data['date'].toDate(),
+            "readBy": data['readBy'],
+            "discussionId": "$snippetId-$userId",
+            "snippetId": snippetId,
+            "lastUpdatedMillis": data['lastUpdatedMillis']
+          };
+          messages.add(Message.fromMap(chatMessageMap));
+        }
+        controller.add(messages);
       });
     }
   }
@@ -667,24 +837,24 @@ class FBDatabase {
   }
 
   Future<String> sendDiscussionMessage(
-      String snippetId, String userId, Map<String, dynamic> message) async {
+      String snippetId, String userId, Message message) async {
     DocumentReference ref = await currentSnippetsCollection
         .doc(snippetId)
         .collection("answers")
         .doc(userId)
         .collection("discussion")
-        .add(message);
+        .add(message.toMap());
     return ref.id;
   }
 
-  Future updateDiscussionUsers(String snippetId, String answerId,
-      Map<String, dynamic> discussionUsers) async {
+  Future updateDiscussionUsers(
+      String snippetId, String answerId, DiscussionUser discussionUsers) async {
     await currentSnippetsCollection
         .doc(snippetId)
         .collection("answers")
         .doc(answerId)
         .update({
-      "discussionUsers": FieldValue.arrayUnion([discussionUsers]),
+      "discussionUsers": FieldValue.arrayUnion([discussionUsers.toMap()]),
       "lastUpdated": DateTime.now(),
       "lastUpdatedMillis": DateTime.now().millisecondsSinceEpoch,
     });
@@ -692,6 +862,7 @@ class FBDatabase {
 
   Future addUserToDiscussion(String userId, String snippetId, String answerId,
       String snippetQuestion, String theme, bool isAnonymous) async {
+    int lastUpdatedMillis = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(userId).update({
       "discussions": FieldValue.arrayUnion([
         {
@@ -700,54 +871,80 @@ class FBDatabase {
           "snippetQuestion": snippetQuestion,
           "theme": theme,
           "isAnonymous": isAnonymous
-        }
+        },
       ]),
+      "lastUpdatedMillis": lastUpdatedMillis,
     });
 
 //Update user's discussion list in the local database
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-    userData["discussions"].add({
-      "snippetId": snippetId,
-      "answerId": answerId,
-    });
-    await HelperFunctions.saveUserDataSF(jsonEncode(userData));
+    User userData = await Database().getUserData(uid!);
+
+    userData.discussions.add(Discussion(
+        answerId: userId,
+        isAnonymous: isAnonymous,
+        snippetId: snippetId,
+        snippetQuestion: snippetQuestion));
+    await LocalDatabase().addDiscussionToUser(
+        uid!,
+        Discussion(
+            answerId: userId,
+            isAnonymous: isAnonymous,
+            snippetId: snippetId,
+            snippetQuestion: snippetQuestion),
+        lastUpdatedMillis);
   }
 
-  Future getDiscussions(String userId, StreamController discStream) async {
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-    List<dynamic> discussions = userData["discussions"];
+  Future getDiscussions(
+      String userId, StreamController<DiscussionFull> discStream) async {
+    User userData = await Database().getUserData(uid!);
+    List<Discussion> discussions = userData.discussions;
 
     for (var element in discussions) {
       // DocumentSnapshot snippetData =
       // await currentSnippetsCollection.doc(element["snippetId"]).get();
 
       DocumentSnapshot answerDoc = await currentSnippetsCollection
-          .doc(element["snippetId"])
+          .doc(element.snippetId)
           .collection("answers")
-          .doc(element["answerId"])
+          .doc(element.answerId)
           .get();
       if (!answerDoc.exists) {
+        int lastUpdatedMillis = DateTime.now().millisecondsSinceEpoch;
         //Remove discussion from user's list
+        print("Removing discussion from user's list");
+        print("Snippet ID: ${element.snippetId}");
+        print("Answer ID: ${element.answerId}");
+        print("Snippet Question: ${element.snippetQuestion}");
+        print("Is Anonymous: ${element.isAnonymous}");
         await userCollection.doc(userId).update({
           "discussions": FieldValue.arrayRemove([
             {
-              "snippetId": element["snippetId"],
-              "answerId": element["answerId"],
-              "snippetQuestion": element["snippetQuestion"],
-              "theme": element["theme"],
-              "isAnonymous": element["isAnonymous"],
+              "snippetId": element.snippetId,
+              "answerId": element.answerId,
+              "snippetQuestion": element.snippetQuestion,
+              "isAnonymous": element.isAnonymous,
+              "theme": "blue"
             }
           ]),
+          "lastUpdatedMillis": lastUpdatedMillis,
         });
+        await LocalDatabase().removeDiscussionFromUser(
+            userId,
+            Discussion(
+                answerId: element.answerId,
+                isAnonymous: element.isAnonymous,
+                snippetId: element.snippetId,
+                snippetQuestion: element.snippetQuestion),
+            lastUpdatedMillis);
         await LocalDatabase()
-            .deleteChats("${element["snippetId"]}-${element["answerId"]}");
+            .deleteChats("${element.snippetId}-${element.answerId}");
 
         continue;
       }
       Stream snippetData = currentSnippetsCollection
-          .doc(element["snippetId"])
+          .doc(element.snippetId)
           .collection("answers")
-          .doc(element["answerId"])
+          .doc(element.answerId)
           .collection("discussion")
           .orderBy("date", descending: true)
           .limit(1)
@@ -755,40 +952,74 @@ class FBDatabase {
       snippetData.listen((event) async {
         Map<String, dynamic> answerData =
             answerDoc.data() as Map<String, dynamic>;
+        Message lastMessage;
 
         //Check if discussion is already in the list
 
-        Map<String, dynamic> discussionsData = {};
-        Map<String, dynamic> lastMessage = {};
+        DiscussionFull discussionsData;
+
         if (event.docs.isEmpty) {
-          lastMessage = {
-            "message": "No messages",
-            "date": DateTime.now(),
-            "senderId": "",
-            "senderDisplayName": "",
-            "readBy": [],
-          };
+          lastMessage = Message(
+            message: "No messages",
+            date: DateTime.now(),
+            senderId: "",
+            senderDisplayName: "",
+            readBy: [],
+            senderUsername: "",
+            messageId: "",
+            snippetId: "",
+            lastUpdatedMillis: 0,
+            discussionId: "",
+          );
         } else {
-          lastMessage = event.docs[0].data() as Map<String, dynamic>;
+          Map<String, dynamic> data =
+              event.docs[0].data() as Map<String, dynamic>;
+          Map<String, dynamic> chatMessageMap = {
+            "messageId": event.docs[0].id,
+            "message": data['message'],
+            "senderUsername": data['senderUsername'],
+            "senderId": data['senderId'],
+            "senderDisplayName": data['senderDisplayName'],
+            "date": data['date'].toDate(),
+            "readBy": data['readBy'],
+            "discussionId": "${element.snippetId}-$userId",
+            "snippetId": element.snippetId,
+            "lastUpdatedMillis": data['lastUpdatedMillis']
+          };
+          lastMessage = Message.fromMap(chatMessageMap);
         }
-        discussionsData = {
-          "snippetQuestion": element["snippetQuestion"],
-          "answerUser": answerData["displayName"],
-          "lastMessage": lastMessage,
-          "snippetId": element["snippetId"],
-          "answerId": element["answerId"],
-          "theme": element["theme"],
-          "answerResponse": answerData["answer"],
-          "discussionUsers": answerData["discussionUsers"],
-          "isAnonymous": element["isAnonymous"],
-        };
+        List<DiscussionUser> discussionUsers = [];
+        for (var element in answerData["discussionUsers"]) {
+          discussionUsers.add(DiscussionUser.fromMap(element));
+        }
+        discussionsData = DiscussionFull(
+          snippetQuestion: element.snippetQuestion,
+          answerDisplayName: answerData["displayName"],
+          lastMessage: lastMessage,
+          snippetId: element.snippetId,
+          answerId: element.answerId,
+          answer: answerData["answer"],
+          discussionUsers: discussionUsers,
+          isAnonymous: element.isAnonymous,
+        );
+        // discussionsData = {
+        //   "snippetQuestion": element["snippetQuestion"],
+        //   "answerUser": answerData["displayName"],
+        //   "lastMessage": lastMessage,
+        //   "snippetId": element["snippetId"],
+        //   "answerId": element["answerId"],
+        //   "theme": element["theme"],
+        //   "answerResponse": answerData["answer"],
+        //   "discussionUsers": answerData["discussionUsers"],
+        //   "isAnonymous": element["isAnonymous"],
+        // };
 
         discStream.add(discussionsData);
       });
     }
   }
 
-  Future<Map<String, dynamic>> getLastDiscussionMessage(
+  Future<Message> getLastDiscussionMessage(
       String snippetId, String userId) async {
     QuerySnapshot snapshot = await currentSnippetsCollection
         .doc(snippetId)
@@ -798,43 +1029,48 @@ class FBDatabase {
         .orderBy("date", descending: true)
         .limit(1)
         .get();
-    return snapshot.docs[0].data() as Map<String, dynamic>;
-  }
-
-  StreamSubscription userDataStream(StreamController streamController) {
-    Stream stream = userCollection.doc(uid).snapshots();
-
-    StreamSubscription streamListen = stream.listen((event) async {
-      //if user is logged out, end stream
-
-      await HelperFunctions.saveUserDataSF(jsonEncode(event.data()));
-
-      streamController.add(event.data());
-    }, onDone: () {});
-    //On Auth State change end stream
-    return streamListen;
+    Map<String, dynamic> data = snapshot.docs[0].data() as Map<String, dynamic>;
+    Map<String, dynamic> chatMessageMap = {
+      "messageId": snapshot.docs[0].id,
+      "message": data['message'],
+      "senderUsername": data['senderUsername'],
+      "senderId": data['senderId'],
+      "senderDisplayName": data['senderDisplayName'],
+      "date": data['date'].toDate(),
+      "readBy": data['readBy'],
+      "discussionId": "$snippetId-$userId",
+      "snippetId": snippetId,
+      "lastUpdatedMillis": data['lastUpdatedMillis']
+    };
+    return Message.fromMap(chatMessageMap);
   }
 
   Future updateUserDescription(String description) async {
+    int lastUpdated = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(uid).update({
       "description": description,
+      "lastUpdatedMillis": lastUpdated,
     });
+    await LocalDatabase().updateUserDescription(uid!, description, lastUpdated);
   }
 
-  Stream getUserDataStream() {
-    Stream stream = userCollection.doc(uid).snapshots();
+  Stream<User> getUserDataStream() {
+    Stream<User> stream = userCollection.doc(uid).snapshots().map((event) {
+      return User.fromMap(event.data() as Map<String, dynamic>);
+    });
     return stream;
   }
 
-  Future getBlankOfTheWeek(StreamController<Map<String, dynamic>> controller,
-      int? lastUpdated) async {
+  Future getBlankOfTheWeek(
+      StreamController<BOTW> controller, int? lastUpdated) async {
     Stream snapshot;
     if (lastUpdated == null) {
       snapshot = botwCollection.doc("currentBlank").snapshots();
       snapshot.listen((event) {
         DocumentSnapshot snapshot = event;
         snapshot.data();
-        controller.add(snapshot.data() as Map<String, dynamic>);
+
+        controller.add(BOTW.fromMap(snapshot.data() as Map<String, dynamic>));
       });
     } else {
       snapshot = botwCollection
@@ -845,34 +1081,35 @@ class FBDatabase {
         if (event.docs.isNotEmpty) {
           DocumentSnapshot snapshot = event.docs[0];
 
-          controller.add(snapshot.data() as Map<String, dynamic>);
+          controller.add(BOTW.fromMap(snapshot.data() as Map<String, dynamic>));
         }
       });
     }
   }
 
-  Future<Map<String, dynamic>?> getBlankOfTheWeekData(int? LastUpdated) async {
-    DocumentSnapshot snapshot;
+  Future<BOTW?> getBlankOfTheWeekData(int? LastUpdated) async {
+    DocumentSnapshot? snapshot;
     if (LastUpdated == null) {
       snapshot = await botwCollection.doc("currentBlank").get();
     } else {
       snapshot = await botwCollection
           .where("lastUpdatedMillis", isGreaterThan: LastUpdated)
           .get()
-          .then((value) => value.docs[0]);
+          .then((value) => value.docs.isNotEmpty ? value.docs[0] : null);
     }
-    if (!snapshot.exists) {
+    if (snapshot == null) {
       return null;
     }
-    return snapshot.data() as Map<String, dynamic>;
+    return BOTW.fromMap(snapshot.data() as Map<String, dynamic>);
   }
 
-  Future updateUsersBOTWAnswer(Map<String, dynamic> answer) async {
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+  Future updateUsersBOTWAnswer(BOTWAnswer answer) async {
+    User userData = await Database().getUserData(uid!);
     DateTime now = DateTime.now();
     DateTime monday = now.subtract(Duration(days: now.weekday - 1));
     String mondayString = "${monday.month}-${monday.day}-${monday.year}";
-    if (userData["botwStatus"]["date"] != mondayString) {
+    if (userData.botwStatus.date != mondayString) {
+      int lastUpdated = DateTime.now().millisecondsSinceEpoch;
       await userCollection.doc(uid).update({
         "botwStatus": {
           "date": mondayString,
@@ -880,27 +1117,33 @@ class FBDatabase {
           "hasSeenResults": false,
         },
         "votesLeft": 3,
+        "lastUpdatedMillis": lastUpdated,
       });
+
+      await LocalDatabase().updateUserBOTWStatus(
+          uid!,
+          BOTWStatus(
+              date: mondayString, hasAnswered: true, hasSeenResults: false),
+          lastUpdated);
+      await LocalDatabase().updateUserVotes(uid!, 3, lastUpdated);
     }
-    answer["displayName"] = userData["fullname"];
+    answer.displayName = userData.displayName;
 
     await botwCollection.doc("currentBlank").set({
       "answers": {
-        uid: answer,
+        uid: answer.toMap(),
       },
       "lastUpdated": DateTime.now(),
       "lastUpdatedMillis": DateTime.now().millisecondsSinceEpoch,
     }, SetOptions(merge: true));
   }
 
-  Future updateBOTWAnswer(Map<String, dynamic> answer) async {
+  Future updateBOTWAnswer(BOTWAnswer answer) async {
     //Get user data
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-    answer["displayName"] = userData["fullname"];
 
     await botwCollection.doc("currentBlank").set({
       "answers": {
-        answer["userId"]: answer,
+        answer.userId: answer.toMap(),
       },
       "lastUpdated": DateTime.now(),
       "lastUpdatedMillis": DateTime.now().millisecondsSinceEpoch,
@@ -908,21 +1151,23 @@ class FBDatabase {
   }
 
   Future updateUserVotesLeft(int votesLeft) async {
+    int lastUpdated = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(uid).update({
       "votesLeft": votesLeft,
+      "lastUpdatedMillis": lastUpdated,
     });
+    await LocalDatabase().updateUserVotes(uid!, votesLeft, lastUpdated);
   }
 
   Future<List<Map<String, dynamic>>> getSuggestedFriends() async {
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-    List<dynamic> friendsList = userData["friends"];
+    User userData = await Database().getUserData(uid!);
+    List<UserMini> friendsList = userData.friends;
 
-    List<String> friendsIds =
-        friendsList.map((e) => e["userId"].toString()).toList();
-    List<dynamic> mutualFriends = [];
+    List<String> friendsIds = friendsList.map((e) => e.userId).toList();
+    List<UserMini> mutualFriends = [];
     for (var element in friendsList) {
-      Map<String, dynamic> friendData = (await getUserData(element["userId"]))!;
-      List<dynamic> friendFriends = friendData["friends"];
+      User friendData = (await getUserData(element.userId))!;
+      List<UserMini> friendFriends = friendData.friends;
       //get list where friendsFriends in friendsList
 
       mutualFriends = mutualFriends + friendFriends;
@@ -930,20 +1175,20 @@ class FBDatabase {
     //Count the number of times each friend appears
     List<Map<String, dynamic>> mutualFriendsWithCount = [];
     for (var element in mutualFriends) {
-      if (friendsIds.contains(element["userId"]) ||
-          element["userId"] == userData["uid"]) {
+      if (friendsIds.contains(element.userId) ||
+          element.userId == userData.userId) {
         continue;
       }
-      if (mutualFriendsWithCount.any((e) => e["userId"] == element["userId"])) {
+      if (mutualFriendsWithCount.any((e) => e["userId"] == element.userId)) {
         int index = mutualFriendsWithCount
-            .indexWhere((e) => e["userId"] == element["userId"]);
+            .indexWhere((e) => e["userId"] == element.userId);
         mutualFriendsWithCount[index]["count"] =
             mutualFriendsWithCount[index]["count"] + 1;
       } else {
         mutualFriendsWithCount.add({
-          "userId": element["userId"],
-          "displayName": element["displayName"],
-          "username": element["username"],
+          "userId": element.userId,
+          "displayName": element.displayName,
+          "username": element.username,
           "count": 1,
         });
       }
@@ -955,7 +1200,7 @@ class FBDatabase {
     return mutualFriendsWithCount;
   }
 
-  Future<List<dynamic>> getDiscussionUsers(
+  Future<List<DiscussionUser>> getDiscussionUsers(
       String snippetId, String answerId) async {
     DocumentSnapshot snapshot = await currentSnippetsCollection
         .doc(snippetId)
@@ -963,26 +1208,31 @@ class FBDatabase {
         .doc(answerId)
         .get();
     Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
-    return data["discussionUsers"] as List<dynamic>;
+
+    data["snippetId"] = snippetId;
+    SnippetResponse response = SnippetResponse.fromMap(data);
+    return response.discussionUsers;
   }
 
   Future updateUserFCMToken(String FCMToken) async {
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    User userData = await Database().getUserData(uid!);
+    int lastUpdated = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(uid).update({
       "FCMToken": FCMToken,
+      "lastUpdatedMillis": lastUpdated,
     });
+    await LocalDatabase().updateUserFCMToken(uid!, FCMToken, lastUpdated);
 
-    List<dynamic> friends = userData["friends"];
-    List<String> friendsIds =
-        friends.map((e) => e["userId"].toString()).toList();
+    List<UserMini> friends = userData.friends;
+    List<String> friendsIds = friends.map((e) => e.userId).toList();
     for (var id in friendsIds) {
       await userCollection.doc(id).update({
         "friends": FieldValue.arrayRemove([
           {
             "userId": uid,
-            "displayName": userData["fullname"],
-            "username": userData["username"],
-            "FCMToken": userData["FCMToken"],
+            "displayName": userData.displayName,
+            "username": userData.username,
+            "FCMToken": userData.FCMToken,
           }
         ]),
       });
@@ -990,24 +1240,25 @@ class FBDatabase {
         "friends": FieldValue.arrayUnion([
           {
             "userId": uid,
-            "displayName": userData["fullname"],
-            "username": userData["username"],
+            "displayName": userData.displayName,
+            "username": userData.username,
             "FCMToken": FCMToken,
           }
         ]),
+        "lastUpdatedMillis": lastUpdated,
       });
     }
-    List<dynamic> friendRequests = userData["friendRequests"];
+    List<UserMini> friendRequests = userData.friendRequests;
     List<String> friendRequestsIds =
-        friendRequests.map((e) => e["userId"].toString()).toList();
+        friendRequests.map((e) => e.userId).toList();
     for (var id in friendRequestsIds) {
       await userCollection.doc(id).update({
         "outgoingRequests": FieldValue.arrayRemove([
           {
             "userId": uid,
-            "displayName": userData["fullname"],
-            "username": userData["username"],
-            "FCMToken": userData["FCMToken"],
+            "displayName": userData.displayName,
+            "username": userData.username,
+            "FCMToken": userData.FCMToken,
           }
         ]),
       });
@@ -1015,24 +1266,25 @@ class FBDatabase {
         "outgoingRequests": FieldValue.arrayUnion([
           {
             "userId": uid,
-            "displayName": userData["fullname"],
-            "username": userData["username"],
+            "displayName": userData.displayName,
+            "username": userData.username,
             "FCMToken": FCMToken,
           }
         ]),
+        "lastUpdatedMillis": lastUpdated,
       });
     }
-    List<dynamic> outgoingRequests = userData["outgoingRequests"];
+    List<UserMini> outgoingRequests = userData.outgoingFriendRequests;
     List<String> outgoingRequestsIds =
-        outgoingRequests.map((e) => e["userId"].toString()).toList();
+        outgoingRequests.map((e) => e.userId).toList();
     for (var id in outgoingRequestsIds) {
       await userCollection.doc(id).update({
         "friendRequests": FieldValue.arrayRemove([
           {
             "userId": uid,
-            "displayName": userData["fullname"],
-            "username": userData["username"],
-            "FCMToken": userData["FCMToken"],
+            "displayName": userData.displayName,
+            "username": userData.username,
+            "FCMToken": userData.FCMToken,
           }
         ]),
       });
@@ -1040,25 +1292,14 @@ class FBDatabase {
         "friendRequests": FieldValue.arrayUnion([
           {
             "userId": uid,
-            "displayName": userData["fullname"],
-            "username": userData["username"],
+            "displayName": userData.displayName,
+            "username": userData.username,
             "FCMToken": FCMToken,
           }
         ]),
+        "lastUpdatedMillis": lastUpdated,
       });
     }
-  }
-
-  Future<Stream> getDiscussionLastMessages(
-      String snippetId, String answerId, DateTime latestMessage) async {
-    return currentSnippetsCollection
-        .doc(snippetId)
-        .collection("answers")
-        .doc(answerId)
-        .collection("discussion")
-        .orderBy("date", descending: true)
-        .limit(1)
-        .snapshots();
   }
 
   Future<void> shareFeedback(String feedback) async {
@@ -1069,10 +1310,10 @@ class FBDatabase {
     });
   }
 
-  Future<List<Map<String, dynamic>>> getSnippetsList(
+  Future<List<Snippet>> getSnippetsList(
       int? lastUpdated, int? lastRecieved) async {
     QuerySnapshot snapshot;
-    List<Map<String, dynamic>> snippets = [];
+    List<Snippet> snippets = [];
     if (lastUpdated == null) {
       snapshot = await currentSnippetsCollection.get();
       for (var element in snapshot.docs) {
@@ -1080,26 +1321,36 @@ class FBDatabase {
         data["snippetId"] = element.id;
         data["lastRecieved"] = data["lastRecieved"].toDate();
         data["lastUpdated"] = data["lastUpdated"].toDate();
-        data["answered"] = data["answered"].contains(uid);
-        snippets.add(data);
+        String id = auth.FirebaseAuth.instance.currentUser!.uid;
+        if (data["type"] == "anonymous") {
+          id = await HelperFunctions.getAnonymousIDFromSF() ?? "";
+        }
+        data["answered"] = data["answered"].contains(id);
+        snippets.add(Snippet.fromMap(data));
       }
     } else {
       snapshot = await currentSnippetsCollection
-          .where("lastRecievedMillis", isGreaterThan: lastUpdated)
+          .where("lastRecievedMillis", isGreaterThan: lastRecieved! + 1)
           .get();
       for (var element in snapshot.docs) {
+        print("FROM LAST RECIEVED");
         Map<String, dynamic> data = element.data() as Map<String, dynamic>;
         data["snippetId"] = element.id;
         data["lastRecieved"] = data["lastRecieved"].toDate();
         data["lastUpdated"] = data["lastUpdated"].toDate();
-        data["answered"] = data["answered"].contains(uid);
-        snippets.add(data);
+        String id = auth.FirebaseAuth.instance.currentUser!.uid;
+        if (data["type"] == "anonymous") {
+          id = await HelperFunctions.getAnonymousIDFromSF() ?? "";
+        }
+        data["answered"] = data["answered"].contains(id);
+        snippets.add(Snippet.fromMap(data));
       }
       QuerySnapshot snapshot2 = await currentSnippetsCollection
-          .where("lastUpdatedMillis", isGreaterThan: lastUpdated)
+          .where("lastUpdatedMillis", isGreaterThan: lastUpdated + 1)
           .where("answered", arrayContains: uid)
           .get();
       for (var element in snapshot2.docs) {
+        print("FROM LASTUPDATED");
         Map<String, dynamic> data = element.data() as Map<String, dynamic>;
         data["snippetId"] = element.id;
         data["lastRecieved"] = data["lastRecieved"].toDate();
@@ -1107,20 +1358,21 @@ class FBDatabase {
         data["answered"] = data["answered"].contains(uid);
         //Check if snippet is already in the list
         if (!snippets
-            .any((element) => element["snippetId"] == data["snippetId"])) {
-          snippets.add(data);
+            .any((element) => element.snippetId == data["snippetId"])) {
+          snippets.add(Snippet.fromMap(data));
         } else {
           //Update the snippet in the list
-          int index = snippets.indexWhere(
-              (element) => element["snippetId"] == data["snippetId"]);
-          snippets[index] = data;
+          int index = snippets
+              .indexWhere((element) => element.snippetId == data["snippetId"]);
+
+          snippets[index] = Snippet.fromMap(data);
         }
       }
     }
     return snippets;
   }
 
-  Future<List<Map<String, dynamic>>> getSnippetResponses(
+  Future<List<SnippetResponse>> getSnippetResponses(
       String snippetId, int? lastUpdated, bool isAnonymous) async {
     QuerySnapshot snapshot;
     List<String> friendsList = [];
@@ -1161,13 +1413,15 @@ class FBDatabase {
             .get();
       }
     }
-    List<Map<String, dynamic>> responses = [];
+    List<SnippetResponse> responses = [];
     for (var element in snapshot.docs) {
       Map<String, dynamic> data = element.data() as Map<String, dynamic>;
       data["answerId"] = element.id;
       data["date"] = data["date"].toDate();
       data["lastUpdated"] = data["lastUpdated"].toDate();
-      responses.add(data);
+
+      data["snippetId"] = snippetId;
+      responses.add(SnippetResponse.fromMap(data));
     }
     return responses;
   }
@@ -1182,13 +1436,15 @@ class FBDatabase {
     if (res != "Done") {
       return res;
     }
+    int lastUpdatedMillis = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(uid).update({
       "email": newEmail,
+      "lastUpdatedMillis": lastUpdatedMillis,
     });
     //Update local user data
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
-    userData["email"] = newEmail;
-    await HelperFunctions.saveUserDataSF(jsonEncode(userData));
+    User userData = await Database().getUserData(uid!);
+    userData.email = newEmail;
+    await LocalDatabase().updateUserData(userData, lastUpdatedMillis);
 
     return res;
   }
@@ -1202,18 +1458,19 @@ class FBDatabase {
       }
     }
 
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    User userData = await Database().getUserData(uid!);
+    int lastUpdatedMillis = DateTime.now().millisecondsSinceEpoch;
 
     await userCollection.doc(uid).update({
-      "fullname": displayName ?? userData["fullname"],
-      "username": username ?? userData["username"],
-      "searchKey": displayName != null
-          ? displayName.toLowerCase()
-          : userData["searchKey"],
+      "fullname": displayName ?? userData.displayName,
+      "username": username ?? userData.username,
+      "searchKey":
+          displayName != null ? displayName.toLowerCase() : userData.searchKey,
+      "lastUpdatedMillis": lastUpdatedMillis,
     });
 
-    String oldUsername = userData["username"];
-    String oldDisplayName = userData["fullname"];
+    String oldUsername = userData.username;
+    String oldDisplayName = userData.displayName;
     if (username != null) {
       //Delete old username from usernames collection
       await publicCollection.doc("usernames").update({
@@ -1226,9 +1483,9 @@ class FBDatabase {
     }
 
     //Update local user data
-    userData["fullname"] = displayName ?? userData["fullname"];
-    userData["username"] = username ?? userData["username"];
-    await HelperFunctions.saveUserDataSF(jsonEncode(userData));
+    userData.displayName = displayName ?? userData.displayName;
+    userData.username = username ?? userData.username;
+    await LocalDatabase().updateUserData(userData, lastUpdatedMillis);
 
     //Update BOTW answers
     DocumentSnapshot botwSnapshot =
@@ -1236,8 +1493,8 @@ class FBDatabase {
     Map<String, dynamic> botwData = botwSnapshot.data() as Map<String, dynamic>;
     if (botwData["answers"].containsKey(uid)) {
       botwData["answers"][uid]["displayName"] =
-          displayName ?? userData["fullname"];
-      botwData["answers"][uid]["username"] = username ?? userData["username"];
+          displayName ?? userData.displayName;
+      botwData["answers"][uid]["username"] = username ?? userData.username;
       await botwCollection.doc("currentBlank").set({
         "answers": botwData["answers"],
         "lastUpdated": DateTime.now(),
@@ -1245,9 +1502,8 @@ class FBDatabase {
       }, SetOptions(merge: true));
     }
 
-    List<dynamic> friends = userData["friends"];
-    List<String> friendsIds =
-        friends.map((e) => e["userId"].toString()).toList();
+    List<UserMini> friends = userData.friends;
+    List<String> friendsIds = friends.map((e) => e.userId).toList();
     for (var id in friendsIds) {
       await userCollection.doc(id).update({
         "friends": FieldValue.arrayRemove([
@@ -1255,7 +1511,7 @@ class FBDatabase {
             "userId": uid,
             "displayName": oldDisplayName,
             "username": oldUsername,
-            "FCMToken": userData["FCMToken"],
+            "FCMToken": userData.FCMToken,
           }
         ]),
       });
@@ -1263,16 +1519,17 @@ class FBDatabase {
         "friends": FieldValue.arrayUnion([
           {
             "userId": uid,
-            "displayName": displayName ?? userData["fullname"],
-            "username": username ?? userData["username"],
-            "FCMToken": userData["FCMToken"],
+            "displayName": displayName ?? userData.displayName,
+            "username": username ?? userData.username,
+            "FCMToken": userData.FCMToken,
           }
         ]),
+        "lastUpdatedMillis": lastUpdatedMillis,
       });
     }
-    List<dynamic> friendRequests = userData["friendRequests"];
+    List<UserMini> friendRequests = userData.friendRequests;
     List<String> friendRequestsIds =
-        friendRequests.map((e) => e["userId"].toString()).toList();
+        friendRequests.map((e) => e.userId).toList();
     for (var id in friendRequestsIds) {
       await userCollection.doc(id).update({
         "outgoingRequests": FieldValue.arrayRemove([
@@ -1280,7 +1537,7 @@ class FBDatabase {
             "userId": uid,
             "displayName": oldDisplayName,
             "username": oldUsername,
-            "FCMToken": userData["FCMToken"],
+            "FCMToken": userData.FCMToken,
           }
         ]),
       });
@@ -1288,16 +1545,17 @@ class FBDatabase {
         "outgoingRequests": FieldValue.arrayUnion([
           {
             "userId": uid,
-            "displayName": displayName ?? userData["fullname"],
-            "username": username ?? userData["username"],
-            "FCMToken": userData["FCMToken"],
+            "displayName": displayName ?? userData.displayName,
+            "username": username ?? userData.username,
+            "FCMToken": userData.FCMToken,
           }
         ]),
+        "lastUpdatedMillis": lastUpdatedMillis,
       });
     }
-    List<dynamic> outgoingRequests = userData["outgoingRequests"];
+    List<UserMini> outgoingRequests = userData.outgoingFriendRequests;
     List<String> outgoingRequestsIds =
-        outgoingRequests.map((e) => e["userId"].toString()).toList();
+        outgoingRequests.map((e) => e.userId).toList();
     for (var id in outgoingRequestsIds) {
       await userCollection.doc(id).update({
         "friendRequests": FieldValue.arrayRemove([
@@ -1305,7 +1563,7 @@ class FBDatabase {
             "userId": uid,
             "displayName": oldDisplayName,
             "username": oldUsername,
-            "FCMToken": userData["FCMToken"],
+            "FCMToken": userData.FCMToken,
           }
         ]),
       });
@@ -1313,11 +1571,12 @@ class FBDatabase {
         "friendRequests": FieldValue.arrayUnion([
           {
             "userId": uid,
-            "displayName": displayName ?? userData["fullname"],
-            "username": username ?? userData["username"],
-            "FCMToken": userData["FCMToken"],
+            "displayName": displayName ?? userData.displayName,
+            "username": username ?? userData.username,
+            "FCMToken": userData.FCMToken,
           }
         ]),
+        "lastUpdatedMillis": lastUpdatedMillis,
       });
     }
     return true;
@@ -1330,56 +1589,55 @@ class FBDatabase {
       return res;
     }
     print("past auth");
-    Map<String, dynamic> userData = await HelperFunctions.getUserDataFromSF();
+    User userData = await Database().getUserData(uid!);
 
-    List<dynamic> friends = userData["friends"];
-    List<String> friendsIds =
-        friends.map((e) => e["userId"].toString()).toList();
+    List<UserMini> friends = userData.friends;
+    List<String> friendsIds = friends.map((e) => e.userId).toList();
     for (var id in friendsIds) {
       await userCollection.doc(id).update({
         "friends": FieldValue.arrayRemove([
           {
             "userId": uid,
-            "displayName": userData["fullname"],
-            "username": userData["username"],
-            "FCMToken": userData["FCMToken"],
+            "displayName": userData.displayName,
+            "username": userData.username,
+            "FCMToken": userData.FCMToken,
           }
         ]),
       });
     }
-    List<dynamic> friendRequests = userData["friendRequests"];
+    List<UserMini> friendRequests = userData.friendRequests;
     List<String> friendRequestsIds =
-        friendRequests.map((e) => e["userId"].toString()).toList();
+        friendRequests.map((e) => e.userId).toList();
     for (var id in friendRequestsIds) {
       await userCollection.doc(id).update({
         "friendRequests": FieldValue.arrayRemove([
           {
             "userId": uid,
-            "displayName": userData["fullname"],
-            "username": userData["username"],
-            "FCMToken": userData["FCMToken"],
+            "displayName": userData.displayName,
+            "username": userData.username,
+            "FCMToken": userData.FCMToken,
           }
         ]),
       });
     }
-    List<dynamic> outgoingRequests = userData["outgoingRequests"];
+    List<UserMini> outgoingRequests = userData.outgoingFriendRequests;
     List<String> outgoingRequestsIds =
-        outgoingRequests.map((e) => e["userId"].toString()).toList();
+        outgoingRequests.map((e) => e.userId).toList();
     for (var id in outgoingRequestsIds) {
       await userCollection.doc(id).update({
         "outgoingRequests": FieldValue.arrayRemove([
           {
             "userId": uid,
-            "displayName": userData["fullname"],
-            "username": userData["username"],
-            "FCMToken": userData["FCMToken"],
+            "displayName": userData.displayName,
+            "username": userData.username,
+            "FCMToken": userData.FCMToken,
           }
         ]),
       });
     }
     //Get current snippets where user answered
     QuerySnapshot snapshot = await currentSnippetsCollection
-        .where("answered", arrayContains: userData["uid"])
+        .where("answered", arrayContains: userData.userId)
         .get();
     //For each, delete discussion chats and then answer
     for (var doc in snapshot.docs) {
@@ -1400,43 +1658,74 @@ class FBDatabase {
   }
 
   Future<void> removeOutgoingFriendRequest(
-      Map<String, dynamic> request, Map<String, dynamic> userData) async {
-    await userCollection.doc(userData["uid"]).update({
-      "outgoingRequests": FieldValue.arrayRemove([request]),
+      UserMini request, User userData) async {
+    int lastUpdatedMillis = DateTime.now().millisecondsSinceEpoch;
+    await userCollection.doc(userData.userId).update({
+      "outgoingRequests": FieldValue.arrayRemove([request.toMap()]),
+      "lastUpdatedMillis": lastUpdatedMillis,
     });
-    await userCollection.doc(request["userId"]).update({
+    await userCollection.doc(request.userId).update({
       "friendRequests": FieldValue.arrayRemove([
         {
-          "userId": userData["uid"],
-          "displayName": userData["fullname"],
-          "username": userData["username"],
-          "FCMToken": userData["FCMToken"],
+          "userId": userData.userId,
+          "displayName": userData.displayName,
+          "username": userData.username,
+          "FCMToken": userData.FCMToken,
         }
       ]),
+      "lastUpdatedMillis": lastUpdatedMillis,
     });
+    await LocalDatabase()
+        .removeOutgoingFriendFromUser(uid!, request.userId, lastUpdatedMillis);
   }
 
-  Future<void> removeFriendRequest(
-      Map<String, dynamic> request, Map<String, dynamic> userData) async {
-    await userCollection.doc(userData["uid"]).update({
-      "friendRequests": FieldValue.arrayRemove([request]),
+  Future<void> removeFriendRequest(UserMini request, User userData) async {
+    int lastUpdatedMillis = DateTime.now().millisecondsSinceEpoch;
+    await userCollection.doc(userData.userId).update({
+      "friendRequests": FieldValue.arrayRemove([request.toMap()]),
+      "lastUpdatedMillis": lastUpdatedMillis,
     });
-    await userCollection.doc(request["userId"]).update({
+    await userCollection.doc(request.userId).update({
       "outgoingRequests": FieldValue.arrayRemove([
         {
-          "userId": userData["uid"],
-          "displayName": userData["fullname"],
-          "username": userData["username"],
-          "FCMToken": userData["FCMToken"],
+          "userId": userData.userId,
+          "displayName": userData.displayName,
+          "username": userData.username,
+          "FCMToken": userData.FCMToken,
         }
       ]),
+      "lastUpdatedMillis": lastUpdatedMillis,
+    });
+
+    await LocalDatabase().removeIncomingFriendRequestFromUser(
+        uid!, request.userId, lastUpdatedMillis);
+  }
+
+  Future<void> removeFriendFix(UserMini friend, User userData) async {
+    await userCollection.doc(userData.userId).update({
+      "friends": FieldValue.arrayRemove([friend.toMap()]),
+      "lastUpdatedMillis": DateTime.now().millisecondsSinceEpoch,
     });
   }
 
-  Future<void> removeFriendFix(
-      Map<String, dynamic> friend, Map<String, dynamic> userData) async {
-    await userCollection.doc(userData["uid"]).update({
-      "friends": FieldValue.arrayRemove([friend]),
-    });
+  StreamSubscription userDataStream(StreamController streamController) {
+    print("User data stream started");
+    print("User ID: $uid");
+    Stream stream = userCollection.doc(uid).snapshots();
+
+    StreamSubscription streamListen = stream.listen((event) async {
+      print("User data changed");
+      //if user is logged out, end stream
+      print("User ID: $uid");
+      print("User Data: ${event.data()}");
+
+      User userData = User.fromMap(event.data() as Map<String, dynamic>);
+      await LocalDatabase()
+          .updateUserData(userData, userData.lastUpdatedMillis);
+
+      streamController.add(userData);
+    }, onDone: () {});
+    //On Auth State change end stream
+    return streamListen;
   }
 }

@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:snippets/api/database.dart';
+import 'package:snippets/constants.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/pages/responses_page.dart';
@@ -34,11 +35,23 @@ class _QuestionPageState extends State<QuestionPage> {
 
   void savePage() async {
     await HelperFunctions.saveOpenedPageSF("question-${widget.snippetId}");
-    List<Map<String, dynamic>> snippets = await Database().getSnippetsList();
-    bool snippetExists =
-        snippets.any((e) => e["snippetId"] == widget.snippetId);
+    List<Snippet> snippets = await Database().getSnippetsList();
+    bool snippetExists = snippets.any((e) => e.snippetId == widget.snippetId);
     if (!snippetExists) {
       router.pushReplacement("/");
+    }
+    //Check if user has already answered this question
+    Snippet snippet =
+        snippets.firstWhere((e) => e.snippetId == widget.snippetId);
+    if (snippet.answered) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
+        return ResponsesPage(
+          snippetId: widget.snippetId,
+          question: widget.question,
+          theme: widget.theme,
+          isAnonymous: snippet.type == "anonymous",
+        );
+      }));
     }
   }
 
@@ -88,7 +101,7 @@ class _QuestionPageState extends State<QuestionPage> {
       bool hasSeenAnonymouse =
           (await HelperFunctions.checkIfSeenAnonymousSnippetSF());
       if (!hasSeenAnonymouse) {
-        await HelperFunctions.saveSeenAnonymousSnippetSF();
+        await HelperFunctions.saveSeenAnonymousSnippetSF(true);
         showAnonymousInfoDialog(context);
       } else {
         String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
@@ -101,7 +114,7 @@ class _QuestionPageState extends State<QuestionPage> {
           .submitAnswer(
               widget.snippetId, answer, widget.question, widget.theme, null);
     }
-setState(() {
+    setState(() {
       isLoading = false;
     });
     // Navigator.of(context).pop();
@@ -117,7 +130,6 @@ setState(() {
           theme: widget.theme,
           isAnonymous: widget.type == "anonymous",
         ));
-
   }
 
   @override

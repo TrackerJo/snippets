@@ -1,14 +1,26 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/templates/input_decoration.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class UpdatePage extends StatelessWidget {
+class UpdatePage extends StatefulWidget {
   final bool isLoggedIn;
   const UpdatePage({super.key, required this.isLoggedIn});
+
+  @override
+  State<UpdatePage> createState() => _UpdatePageState();
+}
+
+class _UpdatePageState extends State<UpdatePage> {
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    HelperFunctions.saveOpenedPageSF("update");
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +47,7 @@ class UpdatePage extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
-                if (isLoggedIn) {
+                if (widget.isLoggedIn) {
                   router.pushReplacement("/");
                 } else {
                   router.pushReplacement("/login");
