@@ -4,12 +4,15 @@ import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:flutter/material.dart';
 
 import 'package:flutter_widgetkit/flutter_widgetkit.dart';
 import 'package:go_router/go_router.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:provider/provider.dart';
@@ -19,10 +22,12 @@ import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/api/local_database.dart';
 import 'package:snippets/api/notifications.dart';
 import 'package:snippets/api/remote_config.dart';
+import 'package:snippets/api/storage.dart';
 import 'package:snippets/constants.dart';
 import 'package:snippets/helper/app_badge.dart';
 
 import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/pages/app_preferences_page.dart';
 import 'package:snippets/pages/botw_results_page.dart';
 import 'package:snippets/pages/create_account_page.dart';
 import 'package:snippets/pages/discussion_page.dart';
@@ -32,12 +37,13 @@ import 'package:snippets/pages/onboarding_page.dart';
 import 'package:snippets/pages/profile_page.dart';
 import 'package:snippets/pages/question_page.dart';
 import 'package:snippets/pages/responses_page.dart';
+import 'package:snippets/pages/settings_page.dart';
 import 'package:snippets/pages/swipe_pages.dart';
 import 'package:snippets/pages/update_page.dart';
 import 'package:snippets/pages/voting_page.dart';
-import 'package:snippets/pages/welcome_page.dart';
+import 'package:snippets/pages/login_page.dart';
 import 'package:snippets/providers/card_provider.dart';
-
+import 'package:snippets/templates/styling.dart';
 import 'package:snippets/widgets/response_tile.dart';
 
 import 'firebase_options.dart';
@@ -48,6 +54,14 @@ const String iOSWidgetName = 'Snippets_Widgets';
 
 final StreamController<User> currentUserStream =
     StreamController<User>.broadcast();
+
+final StreamController<RemoteMessage> onMessageStream =
+    StreamController<RemoteMessage>.broadcast();
+
+final StreamController<RemoteMessage> onMessageOpenedAppStream =
+    StreamController<RemoteMessage>.broadcast();
+
+final Styling styling = Styling();
 
 class Answer {
   final String answer;
@@ -360,9 +374,21 @@ final router = GoRouter(
       path: '/friendLink',
       builder: (context, state) => ProfilePage(
         uid: state.uri.queryParameters['uid']!,
+        showAppBar: true,
         isFriendLink: true,
       ),
     ),
+    GoRoute(
+      path: "/settings",
+      builder: (context, state) {
+        return const SettingsPage();
+      },
+    ),
+    GoRoute(
+        path: "/app_preferences",
+        builder: (context, state) {
+          return const AppPreferencesPage();
+        }),
     GoRoute(
       path: '/home',
       builder: (_, __) => const SwipePages(),
@@ -389,6 +415,7 @@ final router = GoRouter(
           path: 'profile/widget',
           builder: (context, state) => ProfilePage(
             uid: state.uri.queryParameters['uid']!,
+            showAppBar: true,
             showBackButton: true,
           ),
         ),
@@ -396,6 +423,7 @@ final router = GoRouter(
           path: 'friendLink',
           builder: (context, state) => ProfilePage(
             uid: state.uri.queryParameters['uid']!,
+            showAppBar: true,
           ),
         ),
         GoRoute(
@@ -443,6 +471,7 @@ final router = GoRouter(
           path: 'profile/:uid',
           builder: (context, state) => ProfilePage(
             uid: state.pathParameters['uid']!,
+            showAppBar: true,
             showBackButton: true,
           ),
         ),
@@ -456,22 +485,42 @@ final router = GoRouter(
   ],
 );
 
+Key refreshKey = UniqueKey();
+
 class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
-  final connectionChecker = InternetConnectionChecker();
-  late StreamSubscription<InternetConnectionStatus> subscription;
+  late StreamSubscription<InternetStatus> subscription;
 
   bool isSignedIn = false;
   getUserLoggedInState() async {
+    String theme = await HelperFunctions.getThemeSF();
+    styling.setTheme(theme);
     int updateLocalDB = await HelperFunctions.getLocalDatabaseUpdateSF();
-    if (updateLocalDB < 16) {
-      print("Deleting local database");
+    if (updateLocalDB < 19) {
       await LocalDatabase().deleteDB();
-      await HelperFunctions.saveLocalDatabaseUpdateSF(16);
+      await HelperFunctions.saveLocalDatabaseUpdateSF(19);
     }
 
     bool status = await Auth().isUserLoggedIn();
     if (status) {
       await PushNotifications().initNotifications();
+      List<String> topics = await HelperFunctions.getTopicNotifications();
+      if (topics.isEmpty) {
+        print("Subscribing to topics");
+        await HelperFunctions.addTopicNotification("all");
+        await HelperFunctions.addTopicNotification("botw");
+        await HelperFunctions.addTopicNotification("snippets");
+        await HelperFunctions.addAllowedNotification("friend");
+        await HelperFunctions.addAllowedNotification("discussion");
+        await HelperFunctions.addAllowedNotification("snippets");
+        await HelperFunctions.addAllowedNotification("botw");
+        await HelperFunctions.addAllowedNotification("snippetResponse");
+        await PushNotifications().subscribeToTopic("all");
+        await PushNotifications().subscribeToTopic("botw");
+        await PushNotifications().subscribeToTopic("snippets");
+        await Storage().changeAllowedNotification("friend", true);
+        await Storage().changeAllowedNotification("discussion", true);
+        await Storage().changeAllowedNotification("snippetResponse", true);
+      }
     }
     // await LocalDatabase().clearChats();
 
@@ -496,9 +545,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     // TODO: implement initState
     super.initState();
 
-    subscription = connectionChecker.onStatusChange.listen(
-      (InternetConnectionStatus status) async {
-        if (status == InternetConnectionStatus.connected) {
+    subscription = InternetConnection().onStatusChange.listen(
+      (InternetStatus status) async {
+        if (status == InternetStatus.connected) {
           //Check if on /nowifi
           String? currentPage = await HelperFunctions.getOpenedPageFromSF();
           if (currentPage == "nowifi") {
@@ -566,8 +615,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     List<UserMini> friendRequests = dataToFix.friendRequests;
     List<UserMini> outgoingRequests = dataToFix.outgoingFriendRequests;
     List<String> friendIds = friends.map((e) => e.userId).toList();
-    print(friendIds);
-    print("Fixing user data");
+
     //Check if has any friend requests that are in friends list
     for (UserMini request in friendRequests) {
       if (friendIds.contains(request.userId)) {
@@ -578,10 +626,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
     //Check if has any outgoing requests that are in friends list
     for (UserMini request in outgoingRequests) {
-      print("Checking outgoing requests");
-      print("Request: $request");
       if (friendIds.contains(request.userId)) {
-        print("Removing request");
         await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
             .removeOutgoingFriendRequest(request, dataToFix);
       }
@@ -590,6 +635,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     //Check for duplicate friends
     List<String> readIds = [];
     List<UserMini> requestsToRemove = [];
+
     for (var i = 0; i < friendIds.length; i++) {
       String id = friendIds[i];
       if (readIds.contains(id)) {
@@ -611,7 +657,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     switch (state) {
       case AppLifecycleState.resumed:
-        bool isConnected = await InternetConnectionChecker().hasConnection;
+        bool isConnected = await InternetConnection().hasInternetAccess;
         if (isConnected) {
           //Check if on /nowifi
           String? currentPage = await HelperFunctions.getOpenedPageFromSF();
@@ -640,54 +686,57 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         if (!status) {
           return;
         }
-        BOTW botwData = await Database().getBOTW();
-        List<Answer> answers = [];
-        var answersData = botwData.answers;
+        if (Platform.isIOS) {
+          BOTW botwData = await Database().getBOTW();
+          List<Answer> answers = [];
+          var answersData = botwData.answers;
 
-        for (var answer in answersData.values) {
-          answers.add(Answer(answer.answer, answer.userId, answer.displayName));
-        }
-        print("BOTW DATA");
-        print(botwData);
-        Map<String, dynamic> data =
-            WidgetData(botwData.blank.split(" of")[0], answers: answers)
-                .toJson();
-
-        if (await WidgetKit.getItem('botwData', 'group.kazoom_snippets') ==
-            null) {
-          WidgetKit.setItem(
-              'botwData', jsonEncode(data), 'group.kazoom_snippets');
-          WidgetKit.reloadAllTimelines();
-        } else {
-          Map<String, dynamic> oldBOTW = json.decode(
-              await WidgetKit.getItem('botwData', 'group.kazoom_snippets'));
-
-          List<Map<String, dynamic>> newAnswers = [];
-          for (var answer in data["answers"]) {
-            newAnswers.add({
-              "answer": answer["answer"],
-              "uid": answer["uid"],
-              "displayName": answer["displayName"],
-            });
-          }
-          List<Map<String, dynamic>> oldAnswers = [];
-          for (var answer in oldBOTW["answers"]) {
-            oldAnswers.add({
-              "answer": answer["answer"],
-              "uid": answer["uid"],
-              "displayName": answer["displayName"],
-            });
+          for (var answer in answersData.values) {
+            answers
+                .add(Answer(answer.answer, answer.userId, answer.displayName));
           }
 
-          if (oldBOTW["text"] != data["text"] ||
-              !compareAnswerList(oldAnswers, newAnswers)) {
+          Map<String, dynamic> data =
+              WidgetData(botwData.blank.split(" of")[0], answers: answers)
+                  .toJson();
+
+          if (await WidgetKit.getItem('botwData', 'group.kazoom_snippets') ==
+              null) {
             WidgetKit.setItem(
                 'botwData', jsonEncode(data), 'group.kazoom_snippets');
             WidgetKit.reloadAllTimelines();
+          } else {
+            Map<String, dynamic> oldBOTW = json.decode(
+                await WidgetKit.getItem('botwData', 'group.kazoom_snippets'));
+
+            List<Map<String, dynamic>> newAnswers = [];
+            for (var answer in data["answers"]) {
+              newAnswers.add({
+                "answer": answer["answer"],
+                "uid": answer["uid"],
+                "displayName": answer["displayName"],
+              });
+            }
+            List<Map<String, dynamic>> oldAnswers = [];
+            for (var answer in oldBOTW["answers"]) {
+              oldAnswers.add({
+                "answer": answer["answer"],
+                "uid": answer["uid"],
+                "displayName": answer["displayName"],
+              });
+            }
+
+            if (oldBOTW["text"] != data["text"] ||
+                !compareAnswerList(oldAnswers, newAnswers)) {
+              WidgetKit.setItem(
+                  'botwData', jsonEncode(data), 'group.kazoom_snippets');
+              WidgetKit.reloadAllTimelines();
+            }
           }
         }
 
         List<Snippet> snippets = await Database().getSnippetsList();
+
         List<Map<String, dynamic>> snippetsData = [];
         List<Snippet> removedSnippets = [];
         for (var snippet in snippets) {
@@ -727,25 +776,10 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           snippetStrings.add(
               "${snippet["question"]}|${snippet["snippetId"]}|${snippet["index"]}|${snippet["type"]}|${snippet["answered"] ? "true" : "false"}|${snippet["removalDate"]}");
         }
-
-        if (await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets') ==
-            null) {
-          print("NULL SNIPPETS");
-
-          WidgetKit.setItem(
-              'snippetsData',
-              jsonEncode({
-                "snippets": snippetStrings,
-              }),
-              'group.kazoom_snippets');
-          WidgetKit.reloadAllTimelines();
-        } else {
-          Map<String, dynamic> oldSnippets = json.decode(
-              await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets'));
-
-          if (!compareQuestionsAndIDs(oldSnippets, {
-            "snippets": snippetStrings,
-          })) {
+        if (Platform.isIOS) {
+          if (await WidgetKit.getItem(
+                  'snippetsData', 'group.kazoom_snippets') ==
+              null) {
             WidgetKit.setItem(
                 'snippetsData',
                 jsonEncode({
@@ -753,53 +787,53 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
                 }),
                 'group.kazoom_snippets');
             WidgetKit.reloadAllTimelines();
+          } else {
+            Map<String, dynamic> oldSnippets = json.decode(
+                await WidgetKit.getItem(
+                    'snippetsData', 'group.kazoom_snippets'));
+
+            if (!compareQuestionsAndIDs(oldSnippets, {
+              "snippets": snippetStrings,
+            })) {
+              WidgetKit.setItem(
+                  'snippetsData',
+                  jsonEncode({
+                    "snippets": snippetStrings,
+                  }),
+                  'group.kazoom_snippets');
+              WidgetKit.reloadAllTimelines();
+            }
           }
         }
 
-        List<SnippetResponse> snippetResponses =
-            await Database().getSnippetsResponses();
-        List<String> responseStrings = [];
-        List<String> unansweredQuestions = [];
+        if (Platform.isIOS) {
+          List<SnippetResponse> snippetResponses =
+              await Database().getSnippetsResponses();
+          List<String> responseStrings = [];
+          List<String> unansweredQuestions = [];
 
-        for (var response in snippetResponses) {
-          if (unansweredQuestions.contains(response.snippetId)) {
-            continue;
-          }
-          if (response.userId == auth.FirebaseAuth.instance.currentUser!.uid) {
-            continue;
+          for (var response in snippetResponses) {
+            if (unansweredQuestions.contains(response.snippetId)) {
+              continue;
+            }
+            if (response.userId ==
+                auth.FirebaseAuth.instance.currentUser!.uid) {
+              continue;
+            }
+
+            responseStrings.add(
+                "${response.displayName}|${snippets.firstWhere((e) => e.snippetId == response.snippetId).question}|${response.answer}|${response.snippetId}|${response.userId}|${snippets.firstWhere((e) => e.snippetId == response.snippetId).type}|${snippets.firstWhere((e) => e.snippetId == response.snippetId).answered ? "true" : "false"}");
+            if (snippets
+                    .firstWhere((e) => e.snippetId == response.snippetId)
+                    .answered ==
+                false) {
+              unansweredQuestions.add(response.snippetId);
+            }
           }
 
-          responseStrings.add(
-              "${response.displayName}|${snippets.firstWhere((e) => e.snippetId == response.snippetId).question}|${response.answer}|${response.snippetId}|${response.userId}|${snippets.firstWhere((e) => e.snippetId == response.snippetId).type}|${snippets.firstWhere((e) => e.snippetId == response.snippetId).answered ? "true" : "false"}");
-          if (snippets
-                  .firstWhere((e) => e.snippetId == response.snippetId)
-                  .answered ==
-              false) {
-            unansweredQuestions.add(response.snippetId);
-          }
-        }
-
-        if (await WidgetKit.getItem(
-                'snippetsResponsesData', 'group.kazoom_snippets') ==
-            null) {
-          WidgetKit.setItem(
-              'snippetsResponsesData',
-              jsonEncode({
-                "responses": responseStrings,
-              }),
-              'group.kazoom_snippets');
-          WidgetKit.reloadAllTimelines();
-        } else {
-          Map<String, dynamic> oldResponsesMap = json.decode(
-              await WidgetKit.getItem(
-                  'snippetsResponsesData', 'group.kazoom_snippets'));
-          List<String> oldResponses =
-              oldResponsesMap["responses"].cast<String>();
-          print("OLD RESPONSES");
-          print(oldResponses);
-          print("NEW RESPONSES");
-          print(responseStrings);
-          if (!compareResponsesList(oldResponses, responseStrings)) {
+          if (await WidgetKit.getItem(
+                  'snippetsResponsesData', 'group.kazoom_snippets') ==
+              null) {
             WidgetKit.setItem(
                 'snippetsResponsesData',
                 jsonEncode({
@@ -807,6 +841,22 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
                 }),
                 'group.kazoom_snippets');
             WidgetKit.reloadAllTimelines();
+          } else {
+            Map<String, dynamic> oldResponsesMap = json.decode(
+                await WidgetKit.getItem(
+                    'snippetsResponsesData', 'group.kazoom_snippets'));
+            List<String> oldResponses =
+                oldResponsesMap["responses"].cast<String>();
+
+            if (!compareResponsesList(oldResponses, responseStrings)) {
+              WidgetKit.setItem(
+                  'snippetsResponsesData',
+                  jsonEncode({
+                    "responses": responseStrings,
+                  }),
+                  'group.kazoom_snippets');
+              WidgetKit.reloadAllTimelines();
+            }
           }
         }
 
@@ -819,13 +869,14 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         }
         int numCachedResponses = await LocalDatabase().numberOfResponses();
         int numCachedSnippets = await LocalDatabase().numberOfSnippets();
-        print("Cached responses: $numCachedResponses");
-        print("Cached snippets: $numCachedSnippets");
 
         //Check if FCM token changed
         String deviceToken = await PushNotifications().getDeviceToken();
+
         User userData = await Database()
             .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
+        // await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+        //     .removeOldDiscussions(userData, snippets);
         fixUserData(userData);
 
         if (userData.FCMToken != deviceToken) {
@@ -833,7 +884,13 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
               .updateUserFCMToken(deviceToken);
           //Subscribe to topic
-          await PushNotifications().subscribeToTopic("all");
+          List<String> topics = await HelperFunctions.getTopicNotifications();
+          for (var topic in topics) {
+            await PushNotifications().subscribeToTopic(topic);
+          }
+          int snippetResponseDelay =
+              await HelperFunctions.getSnippetResponseDelaySF();
+          await Storage().setUserSnippetResponseDelay(snippetResponseDelay);
         }
 
         break;
@@ -864,6 +921,13 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         create: (context) => CardProvider(),
         child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
+          key: styling.key,
+          theme: ThemeData(
+            // fontFamily: styling.font,
+            textTheme: GoogleFonts.notoSansTextTheme(
+              Theme.of(context).textTheme,
+            ),
+          ),
           routerConfig: router,
           // home: isSignedIn ? const SwipePages() : const WelcomePage(),
           // navigatorKey: navigatorKey,

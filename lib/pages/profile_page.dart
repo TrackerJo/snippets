@@ -7,15 +7,18 @@ import 'package:flutter/services.dart';
 import 'package:snippets/api/database.dart';
 import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/constants.dart';
+import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/pages/botw_results_page.dart';
+import 'package:snippets/pages/no_wifi_page.dart';
+import 'package:snippets/pages/settings_page.dart';
+import 'package:snippets/pages/update_page.dart';
 
 import 'package:snippets/pages/voting_page.dart';
 
-import 'package:snippets/templates/colorsSys.dart';
-import 'package:snippets/templates/input_decoration.dart';
 import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/botw_tile.dart';
+import 'package:snippets/widgets/custom_page_route.dart';
 
 import 'package:snippets/widgets/friend_tile.dart';
 import 'package:snippets/widgets/friends_count.dart';
@@ -104,7 +107,7 @@ class _ProfilePageState extends State<ProfilePage> {
           numberOfFriends = profileData.friends.length;
           userDisplayName = profileData.displayName;
           BOTW newBlankofTheWeek = blankOfTheWeek;
-          print(newBlankofTheWeek);
+
           if (newBlankofTheWeek.answers.containsKey(profileData.userId)) {
             newBlankofTheWeek.answers[profileData.userId] = BOTWAnswer(
                 FCMToken: profileData.FCMToken,
@@ -183,7 +186,9 @@ class _ProfilePageState extends State<ProfilePage> {
             }
           }
         }
+        if (!mounted) return;
         setState(() {
+          if (!mounted) return;
           numberOfMutualFriends = mutualFriends;
           this.mutualFriends = mutualFriendsList;
         });
@@ -345,8 +350,7 @@ class _ProfilePageState extends State<ProfilePage> {
     List<UserMini> friendRequests = dataToFix.friendRequests;
     List<UserMini> outgoingRequests = dataToFix.outgoingFriendRequests;
     List<String> friendIds = friends.map((e) => e.userId).toList();
-    print(friendIds);
-    print("Fixing user data");
+
     //Check if has any friend requests that are in friends list
     for (UserMini request in friendRequests) {
       if (friendIds.contains(request.userId)) {
@@ -357,10 +361,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     //Check if has any outgoing requests that are in friends list
     for (UserMini request in outgoingRequests) {
-      print("Checking outgoing requests");
-      print("Request: $request");
       if (friendIds.contains(request.userId)) {
-        print("Removing request");
         await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
             .removeOutgoingFriendRequest(request, dataToFix);
       }
@@ -412,11 +413,18 @@ class _ProfilePageState extends State<ProfilePage> {
     botwStreamController.close();
   }
 
-  void showFriendsPopup() {
-    HapticFeedback.mediumImpact();
+  void showFriendsPopup() async {
+    String hapticFeedback = await HelperFunctions.getHapticFeedbackSF();
+    if (hapticFeedback == "normal") {
+      HapticFeedback.mediumImpact();
+    } else if (hapticFeedback == "light") {
+      HapticFeedback.lightImpact();
+    } else if (hapticFeedback == "heavy") {
+      HapticFeedback.heavyImpact();
+    }
     showModalBottomSheet<void>(
         context: context,
-        backgroundColor: ColorSys.background,
+        backgroundColor: styling.background,
         isScrollControlled: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
@@ -432,9 +440,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   padding: const EdgeInsets.all(32.0),
                   child: Column(
                     children: [
-                      const Text("Friends",
+                      Text("Friends",
                           style: TextStyle(
-                            color: Colors.white,
+                            color: styling.backgroundText,
                             fontSize: 30,
                           )),
                       const SizedBox(height: 20),
@@ -458,11 +466,18 @@ class _ProfilePageState extends State<ProfilePage> {
         });
   }
 
-  void showMutualFriendsPopup() {
-    HapticFeedback.mediumImpact();
+  void showMutualFriendsPopup() async {
+    String hapticFeedback = await HelperFunctions.getHapticFeedbackSF();
+    if (hapticFeedback == "normal") {
+      HapticFeedback.mediumImpact();
+    } else if (hapticFeedback == "light") {
+      HapticFeedback.lightImpact();
+    } else if (hapticFeedback == "heavy") {
+      HapticFeedback.heavyImpact();
+    }
     showModalBottomSheet<void>(
         context: context,
-        backgroundColor: ColorSys.background,
+        backgroundColor: styling.background,
         isScrollControlled: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
@@ -478,9 +493,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   padding: const EdgeInsets.all(32.0),
                   child: Column(
                     children: [
-                      const Text("Mutual Friends",
+                      Text("Mutual Friends",
                           style: TextStyle(
-                            color: Colors.white,
+                            color: styling.backgroundText,
                             fontSize: 30,
                           )),
                       const SizedBox(height: 20),
@@ -546,365 +561,306 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        appBar: widget.showAppBar
-            ? PreferredSize(
-                preferredSize: const Size.fromHeight(kToolbarHeight),
-                child: CustomAppBar(
-                  fixRight: true,
-                  title: !userExists
-                      ? "User Doesn't Exist"
-                      : isCurrentUser
-                          ? "Your Profile"
-                          : displayName,
-                  showBackButton: widget.showBackButton || widget.isFriendLink,
-                  onBackButtonPressed: () {
-                    HapticFeedback.mediumImpact();
+      child: Stack(
+        children: [
+          if (widget.showAppBar) BackgroundTile(),
+          Scaffold(
+            resizeToAvoidBottomInset: false,
+            appBar: widget.showAppBar
+                ? PreferredSize(
+                    preferredSize: const Size.fromHeight(kToolbarHeight),
+                    child: CustomAppBar(
+                      fixRight: true,
+                      title: !userExists
+                          ? "User Doesn't Exist"
+                          : isCurrentUser
+                              ? "Your Profile"
+                              : displayName,
+                      showBackButton:
+                          widget.showBackButton || widget.isFriendLink,
+                      onBackButtonPressed: () async {
+                        String hapticFeedback =
+                            await HelperFunctions.getHapticFeedbackSF();
+                        if (hapticFeedback == "normal") {
+                          HapticFeedback.mediumImpact();
+                        } else if (hapticFeedback == "light") {
+                          HapticFeedback.lightImpact();
+                        } else if (hapticFeedback == "heavy") {
+                          HapticFeedback.heavyImpact();
+                        }
 
-                    if (widget.isFriendLink) {
-                      // Navigator.of(context).pop();
-                      router.go('/home');
-                    } else {
-                      Navigator.of(context).pop();
-                    }
-                  },
-                  showSettingsButton: isCurrentUser,
-                  onSettingsButtonPressed: () {
-                    showModalBottomSheet<void>(
-                        context: context,
-                        backgroundColor: ColorSys.background,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(23),
-                            topRight: Radius.circular(23),
-                          ),
+                        if (widget.isFriendLink) {
+                          // Navigator.of(context).pop();
+                          router.go('/home');
+                        } else {
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      showSettingsButton: isCurrentUser,
+                      onSettingsButtonPressed: () async {
+                        String? hapticFeedback =
+                            await HelperFunctions.getHapticFeedbackSF();
+                        if (hapticFeedback == "normal") {
+                          HapticFeedback.mediumImpact();
+                        } else if (hapticFeedback == "light") {
+                          HapticFeedback.lightImpact();
+                        } else if (hapticFeedback == "heavy") {
+                          HapticFeedback.heavyImpact();
+                        }
+                        nextScreen(context, SettingsPage());
+                      },
+                    ),
+                  )
+                : null,
+            backgroundColor: Colors.transparent,
+            body: !userExists
+                ? Center(
+                    child: Column(
+                      children: [
+                        const SizedBox(
+                          height: 20,
                         ),
-                        builder: (BuildContext context) {
-                          return SizedBox(
-                              height: 200,
-                              child: Padding(
-                                  padding: const EdgeInsets.all(32.0),
-                                  child: Column(
-                                    children: [
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: ElevatedButton(
-                                            onPressed: () {
-                                              HapticFeedback.mediumImpact();
-
-                                              logout();
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    ColorSys.primarySolid,
-                                                elevation: 10,
-                                                shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            12)),
-                                                shadowColor: ColorSys.primary),
-                                            child: const Text("Log Out",
-                                                style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 15))),
-                                      ),
-                                      const SizedBox(height: 20),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: ElevatedButton(
-                                            onPressed: () {
-                                              HapticFeedback.mediumImpact();
-                                              editDescription =
-                                                  profileData.description;
-                                              showDiscriptionPopup(context);
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    ColorSys.primarySolid,
-                                                elevation: 10,
-                                                shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            12)),
-                                                shadowColor: ColorSys.primary),
-                                            child: const Text(
-                                                "Edit Description",
-                                                style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 15))),
-                                      ),
-                                    ],
-                                  )));
-                        });
-                  },
-                ),
-              )
-            : null,
-        backgroundColor: const Color(0xFF232323),
-        body: !userExists
-            ? Center(
-                child: Column(
-                  children: [
-                    const SizedBox(
-                      height: 20,
+                        const Text(
+                          "Account doesnt exist anymore :(",
+                          style: TextStyle(color: Colors.white, fontSize: 20),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(
+                          height: 20,
+                        ),
+                        ElevatedButton(
+                            onPressed: () {
+                              router.pushReplacement("/");
+                            },
+                            style: styling.elevatedButtonDecoration(),
+                            child: Text(
+                              "Go Back Home",
+                              style: TextStyle(
+                                  color: styling.theme == "colorful-light"
+                                      ? styling.primaryDark
+                                      : Colors.black,
+                                  fontSize: 16),
+                            ))
+                      ],
                     ),
-                    const Text(
-                      "Account doesnt exist anymore :(",
-                      style: TextStyle(color: Colors.white, fontSize: 20),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    ElevatedButton(
-                        onPressed: () {
-                          router.pushReplacement("/");
-                        },
-                        style: elevatedButtonDecoration,
-                        child: const Text(
-                          "Go Back Home",
-                          style: TextStyle(color: Colors.black, fontSize: 16),
-                        ))
-                  ],
-                ),
-              )
-            : gotData && blankOfTheWeek.answers.containsKey(profileData.userId)
-                ? Stack(
-                    children: [
-                      const BackgroundTile(),
-                      SingleChildScrollView(
-                        child: Column(
-                          // shrinkWrap: true,
-                          children: [
-                            const SizedBox(height: 20),
-                            Column(
+                  )
+                : gotData &&
+                        blankOfTheWeek.answers.containsKey(profileData.userId)
+                    ? Stack(
+                        children: [
+                          SingleChildScrollView(
+                            child: Column(
+                              // shrinkWrap: true,
                               children: [
-                                if (profileData.description != "")
-                                  SizedBox(
-                                    width:
-                                        MediaQuery.of(context).size.width - 50,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        //Write three sentences of filler text here
-                                        profileData.description ?? "",
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
+                                const SizedBox(height: 20),
+                                Column(
+                                  children: [
+                                    if (profileData.description != "")
+                                      SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width -
+                                                50,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(
+                                            //Write three sentences of filler text here
+                                            profileData.description ?? "",
+                                            style: TextStyle(
+                                              color: styling.backgroundText,
+                                              fontSize: 16,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
                                         ),
-                                        textAlign: TextAlign.center,
                                       ),
+                                    FriendsCount(
+                                      isCurrentUser: isCurrentUser,
+                                      friends: numberOfFriends,
+                                      mutualFriends: numberOfMutualFriends,
+                                      onFriendsButtonPressed: showFriendsPopup,
+                                      onMutualFriendsButtonPressed:
+                                          showMutualFriendsPopup,
                                     ),
-                                  ),
-                                FriendsCount(
-                                  isCurrentUser: isCurrentUser,
-                                  friends: numberOfFriends,
-                                  mutualFriends: numberOfMutualFriends,
-                                  onFriendsButtonPressed: showFriendsPopup,
-                                  onMutualFriendsButtonPressed:
-                                      showMutualFriendsPopup,
+                                  ],
                                 ),
+                                const SizedBox(height: 20),
+                                if (!isCurrentUser)
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      isLoading
+                                          ? CircularProgressIndicator(
+                                              color: styling.primary,
+                                            )
+                                          : SizedBox(
+                                              width: 250,
+                                              child: ElevatedButton(
+                                                  onPressed: () async {
+                                                    setState(() {
+                                                      isLoading = true;
+                                                    });
+                                                    String hapticFeedback =
+                                                        await HelperFunctions
+                                                            .getHapticFeedbackSF();
+                                                    if (hapticFeedback ==
+                                                        "normal") {
+                                                      HapticFeedback
+                                                          .mediumImpact();
+                                                    } else if (hapticFeedback ==
+                                                        "light") {
+                                                      HapticFeedback
+                                                          .lightImpact();
+                                                    }
+                                                    if (isFriends) {
+                                                      await removeFriend();
+                                                    } else {
+                                                      if (hasFriendRequest) {
+                                                        await acceptFriendRequest();
+                                                        setState(() {
+                                                          isLoading = false;
+                                                        });
+                                                        return;
+                                                      }
+                                                      if (sentFriendRequest) {
+                                                        await cancelFriendRequest();
+                                                        setState(() {
+                                                          isLoading = false;
+                                                        });
+                                                        return;
+                                                      }
+
+                                                      await sendFriendRequest();
+                                                    }
+                                                    setState(() {
+                                                      isLoading = false;
+                                                    });
+                                                  },
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor: isFriends ||
+                                                            sentFriendRequest ||
+                                                            hasFriendRequest
+                                                        ? Colors.transparent
+                                                        : styling.primaryDark,
+                                                    elevation: 10,
+                                                    shadowColor:
+                                                        Colors.transparent,
+                                                    shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(30),
+                                                        side: BorderSide(
+                                                            color: styling
+                                                                .primaryDark,
+                                                            width: 3)),
+                                                  ),
+                                                  child: Text(
+                                                      isFriends
+                                                          ? "Unfriend"
+                                                          : hasFriendRequest
+                                                              ? "Accept Friend Request"
+                                                              : sentFriendRequest
+                                                                  ? "Friend Request Sent"
+                                                                  : "Add Friend",
+                                                      style: TextStyle(
+                                                          color: isFriends ||
+                                                                  sentFriendRequest ||
+                                                                  hasFriendRequest
+                                                              ? styling
+                                                                  .backgroundText
+                                                              : styling
+                                                                  .backgroundText))),
+                                            )
+                                    ],
+                                  ),
+                                if (!isCurrentUser) const SizedBox(height: 20),
+                                BOTWTile(
+                                  blank: blankOfTheWeek.blank,
+                                  answer: blankOfTheWeek
+                                      .answers[profileData.userId]!,
+                                  isCurrentUser: isCurrentUser,
+                                  status: blankOfTheWeek.status,
+                                ),
+                                if (blankOfTheWeek.status ==
+                                        BOTWStatusType.voting &&
+                                    isCurrentUser)
+                                  const SizedBox(height: 20),
+                                if (blankOfTheWeek.status ==
+                                        BOTWStatusType.voting &&
+                                    isCurrentUser)
+                                  ElevatedButton(
+                                      onPressed: () async {
+                                        String hapticFeedback =
+                                            await HelperFunctions
+                                                .getHapticFeedbackSF();
+                                        if (hapticFeedback == "normal") {
+                                          HapticFeedback.mediumImpact();
+                                        } else if (hapticFeedback == "light") {
+                                          HapticFeedback.lightImpact();
+                                        } else if (hapticFeedback == "heavy") {
+                                          HapticFeedback.heavyImpact();
+                                        }
+                                        nextScreen(
+                                            context,
+                                            VotingPage(
+                                              blank: blankOfTheWeek,
+                                            ));
+                                      },
+                                      style: styling.elevatedButtonDecoration(),
+                                      child: Text(
+                                        "Vote",
+                                        style: TextStyle(
+                                            color: styling.theme ==
+                                                    "colorful-light"
+                                                ? styling.primaryDark
+                                                : Colors.black,
+                                            fontSize: 16),
+                                      )),
+                                if (blankOfTheWeek.status ==
+                                        BOTWStatusType.done &&
+                                    isCurrentUser)
+                                  const SizedBox(height: 20),
+                                if (blankOfTheWeek.status ==
+                                        BOTWStatusType.done &&
+                                    isCurrentUser)
+                                  ElevatedButton(
+                                      onPressed: () async {
+                                        String hapticFeedback =
+                                            await HelperFunctions
+                                                .getHapticFeedbackSF();
+                                        if (hapticFeedback == "normal") {
+                                          HapticFeedback.mediumImpact();
+                                        } else if (hapticFeedback == "light") {
+                                          HapticFeedback.lightImpact();
+                                        } else if (hapticFeedback == "heavy") {
+                                          HapticFeedback.heavyImpact();
+                                        }
+
+                                        nextScreen(
+                                            context,
+                                            BotwResultsPage(
+                                                answers:
+                                                    blankOfTheWeek.answers));
+                                      },
+                                      style: styling.elevatedButtonDecoration(),
+                                      child: Text(
+                                        "View Results",
+                                        style: TextStyle(
+                                            color: styling.theme ==
+                                                    "colorful-light"
+                                                ? styling.primaryDark
+                                                : Colors.black,
+                                            fontSize: 16),
+                                      )),
                               ],
                             ),
-                            const SizedBox(height: 20),
-                            if (!isCurrentUser)
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  isLoading
-                                      ? CircularProgressIndicator(
-                                          color: ColorSys.primary,
-                                        )
-                                      : SizedBox(
-                                          width: 250,
-                                          child: ElevatedButton(
-                                              onPressed: () async {
-                                                setState(() {
-                                                  isLoading = true;
-                                                });
-                                                HapticFeedback.mediumImpact();
-                                                if (isFriends) {
-                                                  await removeFriend();
-                                                } else {
-                                                  if (hasFriendRequest) {
-                                                    await acceptFriendRequest();
-                                                    setState(() {
-                                                      isLoading = false;
-                                                    });
-                                                    return;
-                                                  }
-                                                  if (sentFriendRequest) {
-                                                    await cancelFriendRequest();
-                                                    setState(() {
-                                                      isLoading = false;
-                                                    });
-                                                    return;
-                                                  }
-
-                                                  await sendFriendRequest();
-                                                }
-                                                setState(() {
-                                                  isLoading = false;
-                                                });
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: isFriends ||
-                                                        sentFriendRequest ||
-                                                        hasFriendRequest
-                                                    ? Colors.transparent
-                                                    : ColorSys.primaryDark,
-                                                elevation: 10,
-                                                shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            30),
-                                                    side: BorderSide(
-                                                        color: ColorSys
-                                                            .primaryDark,
-                                                        width: 3)),
-                                              ),
-                                              child: Text(
-                                                  isFriends
-                                                      ? "Unfriend"
-                                                      : hasFriendRequest
-                                                          ? "Accept Friend Request"
-                                                          : sentFriendRequest
-                                                              ? "Friend Request Sent"
-                                                              : "Add Friend",
-                                                  style: TextStyle(
-                                                      color: isFriends ||
-                                                              sentFriendRequest ||
-                                                              hasFriendRequest
-                                                          ? Colors.white
-                                                          : Colors.white))),
-                                        )
-                                ],
-                              ),
-                            if (!isCurrentUser) const SizedBox(height: 20),
-                            BOTWTile(
-                              blank: blankOfTheWeek.blank,
-                              answer:
-                                  blankOfTheWeek.answers[profileData.userId]!,
-                              isCurrentUser: isCurrentUser,
-                              status: blankOfTheWeek.status,
-                            ),
-                            if (blankOfTheWeek.status ==
-                                    BOTWStatusType.voting &&
-                                isCurrentUser)
-                              const SizedBox(height: 20),
-                            if (blankOfTheWeek.status ==
-                                    BOTWStatusType.voting &&
-                                isCurrentUser)
-                              ElevatedButton(
-                                  onPressed: () {
-                                    HapticFeedback.mediumImpact();
-                                    nextScreen(
-                                        context,
-                                        VotingPage(
-                                          blank: blankOfTheWeek,
-                                        ));
-                                  },
-                                  style: elevatedButtonDecoration,
-                                  child: const Text(
-                                    "Vote",
-                                    style: TextStyle(
-                                        color: Colors.black, fontSize: 16),
-                                  )),
-                            if (blankOfTheWeek.status == BOTWStatusType.done &&
-                                isCurrentUser)
-                              const SizedBox(height: 20),
-                            if (blankOfTheWeek.status == BOTWStatusType.done &&
-                                isCurrentUser)
-                              ElevatedButton(
-                                  onPressed: () {
-                                    HapticFeedback.mediumImpact();
-                                    nextScreen(
-                                        context,
-                                        BotwResultsPage(
-                                            answers: blankOfTheWeek.answers));
-                                  },
-                                  style: elevatedButtonDecoration,
-                                  child: const Text(
-                                    "View Results",
-                                    style: TextStyle(
-                                        color: Colors.black, fontSize: 16),
-                                  )),
-                          ],
-                        ),
-                      ),
-                    ],
-                  )
-                : const SizedBox(),
+                          ),
+                        ],
+                      )
+                    : const SizedBox(),
+          ),
+        ],
       ),
     );
-  }
-
-  showDiscriptionPopup(BuildContext context) {
-    return showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return GestureDetector(
-            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-            child: SingleChildScrollView(
-              child: AlertDialog(
-                backgroundColor: ColorSys.background,
-                title: Text("Profile's Description",
-                    style: TextStyle(color: ColorSys.primary)),
-                content: SizedBox(
-                  width: 300,
-                  height: 300,
-                  child: Column(
-                    children: [
-                      const Text(
-                          "Enter a short description about yourself. This will be visible to other users.",
-                          style: TextStyle(color: Colors.white)),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      TextFormField(
-                        initialValue: editDescription,
-                        maxLines: 7,
-                        decoration: textInputDecoration.copyWith(
-                          hintText: 'Description',
-                          counterStyle: const TextStyle(color: Colors.white),
-                        ),
-                        onChanged: (value) => editDescription = value,
-                        maxLength: 125,
-                        maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                      ),
-                    ],
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text("Cancel"),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorSys.primary,
-                    ),
-                    onPressed: () async {
-                      setState(() {
-                        profileData.description = editDescription;
-                      });
-
-                      await FBDatabase(
-                              uid: auth.FirebaseAuth.instance.currentUser!.uid)
-                          .updateUserDescription(editDescription);
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text("Save",
-                        style: TextStyle(color: Colors.white)),
-                  ),
-                ],
-              ),
-            ),
-          );
-        });
   }
 }

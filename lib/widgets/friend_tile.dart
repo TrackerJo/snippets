@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/main.dart';
 import 'package:snippets/pages/profile_page.dart';
-import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/widgets/helper_functions.dart';
 
 class FriendTile extends StatefulWidget {
@@ -35,17 +36,26 @@ class _FriendTileState extends State<FriendTile> {
   Widget build(BuildContext context) {
     return Material(
         elevation: 10,
-        shadowColor: ColorSys.primaryDark,
+        shadowColor: styling.secondary,
         borderRadius: BorderRadius.circular(12),
         // color: ColorSys.primary,
         child: ListTile(
-          tileColor: ColorSys.primarySolid,
+          tileColor: styling.theme == "colorful-light"
+              ? Colors.white
+              : styling.secondary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           onTap: () async {
-            HapticFeedback.mediumImpact();
-            if(widget.onTap != null) {
+            String hapticFeedback = await HelperFunctions.getHapticFeedbackSF();
+            if (hapticFeedback == "normal") {
+              HapticFeedback.mediumImpact();
+            } else if (hapticFeedback == "light") {
+              HapticFeedback.lightImpact();
+            } else if (hapticFeedback == "heavy") {
+              HapticFeedback.heavyImpact();
+            }
+            if (widget.onTap != null) {
               await widget.onTap!();
             } else {
               nextScreen(
@@ -55,20 +65,23 @@ class _FriendTileState extends State<FriendTile> {
                     showNavBar: false,
                   ));
             }
-
           },
           title: Text(
             widget.displayName,
-            style: const TextStyle(
-              color: Colors.black,
+            style: TextStyle(
+              color: styling.theme == "colorful-light"
+                  ? styling.secondaryDark
+                  : Colors.black,
               fontSize: 20,
               fontWeight: FontWeight.w600,
             ),
           ),
           subtitle: Text(
             '@${widget.username}',
-            style: const TextStyle(
-              color: Colors.black,
+            style: TextStyle(
+              color: styling.theme == "colorful-light"
+                  ? styling.secondaryDark
+                  : Colors.black,
               fontSize: 15,
               fontWeight: FontWeight.w400,
             ),
@@ -79,23 +92,40 @@ class _FriendTileState extends State<FriendTile> {
             children: [
               if (widget.showCheck)
                 IconButton(
-                  icon: const Icon(Icons.check),
+                  icon: Icon(Icons.check,
+                      color: styling.theme == "colorful-light"
+                          ? styling.secondaryDark
+                          : Colors.black),
                   onPressed: () {
                     widget.onCheckPressed!();
                   },
                 ),
               if (widget.showX)
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: Icon(Icons.close,
+                      color: styling.theme == "colorful-light"
+                          ? styling.secondaryDark
+                          : Colors.black),
                   onPressed: () {
                     widget.onXPressed!();
                   },
                 ),
               if (!widget.showX && !widget.showCheck)
                 IconButton(
-                  icon: const Icon(Icons.arrow_forward_ios),
-                  onPressed: () {
-                    HapticFeedback.mediumImpact();
+                  icon: Icon(Icons.arrow_forward_ios,
+                      color: styling.theme == "colorful-light"
+                          ? styling.secondaryDark
+                          : Colors.black),
+                  onPressed: () async {
+                    String hapticFeedback =
+                        await HelperFunctions.getHapticFeedbackSF();
+                    if (hapticFeedback == "normal") {
+                      HapticFeedback.mediumImpact();
+                    } else if (hapticFeedback == "light") {
+                      HapticFeedback.lightImpact();
+                    } else if (hapticFeedback == "heavy") {
+                      HapticFeedback.heavyImpact();
+                    }
 
                     nextScreen(
                         context,

@@ -18,9 +18,11 @@ import WidgetKit
          
           if #available(iOS 16.0, *) {
               UNUserNotificationCenter.current().setBadgeCount(0)
+              UNUserNotificationCenter.current().removeAllDeliveredNotifications()
           } else {
               var badgeManager = AppAlertBadgeManager(application: UIApplication.shared)
               badgeManager.resetAlertBadgeNumber()
+              UNUserNotificationCenter.current().removeAllDeliveredNotifications()
               
           }
           UserDefaults.init(suiteName: "group.kazoom_snippets")?.set(0, forKey: "badgeCount")

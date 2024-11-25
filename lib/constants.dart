@@ -197,6 +197,13 @@ class BOTWAnswer {
   }
 
   Map<String, dynamic> toMap() {
+    //remove empty strings
+    List<String> voters = [];
+    for (var item in this.voters) {
+      if (item != "") {
+        voters.add(item);
+      }
+    }
     return {
       'FCMToken': FCMToken,
       'answer': answer,
@@ -361,6 +368,9 @@ class User {
   String userId;
   int votesLeft;
   int lastUpdatedMillis;
+  int snippetsRespondedTo;
+  int messagesSent;
+  int discussionsStarted;
 
   User(
       {required this.FCMToken,
@@ -375,7 +385,10 @@ class User {
       required this.username,
       required this.searchKey,
       required this.userId,
+      required this.snippetsRespondedTo,
       this.lastUpdatedMillis = 0,
+      required this.discussionsStarted,
+      required this.messagesSent,
       required this.votesLeft});
 
   //Create empty user
@@ -393,6 +406,9 @@ class User {
         username = "",
         searchKey = "",
         lastUpdatedMillis = 0,
+        snippetsRespondedTo = 0,
+        discussionsStarted = 0,
+        messagesSent = 0,
         userId = "",
         votesLeft = 0;
 
@@ -426,7 +442,10 @@ class User {
         username: map['username'],
         searchKey: map['searchKey'],
         userId: map['uid'],
+        snippetsRespondedTo: map['snippetsRespondedTo'] ?? 0,
         lastUpdatedMillis: map['lastUpdatedMillis'] ?? 0,
+        discussionsStarted: map['discussionsStarted'] ?? 0,
+        messagesSent: map['messagesSent'] ?? 0,
         votesLeft: map['votesLeft']);
   }
 
@@ -461,6 +480,7 @@ class User {
       'searchKey': searchKey,
       'uid': userId,
       'votesLeft': votesLeft,
+      'snippetsRespondedTo': snippetsRespondedTo,
       'lastUpdatedMillis': lastUpdatedMillis
     };
   }

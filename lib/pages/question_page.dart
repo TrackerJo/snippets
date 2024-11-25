@@ -5,7 +5,7 @@ import 'package:snippets/constants.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/pages/responses_page.dart';
-import 'package:snippets/templates/colorsSys.dart';
+import 'package:snippets/templates/styling.dart';
 import 'package:snippets/templates/input_decoration.dart';
 import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
@@ -134,24 +134,24 @@ class _QuestionPageState extends State<QuestionPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: CustomAppBar(
-          title: "Snippet",
-          theme: widget.theme,
-          showBackButton: true,
-          fixRight: true,
-          onBackButtonPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-      ),
-      backgroundColor: const Color(0xFF232323),
-      body: Stack(
-        children: [
-          const BackgroundTile(),
-          SizedBox(
+    return Stack(
+      children: [
+        BackgroundTile(),
+        Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
+            child: CustomAppBar(
+              title: "Snippet",
+              theme: "purple",
+              showBackButton: true,
+              fixRight: true,
+              onBackButtonPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ),
+          backgroundColor: Colors.transparent,
+          body: SizedBox(
             width: MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height - 200,
             child: Column(
@@ -159,10 +159,9 @@ class _QuestionPageState extends State<QuestionPage> {
               children: [
                 Text(
                   widget.question,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: styling.backgroundText,
                     fontSize: 20,
-                    fontFamily: 'Inknut Antiqua',
                     fontWeight: FontWeight.w400,
                     height: 0,
                   ),
@@ -174,15 +173,11 @@ class _QuestionPageState extends State<QuestionPage> {
                   height: 100,
                   child: TextFormField(
                     maxLines: 5,
-                    decoration: textInputDecoration.copyWith(
+                    decoration: styling.textInputDecoration().copyWith(
                         hintText: "Enter Answer",
-                        fillColor: widget.theme == "sunset"
-                            ? ColorSys.sunset
-                            : widget.theme == "sunrise"
-                                ? ColorSys.sunriseGradient.colors[0]
-                                : widget.theme == "blue"
-                                    ? ColorSys.secondarySolid
-                                    : ColorSys.primarySolid),
+                        fillColor: widget.theme == "blue"
+                            ? styling.secondarySolid
+                            : styling.primarySolid),
                     onChanged: (value) => {
                       setState(() {
                         answer = value;
@@ -194,7 +189,7 @@ class _QuestionPageState extends State<QuestionPage> {
                 isLoading
                     ? Center(
                         child: CircularProgressIndicator(
-                          color: ColorSys.primary,
+                          color: styling.primary,
                         ),
                       )
                     : ElevatedButton(
@@ -203,34 +198,26 @@ class _QuestionPageState extends State<QuestionPage> {
                         },
                         style: ElevatedButton.styleFrom(
                           elevation: 10,
-                          shadowColor: widget.theme == "sunset"
-                              ? ColorSys.sunset
-                              : widget.theme == "sunrise"
-                                  ? ColorSys.sunriseGradient.colors[0]
-                                  : widget.theme == "blue"
-                                      ? ColorSys.secondarySolid
-                                      : ColorSys.primarySolid,
+                          shadowColor: widget.theme == "blue"
+                              ? styling.secondarySolid
+                              : styling.primarySolid,
                           minimumSize: const Size(150, 50),
-                          backgroundColor: widget.theme == "sunset"
-                              ? ColorSys.sunset
-                              : widget.theme == "sunrise"
-                                  ? ColorSys.sunriseGradient.colors[0]
-                                  : widget.theme == "blue"
-                                      ? ColorSys.secondarySolid
-                                      : ColorSys.primarySolid,
+                          backgroundColor: widget.theme == "blue"
+                              ? styling.secondarySolid
+                              : styling.primarySolid,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20.0),
                           ),
                         ),
-                        child: const Text('Submit',
-                            style:
-                                TextStyle(fontSize: 20, color: Colors.black)),
+                        child: Text('Submit',
+                            style: TextStyle(
+                                fontSize: 20, color: styling.backgroundText)),
                       ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

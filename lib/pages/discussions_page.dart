@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/constants.dart';
+import 'package:snippets/helper/helper_function.dart';
 
 import 'package:snippets/widgets/discussion_tile.dart';
 
@@ -22,12 +22,15 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
   List<DiscussionFull> oldDiscussions = [];
   StreamSubscription? discSub;
   bool isLoading = false;
+  String anonymousId = "";
 
   void getDiscussions() async {
     if (!mounted) return;
-    setState(() {
-      isLoading = true;
-    });
+
+    String? anonId = await HelperFunctions.getAnonymousIDFromSF();
+    if (anonId != null) {
+      anonymousId = anonId;
+    }
     StreamController<DiscussionFull> discStream = StreamController();
 
     await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
@@ -47,7 +50,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
             var existing = discussions.firstWhere((element) =>
                 element.snippetId == discussionsMap.snippetId &&
                 element.answerId == discussionsMap.answerId);
-            print("REMOVING");
+
             discussionsMap.snippetQuestion = existing.snippetQuestion;
             discussionsMap.isAnonymous = existing.isAnonymous;
             discussions.removeWhere((element) =>
@@ -106,7 +109,6 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
       // setState(() {});
       return;
     }
-    print("INDEX CHANGED to ${widget.index}");
 
     setState(() {
       isLoading = true;
@@ -126,7 +128,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF232323),
+      backgroundColor: Colors.transparent,
       body: isLoading
           ? ListView(
               children: [
@@ -141,10 +143,13 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
                       if (oldDiscussions == [] || oldDiscussions.isEmpty)
                         const SizedBox(height: 20),
                       if (oldDiscussions == [] || oldDiscussions.isEmpty)
-                        const Text(
-                          "Join a discussion by sending a message in a discussion",
-                          style: TextStyle(color: Colors.white, fontSize: 20),
-                          textAlign: TextAlign.center,
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: const Text(
+                            "Join a discussion by sending a message in a discussion",
+                            style: TextStyle(color: Colors.white, fontSize: 20),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                     ],
                   ),
@@ -155,11 +160,12 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
                     discussionId: discussion.answerId,
                     question: discussion.snippetQuestion,
                     answerUser: discussion.answerDisplayName,
-                    lastMessageSender:
-                        discussion.lastMessage.senderDisplayName,
+                    lastMessageSender: discussion.lastMessage.senderDisplayName,
                     lastMessage: discussion.lastMessage.message,
-                    hasBeenRead: discussion.lastMessage.readBy
-                        .contains(FirebaseAuth.instance.currentUser!.uid),
+                    hasBeenRead: discussion.lastMessage.readBy.contains(
+                        discussion.isAnonymous
+                            ? anonymousId
+                            : FirebaseAuth.instance.currentUser!.uid),
                     theme: "blue",
                     answerResponse: discussion.answer,
                     isAnonymous: discussion.isAnonymous,
@@ -179,10 +185,13 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
                       if (discussions == [] || discussions.isEmpty)
                         const SizedBox(height: 20),
                       if (discussions == [] || discussions.isEmpty)
-                        const Text(
-                          "Join a discussion by sending a message in a discussion",
-                          style: TextStyle(color: Colors.white, fontSize: 20),
-                          textAlign: TextAlign.center,
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: const Text(
+                            "Join a discussion by sending a message in a discussion",
+                            style: TextStyle(color: Colors.white, fontSize: 20),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                     ],
                   ),
@@ -193,11 +202,12 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
                     discussionId: discussion.answerId,
                     question: discussion.snippetQuestion,
                     answerUser: discussion.answerDisplayName,
-                    lastMessageSender:
-                        discussion.lastMessage.senderDisplayName,
+                    lastMessageSender: discussion.lastMessage.senderDisplayName,
                     lastMessage: discussion.lastMessage.message,
-                    hasBeenRead: discussion.lastMessage.readBy
-                        .contains(FirebaseAuth.instance.currentUser!.uid),
+                    hasBeenRead: discussion.lastMessage.readBy.contains(
+                        discussion.isAnonymous
+                            ? anonymousId
+                            : FirebaseAuth.instance.currentUser!.uid),
                     theme: "blue",
                     answerResponse: discussion.answer,
                     isAnonymous: discussion.isAnonymous,

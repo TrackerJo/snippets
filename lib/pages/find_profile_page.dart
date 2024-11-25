@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/constants.dart';
-import 'package:snippets/templates/input_decoration.dart';
+import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/main.dart';
 import 'package:snippets/widgets/profile_tile.dart';
 
 class FindProfilePage extends StatefulWidget {
@@ -55,10 +56,10 @@ class _FindProfilePageState extends State<FindProfilePage> {
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
-        backgroundColor: const Color(0xFF232323),
+        backgroundColor: Colors.transparent,
         body: Column(
           children: [
-            // const BackgroundTile(),
+            // BackgroundTile(),
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -67,13 +68,21 @@ class _FindProfilePageState extends State<FindProfilePage> {
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: TextFormField(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
+                      onTap: () async {
+                        String hapticFeedback =
+                            await HelperFunctions.getHapticFeedbackSF();
+                        if (hapticFeedback == "normal") {
+                          HapticFeedback.selectionClick();
+                        } else if (hapticFeedback == "light") {
+                          HapticFeedback.selectionClick();
+                        } else if (hapticFeedback == "heavy") {
+                          HapticFeedback.mediumImpact();
+                        }
                       },
-                      decoration: textInputDecoration.copyWith(
-                        hintText: "Enter Profile Name",
-                        fillColor: const Color.fromARGB(255, 156, 225, 255),
-                      ),
+                      decoration: styling.textInputDecoration().copyWith(
+                            hintText: "Enter Profile Name",
+                            fillColor: styling.secondary,
+                          ),
                       onChanged: (value) async {
                         if (value == "") {
                           setState(() {
@@ -99,10 +108,10 @@ class _FindProfilePageState extends State<FindProfilePage> {
             if (profileName != "") Expanded(child: profileList()),
             if (profileName == "") const SizedBox(height: 20),
             if (profileName == "")
-              const Text(
+              Text(
                 "Suggested Friends",
                 style: TextStyle(
-                    color: Colors.white,
+                    color: styling.backgroundText,
                     fontSize: 20,
                     fontWeight: FontWeight.bold),
               ),
@@ -126,7 +135,7 @@ class _FindProfilePageState extends State<FindProfilePage> {
           if (snapshot.data!.length != null) {
             if (snapshot.data.length != 0) {
               return ListView.builder(
-                  clipBehavior: Clip.none,
+                  clipBehavior: Clip.hardEdge,
                   itemCount: snapshot.data.length,
                   itemBuilder: (context, index) {
                     //int reverseIndex = snapshot.data.docs.length - index - 1;

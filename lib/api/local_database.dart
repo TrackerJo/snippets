@@ -80,6 +80,9 @@ class UserDataTable extends Table {
   TextColumn get userId => text()();
   IntColumn get lastUpdatedMillis => integer()();
   IntColumn get votesLeft => integer()();
+  IntColumn get snippetsRespondedTo => integer()();
+  IntColumn get messagesSent => integer()();
+  IntColumn get discussionsStarted => integer()();
 }
 
 @DriftDatabase(
@@ -108,7 +111,10 @@ class LocalDatabase {
   Future<void> deleteDB() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'db.sqlite'));
-    await file.delete();
+    //check if file exists
+    if (file.existsSync()) {
+      await file.delete();
+    }
   }
 
   Future<void> clearDB() async {
@@ -295,7 +301,10 @@ class LocalDatabase {
     List<UserMini> result = [];
     if (string == "") return result;
     for (var item in split) {
-      result.add(stringToUserMini(item));
+      //Check if user is already in list
+      UserMini user = stringToUserMini(item);
+      if (result.any((element) => element.userId == user.userId)) continue;
+      result.add(user);
     }
     return result;
   }
@@ -371,7 +380,6 @@ class LocalDatabase {
   }
 
   Future<List<String>> getCachedResponsesIDs(String snippetId) async {
-    print("Snippet ID CACHED: $snippetId");
     //Print all responses in db
     var allResponses = await (localDb.select(localDb.snipResponses)
           ..orderBy([(u) => OrderingTerm.desc(u.lastUpdatedMillis)]))
@@ -383,7 +391,6 @@ class LocalDatabase {
         .get();
     List<String> ids = [];
     for (var item in responses) {
-      print("Response: ${item.uid}");
       ids.add(item.uid);
     }
     return ids;
@@ -430,7 +437,6 @@ class LocalDatabase {
         if (existingSnippet?.answered == true) {
           return;
         } else {
-          print("Updating snippet to answered");
           //update snippet to answered
           await (localDb.update(localDb.snippetsData)
                 ..where((tbl) => tbl.snippetId.equals(snippet.snippetId)))
@@ -444,7 +450,7 @@ class LocalDatabase {
         await (localDb.delete(localDb.snipResponses)
               ..where((tbl) => tbl.snippetId.equals(snippet.snippetId)))
             .go();
-        print("DELETING RESPONSES SNIP");
+
         await (localDb.delete(localDb.chats)
               ..where((tbl) => tbl.snippetId.equals(snippet.snippetId)))
             .go();
@@ -469,7 +475,7 @@ class LocalDatabase {
     await (localDb.delete(localDb.snipResponses)
           ..where((tbl) => tbl.snippetId.equals(snippetId)))
         .go();
-    print("DELETING RESPONSES ID");
+
     await (localDb.delete(localDb.chats)
           ..where((tbl) => tbl.snippetId.equals(snippetId)))
         .go();
@@ -540,12 +546,9 @@ class LocalDatabase {
           ..where((tbl) => tbl.date.isSmallerThan(
               currentDate.modify(const DateTimeModifier.days(-2)))))
         .go();
-    print("DELETING RESPONSES OLD");
   }
 
   Future<void> removeResponse(String snippetId, String userId) async {
-    print("Removing response");
-
     (localDb.delete(localDb.snipResponses)
           ..where((tbl) => tbl.snippetId.equals(snippetId))
           ..where((tbl) => tbl.uid.equals(userId)))
@@ -558,9 +561,7 @@ class LocalDatabase {
           ..where((tbl) => tbl.uid.equals(response.userId)))
         .get();
 
-    print("Adding response: $response");
     if (existingResponse.isNotEmpty) {
-      print("Response already exists");
       // return;
       //Delete existing response
       await (localDb.delete(localDb.snipResponses)
@@ -568,8 +569,6 @@ class LocalDatabase {
             ..where((tbl) => tbl.uid.equals(response.userId)))
           .go();
     }
-    print("ADDING RESPONSE");
-    print(response.userId);
 
     await localDb.into(localDb.snipResponses).insert(SnipResponsesCompanion(
         answer: Value(response.answer),
@@ -807,24 +806,31 @@ class LocalDatabase {
         .get();
     if (existingUser.isEmpty) {
       //Add user if it doesn't exist
-      await localDb.into(localDb.userDataTable).insert(UserDataTableCompanion(
-            FCMToken: Value(user.FCMToken),
-            displayName: Value(user.displayName),
-            BOTWStatus: Value(botwStatusToString(user.botwStatus)),
-            description: Value(user.description),
-            discussions: Value(discussionListToString(user.discussions)),
-            email: Value(user.email),
-            friends: Value(userMiniListToString(user.friends)),
-            friendRequests: Value(userMiniListToString(user.friendRequests)),
-            outgoingFriendRequests:
-                Value(userMiniListToString(user.outgoingFriendRequests)),
-            username: Value(user.username),
-            searchKey: Value(user.searchKey),
-            userId: Value(user.userId),
-            lastUpdatedMillis: Value(lastUpdated),
-            votesLeft: Value(user.votesLeft),
-          ));
+
+      await localDb.into(localDb.userDataTable).insert(
+            UserDataTableCompanion(
+                FCMToken: Value(user.FCMToken),
+                displayName: Value(user.displayName),
+                BOTWStatus: Value(botwStatusToString(user.botwStatus)),
+                description: Value(user.description),
+                discussions: Value(discussionListToString(user.discussions)),
+                email: Value(user.email),
+                friends: Value(userMiniListToString(user.friends)),
+                friendRequests:
+                    Value(userMiniListToString(user.friendRequests)),
+                outgoingFriendRequests:
+                    Value(userMiniListToString(user.outgoingFriendRequests)),
+                username: Value(user.username),
+                searchKey: Value(user.searchKey),
+                userId: Value(user.userId),
+                lastUpdatedMillis: Value(lastUpdated),
+                votesLeft: Value(user.votesLeft),
+                snippetsRespondedTo: Value(user.snippetsRespondedTo),
+                discussionsStarted: Value(user.discussionsStarted),
+                messagesSent: Value(user.messagesSent)),
+          );
     }
+
     await (localDb.update(localDb.userDataTable)
           ..where((tbl) => tbl.userId.equals(user.userId)))
         .write(UserDataTableCompanion(
@@ -870,9 +876,13 @@ class LocalDatabase {
           outgoingFriendRequests: [],
           username: "",
           searchKey: "",
+          snippetsRespondedTo: 0,
+          discussionsStarted: 0,
+          messagesSent: 0,
           userId: "",
           votesLeft: 0);
     }
+
     return User(
         FCMToken: user.first.FCMToken,
         displayName: user.first.displayName,
@@ -887,6 +897,9 @@ class LocalDatabase {
         username: user.first.username,
         searchKey: user.first.searchKey,
         userId: user.first.userId,
+        snippetsRespondedTo: user.first.snippetsRespondedTo,
+        discussionsStarted: user.first.discussionsStarted,
+        messagesSent: user.first.messagesSent,
         votesLeft: user.first.votesLeft);
   }
 
@@ -899,9 +912,6 @@ class LocalDatabase {
       if (controller.isClosed) return;
       if (event.isNotEmpty) {
         var user = event.first;
-        print("User: $user");
-        print("Friends:");
-        print(user.friends);
 
         controller.add(User(
             FCMToken: user.FCMToken,
@@ -917,6 +927,9 @@ class LocalDatabase {
             username: user.username,
             searchKey: user.searchKey,
             userId: user.userId,
+            snippetsRespondedTo: user.snippetsRespondedTo,
+            discussionsStarted: user.discussionsStarted,
+            messagesSent: user.messagesSent,
             votesLeft: user.votesLeft));
       }
     });

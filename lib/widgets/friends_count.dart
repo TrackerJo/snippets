@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:snippets/main.dart';
 
 class FriendsCount extends StatelessWidget {
   final bool isCurrentUser;
@@ -17,7 +18,9 @@ class FriendsCount extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width:isCurrentUser ? MediaQuery.of(context).size.width : MediaQuery.of(context).size.width * 0.8,
+      width: isCurrentUser
+          ? MediaQuery.of(context).size.width
+          : MediaQuery.of(context).size.width * 0.8,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -27,16 +30,16 @@ class FriendsCount extends StatelessWidget {
               onTap: onMutualFriendsButtonPressed,
               child: Column(
                 children: [
-                  const Text("Mutual Friends",
+                  Text("Mutual Friends",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.white,
+                        color: styling.backgroundText,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       )),
                   Text(mutualFriends.toString(),
-                      style: const TextStyle(
-                          color: Colors.white,
+                      style: TextStyle(
+                          color: styling.backgroundText,
                           fontSize: 20,
                           fontWeight: FontWeight.bold)),
                 ],
@@ -45,11 +48,11 @@ class FriendsCount extends StatelessWidget {
           // Create a line between the two columns
           if (!isCurrentUser)
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: EdgeInsets.all(8.0),
               child: Container(
                 height: 100,
                 width: 2,
-                color: Colors.white,
+                color: styling.backgroundText,
               ),
             ),
 
@@ -57,14 +60,14 @@ class FriendsCount extends StatelessWidget {
             onTap: onFriendsButtonPressed,
             child: Column(
               children: [
-                const Text("Friends",
+                Text("Friends",
                     style: TextStyle(
-                        color: Colors.white,
+                        color: styling.backgroundText,
                         fontSize: 20,
                         fontWeight: FontWeight.bold)),
                 Text(friends.toString(),
-                    style: const TextStyle(
-                        color: Colors.white,
+                    style: TextStyle(
+                        color: styling.backgroundText,
                         fontSize: 20,
                         fontWeight: FontWeight.bold)),
               ],

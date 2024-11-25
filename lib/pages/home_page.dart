@@ -39,7 +39,6 @@ class _HomePageState extends State<HomePage> {
       userId = userData.userId;
       anonymousId = aID;
     });
-    print("User ID: $userId");
 
     Snippet? latestSnippet = await LocalDatabase().getMostRecentSnippet();
 
@@ -60,11 +59,6 @@ class _HomePageState extends State<HomePage> {
       for (var element in localSnippets) {
         //Check if is anonymous
         if (element.type == "anonymous") {
-          bool hasSeenAnonymous =
-              await HelperFunctions.checkIfSeenAnonymousSnippetSF();
-          if (!hasSeenAnonymous) {
-            showAnonymousInfoDialog(context);
-          }
           int lastRecieved = element.lastRecievedMillis;
           DateTime now = DateTime.now();
           if (now
@@ -84,7 +78,6 @@ class _HomePageState extends State<HomePage> {
       }
       localSnippets
           .removeWhere((element) => duplicates.contains(element.snippetId));
-      print("Local Snippets: $localSnippets");
 
       snippetsStreamController.add(localSnippets);
     });
@@ -100,29 +93,6 @@ class _HomePageState extends State<HomePage> {
         }
       }
     });
-  }
-
-  void showAnonymousInfoDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Anonymous Snippets"),
-          content: const Text(
-              "Your response will be completely anonymous to everyone and will be public, not just to your friends."),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () async {
-                await HelperFunctions.saveSeenAnonymousSnippetSF(true);
-
-                Navigator.of(context).pop();
-              },
-              child: const Text("I understand"),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -143,6 +113,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    //Run after build
+
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
@@ -162,7 +134,7 @@ class _HomePageState extends State<HomePage> {
         //   preferredSize: Size.fromHeight(kToolbarHeight),
         //   child: CustomNavBar(pageIndex: 1),
         // ),
-        backgroundColor: const Color(0xFF232323),
+        backgroundColor: Colors.transparent,
         body: Column(
           // mainAxisSize: MainAxisSize.max,
           children: [

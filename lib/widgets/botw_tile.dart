@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:snippets/api/database.dart';
 import 'package:snippets/constants.dart';
-import 'package:snippets/templates/colorsSys.dart';
-import 'package:snippets/templates/input_decoration.dart';
+import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/main.dart';
 
 class BOTWTile extends StatefulWidget {
   // final bool isAnswered;
@@ -39,13 +39,13 @@ class _BOTWTileState extends State<BOTWTile> {
   Widget build(BuildContext context) {
     return Material(
       elevation: 10,
-      shadowColor: ColorSys.purpleBlueGradient.colors[1],
+      shadowColor: styling.getSnippetGradient().colors[1],
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: 300,
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
         decoration: ShapeDecoration(
-          gradient: ColorSys.purpleBlueGradient,
+          gradient: styling.getSnippetGradient(),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -54,10 +54,11 @@ class _BOTWTileState extends State<BOTWTile> {
           onTap: () => {},
           title: Text(
             widget.blank,
-            style: const TextStyle(
-              color: Color.fromARGB(255, 0, 0, 0),
+            style: TextStyle(
+              color: styling.theme == "colorful-light"
+                  ? styling.primaryDark
+                  : Color.fromARGB(255, 0, 0, 0),
               fontSize: 20,
-              fontFamily: 'Inknut Antiqua',
               fontWeight: FontWeight.w400,
               height: 0,
             ),
@@ -71,14 +72,22 @@ class _BOTWTileState extends State<BOTWTile> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: TextFormField(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
+                          onTap: () async {
+                            String hapticFeedback =
+                                await HelperFunctions.getHapticFeedbackSF();
+                            if (hapticFeedback == "normal") {
+                              HapticFeedback.selectionClick();
+                            } else if (hapticFeedback == "light") {
+                              HapticFeedback.selectionClick();
+                            } else if (hapticFeedback == "heavy") {
+                              HapticFeedback.mediumImpact();
+                            }
                           },
                           controller: answerController,
                           maxLines: 2,
-                          decoration: textInputDecoration.copyWith(
+                          decoration: styling.textInputDecoration().copyWith(
                               hintText: "Enter submission here",
-                              fillColor: ColorSys.primaryInput
+                              fillColor: styling.primaryInput
                               //Border color: color: ColorSys.primarySolid,
 
                               //   borderSide: BorderSide(
@@ -90,14 +99,22 @@ class _BOTWTileState extends State<BOTWTile> {
                     ),
                     ElevatedButton(
                       onPressed: () async {
-                        HapticFeedback.mediumImpact();
+                        String hapticFeedback =
+                            await HelperFunctions.getHapticFeedbackSF();
+                        if (hapticFeedback == "normal") {
+                          HapticFeedback.mediumImpact();
+                        } else if (hapticFeedback == "light") {
+                          HapticFeedback.lightImpact();
+                        } else if (hapticFeedback == "heavy") {
+                          HapticFeedback.heavyImpact();
+                        }
                         setState(() {
                           isEditting = false;
                         });
-                        widget.answer.answer = answerController.text;
+                        widget.answer.answer = answerController.text.trim();
                         await Database().updateUsersBOTWAnswer(widget.answer);
                       },
-                      style: elevatedButtonDecorationBlue,
+                      style: styling.elevatedButtonDecorationPurple(),
                       child: Text(isEditting ? "Save" : "Submit",
                           style: const TextStyle(
                               fontSize: 16, color: Colors.black)),
@@ -114,29 +131,43 @@ class _BOTWTileState extends State<BOTWTile> {
                         child: Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(widget.answer.answer,
-                                style: const TextStyle(
-                                    color: Colors.black, fontSize: 16))),
+                                style: TextStyle(
+                                    color: styling.theme == "colorful-light"
+                                        ? styling.primaryDark
+                                        : Colors.black,
+                                    fontSize: 16))),
                       ),
                     ),
                     if (widget.status == BOTWStatusType.answering &&
                         widget.isCurrentUser)
                       ElevatedButton(
-                          onPressed: () {
-                            HapticFeedback.mediumImpact();
+                          onPressed: () async {
+                            String hapticFeedback =
+                                await HelperFunctions.getHapticFeedbackSF();
+                            if (hapticFeedback == "normal") {
+                              HapticFeedback.mediumImpact();
+                            } else if (hapticFeedback == "light") {
+                              HapticFeedback.lightImpact();
+                            } else if (hapticFeedback == "heavy") {
+                              HapticFeedback.heavyImpact();
+                            }
                             setState(() {
                               isEditting = true;
                               answerController.text = widget.answer.answer;
                             });
                           },
-                          style: elevatedButtonDecorationBlue,
+                          style: styling.elevatedButtonDecorationPurple(),
                           child: const Text("Edit",
                               style: TextStyle(
                                   color: Colors.black, fontSize: 16))),
                     if (widget.status == BOTWStatusType.voting &&
                         widget.isCurrentUser)
                       Text("Votes: ${widget.answer.votes}",
-                          style: const TextStyle(
-                              color: Colors.black, fontSize: 16))
+                          style: TextStyle(
+                              color: styling.theme == "colorful-light"
+                                  ? styling.primaryDark
+                                  : Colors.black,
+                              fontSize: 16))
                   ],
                 ),
         ),

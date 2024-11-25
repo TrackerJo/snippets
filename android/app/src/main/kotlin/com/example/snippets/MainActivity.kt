@@ -1,4 +1,4 @@
-package com.example.snippets
+package com.kazoom.snippets
 
 import io.flutter.embedding.android.FlutterActivity
 

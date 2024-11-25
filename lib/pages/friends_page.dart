@@ -8,7 +8,7 @@ import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/constants.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
-import 'package:snippets/templates/colorsSys.dart';
+import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
 import 'package:snippets/widgets/friend_tile.dart';
 
@@ -32,19 +32,45 @@ class _FriendsPageState extends State<FriendsPage> {
   Future getData() async {
     await HelperFunctions.saveOpenedPageSF("friends");
     // Get friends
-    print("Getting friends");
+
     currentUserStream.stream.listen((event) {
-      print("Got data");
-      print(event);
+      if (!mounted) return;
+
       User userData = event;
-      print(userData);
+
       List<UserMini> friends = userData.friends;
       List<UserMini> friendRequests = userData.friendRequests;
       List<UserMini> outgoingRequests = userData.outgoingFriendRequests;
       setState(() {
-        this.friends = friends;
-        this.friendRequests = friendRequests;
-        this.outgoingRequests = outgoingRequests;
+        //remove duplicate friend requests
+        friends.toSet().toList();
+        friendRequests.toSet().toList();
+        outgoingRequests.toSet().toList();
+        List<UserMini> loopedFriends = [];
+        List<UserMini> loopedFriendRequests = [];
+        List<UserMini> loopedOutgoingRequests = [];
+        for (var i = 0; i < friends.length; i++) {
+          if (!loopedFriends
+              .any((element) => element.userId == friends[i].userId)) {
+            loopedFriends.add(friends[i]);
+          } else {}
+        }
+        for (var i = 0; i < friendRequests.length; i++) {
+          if (!loopedFriendRequests
+              .any((element) => element.userId == friendRequests[i].userId)) {
+            loopedFriendRequests.add(friendRequests[i]);
+          }
+        }
+        for (var i = 0; i < outgoingRequests.length; i++) {
+          if (!loopedOutgoingRequests
+              .any((element) => element.userId == outgoingRequests[i].userId)) {
+            loopedOutgoingRequests.add(outgoingRequests[i]);
+          }
+        }
+
+        this.friends = loopedFriends;
+        this.friendRequests = loopedFriendRequests;
+        this.outgoingRequests = loopedOutgoingRequests;
         numberOfRequests = friendRequests.length;
       });
     });
@@ -53,7 +79,37 @@ class _FriendsPageState extends State<FriendsPage> {
     List<UserMini> friends = userData.friends;
     List<UserMini> friendRequests = userData.friendRequests;
     List<UserMini> outgoingRequests = userData.outgoingFriendRequests;
+    if (!mounted) return;
     setState(() {
+      friends.toSet().toList();
+      friendRequests.toSet().toList();
+      outgoingRequests.toSet().toList();
+      List<UserMini> loopedFriends = [];
+      List<UserMini> loopedFriendRequests = [];
+      List<UserMini> loopedOutgoingRequests = [];
+      for (var i = 0; i < friends.length; i++) {
+        //Check if the friend is already in the list by checking the userId
+        if (!loopedFriends
+            .any((element) => element.userId == friends[i].userId)) {
+          loopedFriends.add(friends[i]);
+        } else {}
+      }
+      for (var i = 0; i < friendRequests.length; i++) {
+        if (!loopedFriendRequests
+            .any((element) => element.userId == friendRequests[i].userId)) {
+          loopedFriendRequests.add(friendRequests[i]);
+        }
+      }
+      for (var i = 0; i < outgoingRequests.length; i++) {
+        if (!loopedOutgoingRequests
+            .any((element) => element.userId == outgoingRequests[i].userId)) {
+          loopedOutgoingRequests.add(outgoingRequests[i]);
+        }
+      }
+
+      this.friends = loopedFriends;
+      this.friendRequests = loopedFriendRequests;
+      this.outgoingRequests = loopedOutgoingRequests;
       this.friends = friends;
       this.friendRequests = friendRequests;
       this.outgoingRequests = outgoingRequests;
@@ -77,186 +133,242 @@ class _FriendsPageState extends State<FriendsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: CustomAppBar(
-            title: 'Friends',
-            showBackButton: true,
-            onBackButtonPressed: () {
-              HapticFeedback.mediumImpact();
-              Navigator.of(context).pop();
-            },
-          ),
-        ),
-        backgroundColor: const Color(0xFF232323),
-        body: Column(
-          children: [
-            Container(
-              decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: Color.fromARGB(207, 56, 56, 56),
-                    width: 2.0,
-                  ),
-                ),
+    return Stack(
+      children: [
+        BackgroundTile(),
+        Scaffold(
+            appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(kToolbarHeight),
+              child: CustomAppBar(
+                title: 'Friends',
+                showBackButton: true,
+                onBackButtonPressed: () async {
+                  String hapticFeedback =
+                      await HelperFunctions.getHapticFeedbackSF();
+                  if (hapticFeedback == "normal") {
+                    HapticFeedback.mediumImpact();
+                  } else if (hapticFeedback == "light") {
+                    HapticFeedback.lightImpact();
+                  } else if (hapticFeedback == "heavy") {
+                    HapticFeedback.heavyImpact();
+                  }
+                  Navigator.of(context).pop();
+                },
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: MediaQuery.of(context).size.width / 3 - 30,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: friendsView == "friends"
-                              ? ColorSys.primary
-                              : Colors.transparent,
-                          width: 2.0,
-                        ),
-                      ),
-                    ),
-                    child: TextButton(
-                      onPressed: () {
-                        HapticFeedback.mediumImpact();
-                        setState(() {
-                          friendsView = "friends";
-                        });
-                      },
-                      child: Text(
-                        "Friends",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: ColorSys.primary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+            ),
+            backgroundColor: Colors.transparent,
+            body: Column(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: styling.theme == "light"
+                            ? styling.secondary
+                            : styling.theme == "colorful-light"
+                                ? styling.primary
+                                : Color.fromARGB(207, 56, 56, 56),
+                        width: 2.0,
                       ),
                     ),
                   ),
-                  Container(
-                    height: 50,
-                    width: 1,
-                    color: Colors.transparent,
-                    margin: const EdgeInsets.symmetric(horizontal: 5),
-                  ),
-                  Container(
-                    height: 70,
-                    width: numberOfRequests > 0
-                        ? MediaQuery.of(context).size.width / 3 + 10
-                        : MediaQuery.of(context).size.width / 3 - 15,
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: friendsView == "friendRequests"
-                              ? ColorSys.primary
-                              : Colors.transparent,
-                          width: 2.0,
-                        ),
-                      ),
-                    ),
-                    child: TextButton(
-                      onPressed: () {
-                        HapticFeedback.mediumImpact();
-
-                        setState(() {
-                          friendsView = "friendRequests";
-                        });
-                      },
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: numberOfRequests > 0
-                                ? MediaQuery.of(context).size.width / 3 -
-                                    15 -
-                                    30
-                                : MediaQuery.of(context).size.width / 3 - 40,
-                            child: Text(
-                              "Friend Requests",
-                              textAlign: TextAlign.center,
-                              softWrap: true,
-                              style: TextStyle(
-                                color: ColorSys.primary,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: MediaQuery.of(context).size.width / 3 - 30,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: friendsView == "friends"
+                                  ? styling.theme == "colorful-light"
+                                      ? Colors.white
+                                      : styling.secondaryDark
+                                  : Colors.transparent,
+                              width: 2.0,
                             ),
                           ),
-                          if (numberOfRequests > 0)
-                            const SizedBox(
-                              width: 5,
+                        ),
+                        child: TextButton(
+                          onPressed: () async {
+                            String hapticFeedback =
+                                await HelperFunctions.getHapticFeedbackSF();
+                            if (hapticFeedback == "normal") {
+                              HapticFeedback.mediumImpact();
+                            } else if (hapticFeedback == "light") {
+                              HapticFeedback.lightImpact();
+                            } else if (hapticFeedback == "heavy") {
+                              HapticFeedback.heavyImpact();
+                            }
+                            setState(() {
+                              friendsView = "friends";
+                            });
+                          },
+                          child: Text(
+                            "Friends",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: styling.theme == "colorful-light"
+                                  ? Colors.white
+                                  : styling.secondary,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
-                          if (numberOfRequests > 0)
-                            Container(
-                              decoration: BoxDecoration(
-                                color: ColorSys.primary,
-                                borderRadius: BorderRadius.circular(50),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(5),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        height: 50,
+                        width: 1,
+                        color: Colors.transparent,
+                        margin: const EdgeInsets.symmetric(horizontal: 5),
+                      ),
+                      Container(
+                        height: 70,
+                        width: numberOfRequests > 0
+                            ? MediaQuery.of(context).size.width / 3 + 10
+                            : MediaQuery.of(context).size.width / 3 - 15,
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: friendsView == "friendRequests"
+                                  ? styling.theme == "colorful-light"
+                                      ? Colors.white
+                                      : styling.secondaryDark
+                                  : Colors.transparent,
+                              width: 2.0,
+                            ),
+                          ),
+                        ),
+                        child: TextButton(
+                          onPressed: () async {
+                            String hapticFeedback =
+                                await HelperFunctions.getHapticFeedbackSF();
+                            if (hapticFeedback == "normal") {
+                              HapticFeedback.mediumImpact();
+                            } else if (hapticFeedback == "light") {
+                              HapticFeedback.lightImpact();
+                            } else if (hapticFeedback == "heavy") {
+                              HapticFeedback.heavyImpact();
+                            }
+
+                            setState(() {
+                              friendsView = "friendRequests";
+                            });
+                          },
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: numberOfRequests > 0
+                                    ? MediaQuery.of(context).size.width / 3 -
+                                        15 -
+                                        30
+                                    : MediaQuery.of(context).size.width / 3 -
+                                        40,
                                 child: Text(
-                                  numberOfRequests < 10
-                                      ? numberOfRequests.toString()
-                                      : "9+",
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 12),
+                                  "Friend Requests",
+                                  textAlign: TextAlign.center,
+                                  softWrap: true,
+                                  style: TextStyle(
+                                    color: styling.theme == "colorful-light"
+                                        ? Colors.white
+                                        : styling.secondary,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
+                              if (numberOfRequests > 0)
+                                const SizedBox(
+                                  width: 5,
+                                ),
+                              if (numberOfRequests > 0)
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: styling.theme == "colorful-light"
+                                        ? styling.secondaryDark
+                                        : styling.primaryDark,
+                                    borderRadius: BorderRadius.circular(50),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(5),
+                                    child: Text(
+                                      numberOfRequests < 10
+                                          ? numberOfRequests.toString()
+                                          : "9+",
+                                      style: const TextStyle(
+                                          color: Colors.white, fontSize: 12),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Container(
+                        height: 50,
+                        width: 1,
+                        color: Colors.transparent,
+                        margin: const EdgeInsets.symmetric(horizontal: 5),
+                      ),
+                      Container(
+                        width: MediaQuery.of(context).size.width / 3 - 10,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: friendsView == "outgoingRequests"
+                                  ? styling.theme == "colorful-light"
+                                      ? Colors.white
+                                      : styling.secondaryDark
+                                  : Colors.transparent,
+                              width: 2.0,
                             ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Container(
-                    height: 50,
-                    width: 1,
-                    color: Colors.transparent,
-                    margin: const EdgeInsets.symmetric(horizontal: 5),
-                  ),
-                  Container(
-                    width: MediaQuery.of(context).size.width / 3 - 10,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: friendsView == "outgoingRequests"
-                              ? ColorSys.primary
-                              : Colors.transparent,
-                          width: 2.0,
+                          ),
+                        ),
+                        child: TextButton(
+                          onPressed: () async {
+                            String hapticFeedback =
+                                await HelperFunctions.getHapticFeedbackSF();
+                            if (hapticFeedback == "normal") {
+                              HapticFeedback.mediumImpact();
+                            } else if (hapticFeedback == "light") {
+                              HapticFeedback.lightImpact();
+                            } else if (hapticFeedback == "heavy") {
+                              HapticFeedback.heavyImpact();
+                            }
+                            setState(() {
+                              friendsView = "outgoingRequests";
+                            });
+                          },
+                          child: Text(
+                            "Outgoing Requests",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: styling.theme == "colorful-light"
+                                  ? Colors.white
+                                  : styling.secondary,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    child: TextButton(
-                      onPressed: () {
-                        HapticFeedback.mediumImpact();
-                        setState(() {
-                          friendsView = "outgoingRequests";
-                        });
-                      },
-                      child: Text(
-                        "Outgoing Requests",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: ColorSys.primary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: friendsView == "friends"
-                  ? friendsList()
-                  : friendsView == "friendRequests"
-                      ? friendRequestsList()
-                      : outgoingRequestsList(),
-            ),
-          ],
-        ));
+                ),
+                Expanded(
+                  child: friendsView == "friends"
+                      ? friendsList()
+                      : friendsView == "friendRequests"
+                          ? friendRequestsList()
+                          : outgoingRequestsList(),
+                ),
+              ],
+            )),
+      ],
+    );
   }
 
   Widget friendsList() {
@@ -289,7 +401,15 @@ class _FriendsPageState extends State<FriendsPage> {
             showCheck: true,
             showX: true,
             onCheckPressed: () async {
-              HapticFeedback.mediumImpact();
+              String hapticFeedback =
+                  await HelperFunctions.getHapticFeedbackSF();
+              if (hapticFeedback == "normal") {
+                HapticFeedback.mediumImpact();
+              } else if (hapticFeedback == "light") {
+                HapticFeedback.lightImpact();
+              } else if (hapticFeedback == "heavy") {
+                HapticFeedback.heavyImpact();
+              }
               await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
                   .acceptFriendRequest(
                       friendRequests[index].userId,
@@ -298,14 +418,22 @@ class _FriendsPageState extends State<FriendsPage> {
                       friendRequests[index].FCMToken);
               if (!mounted) return;
               setState(() {
-                friendRequests.removeWhere((element) =>
-                    element.userId == friendRequests[index].userId);
+                // friendRequests.removeWhere((element) =>
+                //     element.userId == friendRequests[index].userId);
               });
 
               //Refresh friend requests
             },
             onXPressed: () async {
-              HapticFeedback.mediumImpact();
+              String hapticFeedback =
+                  await HelperFunctions.getHapticFeedbackSF();
+              if (hapticFeedback == "normal") {
+                HapticFeedback.mediumImpact();
+              } else if (hapticFeedback == "light") {
+                HapticFeedback.lightImpact();
+              } else if (hapticFeedback == "heavy") {
+                HapticFeedback.heavyImpact();
+              }
               await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
                   .declineFriendRequest(
                       friendRequests[index].userId,
@@ -313,8 +441,8 @@ class _FriendsPageState extends State<FriendsPage> {
                       friendRequests[index].displayName,
                       friendRequests[index].username);
               setState(() {
-                friendRequests.removeWhere((element) =>
-                    element.userId == friendRequests[index].userId);
+                // friendRequests.removeWhere((element) =>
+                //     element.userId == friendRequests[index].userId);
               });
 
               //Refresh friend requests
@@ -338,7 +466,15 @@ class _FriendsPageState extends State<FriendsPage> {
             uid: outgoingRequests[index].userId,
             showX: true,
             onXPressed: () async {
-              HapticFeedback.mediumImpact();
+              String hapticFeedback =
+                  await HelperFunctions.getHapticFeedbackSF();
+              if (hapticFeedback == "normal") {
+                HapticFeedback.mediumImpact();
+              } else if (hapticFeedback == "light") {
+                HapticFeedback.lightImpact();
+              } else if (hapticFeedback == "heavy") {
+                HapticFeedback.heavyImpact();
+              }
               await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
                   .cancelFriendRequest(
                       outgoingRequests[index].userId,
@@ -346,8 +482,8 @@ class _FriendsPageState extends State<FriendsPage> {
                       outgoingRequests[index].username,
                       outgoingRequests[index].FCMToken);
               setState(() {
-                outgoingRequests.removeWhere((element) =>
-                    element.userId == outgoingRequests[index].userId);
+                // outgoingRequests.removeWhere((element) =>
+                //     element.userId == outgoingRequests[index].userId);
               });
               //Refresh outgoing requests
             },

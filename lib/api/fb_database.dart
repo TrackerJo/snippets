@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -42,6 +43,9 @@ class FBDatabase {
       outgoingFriendRequests: [],
       discussions: [],
       userId: uid!,
+      snippetsRespondedTo: 0,
+      messagesSent: 0,
+      discussionsStarted: 0,
       username: username,
       searchKey: fullName.toLowerCase(),
       votesLeft: 3,
@@ -209,16 +213,17 @@ class FBDatabase {
             "isAnonymous": id != null,
           }
         ]),
+        "snippetsRespondedTo": FieldValue.increment(1),
         "lastUpdatedMillis": now.millisecondsSinceEpoch,
       });
-      await LocalDatabase().addDiscussionToUser(
-          uid!,
-          Discussion(
-              answerId: uid!,
-              isAnonymous: false,
-              snippetId: snippetId,
-              snippetQuestion: question),
-          now.millisecondsSinceEpoch);
+      // await LocalDatabase().addDiscussionToUser(
+      //     uid!,
+      //     Discussion(
+      //         answerId: uid!,
+      //         isAnonymous: false,
+      //         snippetId: snippetId,
+      //         snippetQuestion: question),
+      //     now.millisecondsSinceEpoch);
     }
 
     //Add uid to snippet's answered list
@@ -232,7 +237,6 @@ class FBDatabase {
     //Send notification to user's friends
 
     if (id == null) {
-      print("Sending notification");
       List<UserMini> friendsList = userData.friends;
       List<String> friendsFCMTokens =
           friendsList.map((e) => e.FCMToken).toList();
@@ -257,13 +261,11 @@ class FBDatabase {
       String notificationBody = notification.body
           .replaceAll("{displayName}", userData.displayName)
           .replaceAll("{question}", question);
-      print("Sending notification to friends");
-      print("Title: $notificationTitle");
-      print("Body: $notificationBody");
 
-      await PushNotifications().sendNotification(
+      PushNotifications().sendNotification(
           title: notificationTitle,
           body: notificationBody,
+          thread: "snippet-$snippetId",
           targetIds: [
             ...friendsFCMTokens,
           ],
@@ -276,43 +278,44 @@ class FBDatabase {
             "displayName": userData.displayName,
             "uid": userData.userId,
             "response": answer,
-            "answered": "false"
+            "answered": "false",
           });
     }
-
-    if (await WidgetKit.getItem(
-            'snippetsResponsesData', 'group.kazoom_snippets') ==
-        null) {
-      List<String> oldResponses = [];
-      String responseString =
-          "${userData.displayName}|$question|$answer|$snippetId|${id ?? uid}|${id != null ? "anonymous" : "normal"}|${true}";
-      if (!oldResponses.contains(responseString)) {
-        oldResponses.add(responseString);
-        WidgetKit.setItem('snippetsResponsesData',
-            jsonEncode({"responses": oldResponses}), 'group.kazoom_snippets');
-        WidgetKit.reloadAllTimelines();
-      }
-    } else {
-      Map<String, dynamic> oldResponsesMap = json.decode(
-          await WidgetKit.getItem(
-              'snippetsResponsesData', 'group.kazoom_snippets'));
-      List<String> oldResponses = oldResponsesMap["responses"].cast<String>();
-      String responseString =
-          "${userData.displayName}|$question|$answer|$snippetId|${id ?? uid}|${id != null ? "anonymous" : "normal"}|${true}";
-      if (!oldResponses.contains(responseString)) {
-        //Mark other responses from the same snippet as read
-        for (var element in oldResponses) {
-          List<String> response = element.split("|");
-          if (response[3] == snippetId) {
-            response[6] = "true";
-            oldResponses[oldResponses.indexOf(element)] = response.join("|");
-          }
+    if (Platform.isIOS) {
+      if (await WidgetKit.getItem(
+              'snippetsResponsesData', 'group.kazoom_snippets') ==
+          null) {
+        List<String> oldResponses = [];
+        String responseString =
+            "${userData.displayName}|$question|$answer|$snippetId|${id ?? uid}|${id != null ? "anonymous" : "normal"}|${true}";
+        if (!oldResponses.contains(responseString)) {
+          oldResponses.add(responseString);
+          WidgetKit.setItem('snippetsResponsesData',
+              jsonEncode({"responses": oldResponses}), 'group.kazoom_snippets');
+          WidgetKit.reloadAllTimelines();
         }
-        WidgetKit.setItem('snippetsResponsesData',
-            jsonEncode({"responses": oldResponses}), 'group.kazoom_snippets');
-        WidgetKit.reloadAllTimelines();
+      } else {
+        Map<String, dynamic> oldResponsesMap = json.decode(
+            await WidgetKit.getItem(
+                'snippetsResponsesData', 'group.kazoom_snippets'));
+        List<String> oldResponses = oldResponsesMap["responses"].cast<String>();
+        String responseString =
+            "${userData.displayName}|$question|$answer|$snippetId|${id ?? uid}|${id != null ? "anonymous" : "normal"}|${true}";
+        if (!oldResponses.contains(responseString)) {
+          //Mark other responses from the same snippet as read
+          for (var element in oldResponses) {
+            List<String> response = element.split("|");
+            if (response[3] == snippetId) {
+              response[6] = "true";
+              oldResponses[oldResponses.indexOf(element)] = response.join("|");
+            }
+          }
+          WidgetKit.setItem('snippetsResponsesData',
+              jsonEncode({"responses": oldResponses}), 'group.kazoom_snippets');
+          WidgetKit.reloadAllTimelines();
+        }
+        // oldResponses.add(responseString);
       }
-      // oldResponses.add(responseString);
     }
   }
 
@@ -352,6 +355,9 @@ class FBDatabase {
             .collection("answers")
             .snapshots();
       } else {
+        if (friendsList.isEmpty) {
+          return;
+        }
         querySnapshot = currentSnippetsCollection
             .doc(snippetId)
             .collection("answers")
@@ -372,8 +378,6 @@ class FBDatabase {
       });
     }
     if (getFriends && !isAnonymous) {
-      print("Getting friends responses");
-
       Stream querySnapshot = currentSnippetsCollection
           .doc(snippetId)
           .collection("answers")
@@ -399,6 +403,9 @@ class FBDatabase {
           .where("lastUpdatedMillis", isGreaterThan: date)
           .snapshots();
     } else {
+      if (friendsList.isEmpty) {
+        return;
+      }
       querySnapshot = currentSnippetsCollection
           .doc(snippetId)
           .collection("answers")
@@ -490,6 +497,7 @@ class FBDatabase {
     PushNotifications().sendNotification(
         title: "New friend request!",
         body: "${userData.displayName} wants to be your friend!",
+        thread: "friend",
         targetIds: [
           friendFCMToken
         ],
@@ -535,8 +543,8 @@ class FBDatabase {
           FCMToken: friendFCMToken,
         ),
         lastUpdated);
-    await LocalDatabase()
-        .removeOutgoingFriendFromUser(uid!, friendUid, lastUpdated);
+    // await LocalDatabase()
+    //     .removeOutgoingFriendFromUser(uid!, friendUid, lastUpdated);
 
     await userCollection.doc(friendUid).update({
       "friends": FieldValue.arrayUnion([
@@ -558,9 +566,10 @@ class FBDatabase {
       "lastUpdatedMillis": lastUpdated,
     });
 
-    await PushNotifications().sendNotification(
+    PushNotifications().sendNotification(
         title: "Friend request accepted!",
         body: "${userData.displayName} accepted your friend request!",
+        thread: "friend",
         targetIds: [
           friendFCMToken
         ],
@@ -844,6 +853,11 @@ class FBDatabase {
         .doc(userId)
         .collection("discussion")
         .add(message.toMap());
+
+    //Update messagesSent count
+    await userCollection.doc(uid).update({
+      "messagesSent": FieldValue.increment(1),
+    });
     return ref.id;
   }
 
@@ -860,8 +874,14 @@ class FBDatabase {
     });
   }
 
-  Future addUserToDiscussion(String userId, String snippetId, String answerId,
-      String snippetQuestion, String theme, bool isAnonymous) async {
+  Future addUserToDiscussion(
+      String userId,
+      String snippetId,
+      String answerId,
+      String snippetQuestion,
+      String theme,
+      bool isAnonymous,
+      bool createdDiscussion) async {
     int lastUpdatedMillis = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(userId).update({
       "discussions": FieldValue.arrayUnion([
@@ -873,17 +893,13 @@ class FBDatabase {
           "isAnonymous": isAnonymous
         },
       ]),
+      "discussionsStarted":
+          createdDiscussion ? FieldValue.increment(1) : FieldValue.increment(0),
       "lastUpdatedMillis": lastUpdatedMillis,
     });
 
 //Update user's discussion list in the local database
-    User userData = await Database().getUserData(uid!);
 
-    userData.discussions.add(Discussion(
-        answerId: userId,
-        isAnonymous: isAnonymous,
-        snippetId: snippetId,
-        snippetQuestion: snippetQuestion));
     await LocalDatabase().addDiscussionToUser(
         uid!,
         Discussion(
@@ -911,11 +927,7 @@ class FBDatabase {
       if (!answerDoc.exists) {
         int lastUpdatedMillis = DateTime.now().millisecondsSinceEpoch;
         //Remove discussion from user's list
-        print("Removing discussion from user's list");
-        print("Snippet ID: ${element.snippetId}");
-        print("Answer ID: ${element.answerId}");
-        print("Snippet Question: ${element.snippetQuestion}");
-        print("Is Anonymous: ${element.isAnonymous}");
+
         await userCollection.doc(userId).update({
           "discussions": FieldValue.arrayRemove([
             {
@@ -1196,6 +1208,7 @@ class FBDatabase {
     //Remove mutualFriends with count less than 2
     mutualFriendsWithCount.removeWhere((element) => element["count"] < 2);
     //Sort the list by the number of times each friend appears
+    mutualFriendsWithCount.sort((a, b) => b["count"].compareTo(a["count"]));
 
     return mutualFriendsWithCount;
   }
@@ -1333,7 +1346,6 @@ class FBDatabase {
           .where("lastRecievedMillis", isGreaterThan: lastRecieved! + 1)
           .get();
       for (var element in snapshot.docs) {
-        print("FROM LAST RECIEVED");
         Map<String, dynamic> data = element.data() as Map<String, dynamic>;
         data["snippetId"] = element.id;
         data["lastRecieved"] = data["lastRecieved"].toDate();
@@ -1350,7 +1362,6 @@ class FBDatabase {
           .where("answered", arrayContains: uid)
           .get();
       for (var element in snapshot2.docs) {
-        print("FROM LASTUPDATED");
         Map<String, dynamic> data = element.data() as Map<String, dynamic>;
         data["snippetId"] = element.id;
         data["lastRecieved"] = data["lastRecieved"].toDate();
@@ -1383,7 +1394,6 @@ class FBDatabase {
       return [];
     }
     if (lastUpdated == null) {
-      print("Getting all responses");
       if (isAnonymous) {
         snapshot = await currentSnippetsCollection
             .doc(snippetId)
@@ -1397,7 +1407,6 @@ class FBDatabase {
             .get();
       }
     } else {
-      print("Getting new responses where lastUpdated > ${lastUpdated + 1}");
       if (isAnonymous) {
         snapshot = await currentSnippetsCollection
             .doc(snippetId)
@@ -1583,12 +1592,11 @@ class FBDatabase {
   }
 
   Future<String?> deleteAccount(String email, String password) async {
-    print("deleting account");
     String? res = await Auth().reauthenticateUser(email, password);
     if (res != null) {
       return res;
     }
-    print("past auth");
+
     User userData = await Database().getUserData(uid!);
 
     List<UserMini> friends = userData.friends;
@@ -1709,16 +1717,9 @@ class FBDatabase {
   }
 
   StreamSubscription userDataStream(StreamController streamController) {
-    print("User data stream started");
-    print("User ID: $uid");
     Stream stream = userCollection.doc(uid).snapshots();
 
     StreamSubscription streamListen = stream.listen((event) async {
-      print("User data changed");
-      //if user is logged out, end stream
-      print("User ID: $uid");
-      print("User Data: ${event.data()}");
-
       User userData = User.fromMap(event.data() as Map<String, dynamic>);
       await LocalDatabase()
           .updateUserData(userData, userData.lastUpdatedMillis);
@@ -1727,5 +1728,42 @@ class FBDatabase {
     }, onDone: () {});
     //On Auth State change end stream
     return streamListen;
+  }
+
+  Future<void> removeOldDiscussions(
+      User userData, List<Snippet> snippets) async {
+    List<Discussion> discussions = userData.discussions;
+    List<String> snippetIds = snippets.map((e) => e.snippetId).toList();
+
+    List<Discussion> discussionsToRemove = [];
+    for (var element in discussions) {
+      if (!snippetIds.contains(element.snippetId)) {
+        discussionsToRemove.add(element);
+      }
+    }
+    for (var element in discussionsToRemove) {
+      await userCollection.doc(uid).update({
+        "discussions": FieldValue.arrayRemove([
+          {
+            "snippetId": element.snippetId,
+            "answerId": element.answerId,
+            "snippetQuestion": element.snippetQuestion,
+            "isAnonymous": element.isAnonymous,
+            "theme": "blue"
+          }
+        ]),
+        "lastUpdatedMillis": DateTime.now().millisecondsSinceEpoch,
+      });
+      await LocalDatabase().removeDiscussionFromUser(
+          uid!,
+          Discussion(
+              answerId: element.answerId,
+              isAnonymous: element.isAnonymous,
+              snippetId: element.snippetId,
+              snippetQuestion: element.snippetQuestion),
+          DateTime.now().millisecondsSinceEpoch);
+      await LocalDatabase()
+          .deleteChats("${element.snippetId}-${element.answerId}");
+    }
   }
 }

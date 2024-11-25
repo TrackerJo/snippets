@@ -1,12 +1,9 @@
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:snippets/api/auth.dart';
+import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
-import 'package:snippets/templates/colorsSys.dart';
-import 'package:snippets/templates/input_decoration.dart';
-
 
 class ForgotPasswordPage extends StatefulWidget {
   final bool? toProfile;
@@ -28,12 +25,19 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         _isLoading = true;
       });
       //Send email
-      HapticFeedback.mediumImpact();
+      String hapticFeedback = await HelperFunctions.getHapticFeedbackSF();
+      if (hapticFeedback == "normal") {
+        HapticFeedback.mediumImpact();
+      } else if (hapticFeedback == "light") {
+        HapticFeedback.lightImpact();
+      } else if (hapticFeedback == "heavy") {
+        HapticFeedback.heavyImpact();
+      }
       Auth().resetPassword(email).then((val) {
         if (val == true) {
           router.pushReplacement("/welcome/${widget.uid}/${widget.toProfile}");
         } else {
-         showModalBottomSheet<void>(
+          showModalBottomSheet<void>(
               context: context,
               backgroundColor: Colors.red,
               shape: const RoundedRectangleBorder(
@@ -89,35 +93,47 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 10),
-                        const Text("Creating real conversations without filters",
+                        const Text(
+                            "Creating real conversations without filters",
                             style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w400,
                                 color: Colors.white)),
                         const SizedBox(height: 25),
-                        const Text("Enter your email connected to your account and then click send email to reset your password, you will receive an email with instructions on how to reset your password",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                ),textAlign: TextAlign.center,),
+                        const Text(
+                          "Enter your email connected to your account and then click send email to reset your password, you will receive an email with instructions on how to reset your password",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                         const SizedBox(height: 20),
                         TextFormField(
-                          decoration: textInputDecoration.copyWith(
+                          decoration: styling.textInputDecoration().copyWith(
                               labelText: "Email",
-                              fillColor: ColorSys.secondary,
+                              fillColor: styling.secondary,
                               prefixIcon: Icon(
                                 Icons.email,
                                 color: Theme.of(context).primaryColor,
                               )),
-                          onTap: () {
-                            HapticFeedback.selectionClick();
+                          onTap: () async {
+                            String hapticFeedback =
+                                await HelperFunctions.getHapticFeedbackSF();
+                            if (hapticFeedback == "normal") {
+                              HapticFeedback.selectionClick();
+                            } else if (hapticFeedback == "light") {
+                              HapticFeedback.selectionClick();
+                            } else if (hapticFeedback == "heavy") {
+                              HapticFeedback.mediumImpact();
+                            }
                           },
                           onChanged: (val) {
                             setState(() {
                               email = val;
                             });
                           },
-      
+
                           //Check email validation
                           validator: (val) {
                             return RegExp(
@@ -127,17 +143,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                 : "Please enter a valid email";
                           },
                         ),
-                        
+
                         const SizedBox(height: 20),
                         _isLoading
                             ? CircularProgressIndicator(
-                                color: ColorSys.primary,
+                                color: styling.primary,
                               )
                             : SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                      backgroundColor: ColorSys.primaryDark,
+                                      backgroundColor: styling.primaryDark,
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(
                                           borderRadius:
@@ -169,18 +185,25 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         //   onPressed: () {},
                         // ),
                         // const SizedBox(height: 10),
-                        Text.rich(
-                              TextSpan(
-                                  text: "Back",
-                                  style: TextStyle(
-                                      color: ColorSys.primary,
-                                      fontWeight: FontWeight.bold),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () {
-                                      HapticFeedback.mediumImpact();
-                                      router.pushReplacement("/welcome/${widget.uid}/${widget.toProfile}");
-                                    })
-                            )
+                        Text.rich(TextSpan(
+                            text: "Back",
+                            style: TextStyle(
+                                color: styling.primary,
+                                fontWeight: FontWeight.bold),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () async {
+                                String hapticFeedback =
+                                    await HelperFunctions.getHapticFeedbackSF();
+                                if (hapticFeedback == "normal") {
+                                  HapticFeedback.mediumImpact();
+                                } else if (hapticFeedback == "light") {
+                                  HapticFeedback.lightImpact();
+                                } else if (hapticFeedback == "heavy") {
+                                  HapticFeedback.heavyImpact();
+                                }
+                                router.pushReplacement(
+                                    "/welcome/${widget.uid}/${widget.toProfile}");
+                              }))
                       ]),
                 ))),
       ),

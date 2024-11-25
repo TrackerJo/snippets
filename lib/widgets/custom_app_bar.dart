@@ -1,8 +1,8 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import 'package:snippets/templates/colorsSys.dart';
+import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/main.dart';
 
 class CustomAppBar extends StatelessWidget {
   final String title;
@@ -20,6 +20,8 @@ class CustomAppBar extends StatelessWidget {
   final void Function()? onShareButtonPressed;
   final bool showPreviewButton;
   final void Function()? onPreviewButtonPressed;
+  final bool showLogoutButton;
+  final void Function()? onLogoutButtonPressed;
   final int? index;
   final bool fixRight;
   const CustomAppBar(
@@ -39,6 +41,8 @@ class CustomAppBar extends StatelessWidget {
       this.onHelpButtonPressed,
       this.showPreviewButton = false,
       this.onPreviewButtonPressed,
+      this.showLogoutButton = false,
+      this.onLogoutButtonPressed,
       this.index,
       this.fixRight = false});
 
@@ -48,9 +52,7 @@ class CustomAppBar extends StatelessWidget {
       children: [
         Material(
           elevation: 10,
-          shadowColor: theme == "blue"
-              ? ColorSys.blueGreenGradient.colors[0]
-              : ColorSys.purpleBlueGradient.colors[1],
+          shadowColor: styling.primary,
           borderRadius: const BorderRadius.only(
             bottomLeft: Radius.circular(23),
             bottomRight: Radius.circular(23),
@@ -60,8 +62,8 @@ class CustomAppBar extends StatelessWidget {
             height: 400,
             decoration: ShapeDecoration(
               gradient: theme == "blue"
-                  ? ColorSys.blueGreenGradient
-                  : ColorSys.purpleBarGradient,
+                  ? styling.getBlueGradient()
+                  : styling.getPurpleBarGradient(),
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(23),
@@ -84,10 +86,14 @@ class CustomAppBar extends StatelessWidget {
                   maxLines: 1,
                   title,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.black,
+                  style: TextStyle(
+                    color: styling.theme == "colorful-light"
+                        ? Colors.white
+                        : Colors.black,
+                    decorationColor: Colors.black,
+                    decorationThickness: 2,
+                    decorationStyle: TextDecorationStyle.wavy,
                     fontSize: 30,
-                    fontFamily: 'Inknut Antiqua',
                     fontWeight: FontWeight.w400,
                     height: 0,
                   ),
@@ -99,9 +105,20 @@ class CustomAppBar extends StatelessWidget {
               ? IconButton(
                   splashColor: Colors.transparent,
                   splashRadius: 25,
-                  icon: const Icon(Icons.arrow_back_ios_new),
-                  onPressed: () {
-                    HapticFeedback.mediumImpact();
+                  icon: Icon(Icons.arrow_back_ios_new,
+                      color: styling.theme == "colorful-light"
+                          ? Colors.white
+                          : Colors.black),
+                  onPressed: () async {
+                    String hapticFeedback =
+                        await HelperFunctions.getHapticFeedbackSF();
+                    if (hapticFeedback == "normal") {
+                      HapticFeedback.mediumImpact();
+                    } else if (hapticFeedback == "light") {
+                      HapticFeedback.lightImpact();
+                    } else if (hapticFeedback == "heavy") {
+                      HapticFeedback.heavyImpact();
+                    }
 
                     if (onBackButtonPressed != null) {
                       onBackButtonPressed!();
@@ -113,9 +130,12 @@ class CustomAppBar extends StatelessWidget {
                   ? Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: IconButton(
-                        splashColor: ColorSys.primary,
+                        splashColor: styling.primary,
                         splashRadius: 25,
-                        icon: const Icon(Icons.ios_share_outlined),
+                        icon: Icon(Icons.ios_share_outlined,
+                            color: styling.theme == "colorful-light"
+                                ? Colors.white
+                                : Colors.black),
                         onPressed: onShareButtonPressed,
                         color: const Color.fromARGB(255, 0, 0, 0),
                       ),
@@ -144,9 +164,12 @@ class CustomAppBar extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: IconButton(
-                  splashColor: ColorSys.primary,
+                  splashColor: styling.primary,
                   splashRadius: 25,
-                  icon: const Icon(Icons.preview),
+                  icon: Icon(Icons.preview,
+                      color: styling.theme == "colorful-light"
+                          ? Colors.white
+                          : Colors.black),
                   onPressed: onPreviewButtonPressed,
                   color: const Color.fromARGB(255, 0, 0, 0),
                 ),
@@ -155,9 +178,12 @@ class CustomAppBar extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: IconButton(
-                  splashColor: ColorSys.primary,
+                  splashColor: styling.primary,
                   splashRadius: 25,
-                  icon: const Icon(Icons.help_outline),
+                  icon: Icon(Icons.help_outline,
+                      color: styling.theme == "colorful-light"
+                          ? Colors.white
+                          : Colors.black),
                   onPressed: onHelpButtonPressed,
                   color: const Color.fromARGB(255, 0, 0, 0),
                 ),
@@ -166,10 +192,27 @@ class CustomAppBar extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: IconButton(
-                  splashColor: ColorSys.primary,
+                  splashColor: styling.primary,
                   splashRadius: 25,
-                  icon: const Icon(Icons.settings),
+                  icon: Icon(Icons.settings,
+                      color: styling.theme == "colorful-light"
+                          ? Colors.white
+                          : Colors.black),
                   onPressed: onSettingsButtonPressed,
+                  color: const Color.fromARGB(255, 0, 0, 0),
+                ),
+              ),
+            if (showLogoutButton)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: IconButton(
+                  splashColor: styling.primary,
+                  splashRadius: 25,
+                  icon: Icon(Icons.logout,
+                      color: styling.theme == "colorful-light"
+                          ? Colors.white
+                          : Colors.black),
+                  onPressed: onLogoutButtonPressed,
                   color: const Color.fromARGB(255, 0, 0, 0),
                 ),
               ),
@@ -193,9 +236,12 @@ class CustomAppBar extends StatelessWidget {
                         ),
                       ),
                     IconButton(
-                      splashColor: ColorSys.primary,
+                      splashColor: styling.primary,
                       splashRadius: 25,
-                      icon: const Icon(Icons.people),
+                      icon: Icon(Icons.people,
+                          color: styling.theme == "colorful-light"
+                              ? Colors.white
+                              : Colors.black),
                       onPressed: onFriendsButtonPressed,
                       color: const Color.fromARGB(255, 0, 0, 0),
                     ),

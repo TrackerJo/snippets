@@ -7,9 +7,6 @@ import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 
-import 'package:snippets/templates/colorsSys.dart';
-import 'package:snippets/templates/input_decoration.dart';
-
 class CreateAccountPage extends StatefulWidget {
   final bool toProfile;
   final String uid;
@@ -36,9 +33,16 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       setState(() {
         _isLoading = true;
       });
-      HapticFeedback.mediumImpact();
+      String hapticFeedback = await HelperFunctions.getHapticFeedbackSF();
+      if (hapticFeedback == "normal") {
+        HapticFeedback.mediumImpact();
+      } else if (hapticFeedback == "light") {
+        HapticFeedback.lightImpact();
+      } else if (hapticFeedback == "heavy") {
+        HapticFeedback.heavyImpact();
+      }
       bool isUsernameTaken = await FBDatabase()
-          .checkUsername(usernameController.text.toLowerCase());
+          .checkUsername(usernameController.text.toLowerCase().trim());
       if (isUsernameTaken) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -55,10 +59,10 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
       authService
           .registerUserWithEmailandPassword(
-              fullNameController.text,
-              emailController.text,
-              passwordController.text,
-              usernameController.text.toLowerCase(),
+              fullNameController.text.trim(),
+              emailController.text.trim(),
+              passwordController.text.trim(),
+              usernameController.text.toLowerCase().trim(),
               phoneNumber)
           .then((val) {
         if (val == true) {
@@ -127,12 +131,20 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       const SizedBox(height: 50),
                       TextFormField(
                           controller: fullNameController,
-                          onTap: () {
-                            HapticFeedback.selectionClick();
+                          onTap: () async {
+                            String hapticFeedback =
+                                await HelperFunctions.getHapticFeedbackSF();
+                            if (hapticFeedback == "normal") {
+                              HapticFeedback.selectionClick();
+                            } else if (hapticFeedback == "light") {
+                              HapticFeedback.selectionClick();
+                            } else if (hapticFeedback == "heavy") {
+                              HapticFeedback.mediumImpact();
+                            }
                           },
-                          decoration: textInputDecoration.copyWith(
+                          decoration: styling.textInputDecoration().copyWith(
                               labelText: "Display Name",
-                              fillColor: ColorSys.secondary,
+                              fillColor: styling.secondary,
                               prefixIcon: Icon(
                                 Icons.person,
                                 color: Theme.of(context).primaryColor,
@@ -151,12 +163,20 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: usernameController,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
+                        onTap: () async {
+                          String hapticFeedback =
+                              await HelperFunctions.getHapticFeedbackSF();
+                          if (hapticFeedback == "normal") {
+                            HapticFeedback.selectionClick();
+                          } else if (hapticFeedback == "light") {
+                            HapticFeedback.selectionClick();
+                          } else if (hapticFeedback == "heavy") {
+                            HapticFeedback.mediumImpact();
+                          }
                         },
-                        decoration: textInputDecoration.copyWith(
+                        decoration: styling.textInputDecoration().copyWith(
                             labelText: "Username",
-                            fillColor: ColorSys.secondary,
+                            fillColor: styling.secondary,
                             prefixIcon: Icon(
                               Icons.person,
                               color: Theme.of(context).primaryColor,
@@ -180,12 +200,20 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: emailController,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
+                        onTap: () async {
+                          String hapticFeedback =
+                              await HelperFunctions.getHapticFeedbackSF();
+                          if (hapticFeedback == "normal") {
+                            HapticFeedback.selectionClick();
+                          } else if (hapticFeedback == "light") {
+                            HapticFeedback.selectionClick();
+                          } else if (hapticFeedback == "heavy") {
+                            HapticFeedback.mediumImpact();
+                          }
                         },
-                        decoration: textInputDecoration.copyWith(
+                        decoration: styling.textInputDecoration().copyWith(
                             labelText: "Email",
-                            fillColor: ColorSys.secondary,
+                            fillColor: styling.secondary,
                             prefixIcon: Icon(
                               Icons.email,
                               color: Theme.of(context).primaryColor,
@@ -218,11 +246,19 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       TextFormField(
                         obscureText: true,
                         controller: passwordController,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
+                        onTap: () async {
+                          String hapticFeedback =
+                              await HelperFunctions.getHapticFeedbackSF();
+                          if (hapticFeedback == "normal") {
+                            HapticFeedback.selectionClick();
+                          } else if (hapticFeedback == "light") {
+                            HapticFeedback.selectionClick();
+                          } else if (hapticFeedback == "heavy") {
+                            HapticFeedback.mediumImpact();
+                          }
                         },
-                        decoration: textInputDecoration.copyWith(
-                            fillColor: ColorSys.secondary,
+                        decoration: styling.textInputDecoration().copyWith(
+                            fillColor: styling.secondary,
                             labelText: "Password",
                             prefixIcon: Icon(
                               Icons.lock,
@@ -244,7 +280,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                               width: double.infinity,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                    backgroundColor: ColorSys.primaryDark,
+                                    backgroundColor: styling.primaryDark,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
@@ -266,11 +302,20 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                             TextSpan(
                                 text: "Sign in here",
                                 style: TextStyle(
-                                    color: ColorSys.primary,
+                                    color: styling.primary,
                                     fontWeight: FontWeight.bold),
                                 recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    HapticFeedback.mediumImpact();
+                                  ..onTap = () async {
+                                    String hapticFeedback =
+                                        await HelperFunctions
+                                            .getHapticFeedbackSF();
+                                    if (hapticFeedback == "normal") {
+                                      HapticFeedback.mediumImpact();
+                                    } else if (hapticFeedback == "light") {
+                                      HapticFeedback.lightImpact();
+                                    } else if (hapticFeedback == "heavy") {
+                                      HapticFeedback.heavyImpact();
+                                    }
                                     router.pushReplacement(
                                         "/welcome/${widget.uid}/${widget.toProfile}");
                                   })

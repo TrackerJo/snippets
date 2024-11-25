@@ -7,8 +7,11 @@ import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/api/notifications.dart';
 import 'package:snippets/constants.dart';
 import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/main.dart';
 import 'package:snippets/providers/card_provider.dart';
-import 'package:snippets/templates/colorsSys.dart';
+import 'package:snippets/templates/styling.dart';
+import 'package:snippets/templates/input_decoration.dart';
+import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/botw_voting_card.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
 
@@ -29,11 +32,16 @@ class _VotingPageState extends State<VotingPage> {
   User profileData = User.empty();
   BOTW blank = BOTW.empty();
   List<BOTWAnswer> movedAnswers = [];
-  List<BOTWAnswer> removedVotedAnswers = [];
+  List<BOTWAnswer> skippedAnswers = [];
+  List<BOTWAnswer> answersList = [];
+  List<BOTWAnswer> pastAnswers = [];
+
+  int mostLinesInAnswer = 0;
 
   List<BOTWAnswer> getAnswers(
       Map<String, BOTWAnswer> answers, User profileData) {
     List<BOTWAnswer> listAnswers = [];
+
     answers.forEach((key, value) {
       if (key == profileData.userId) return;
       if (value.voters.contains(profileData.userId)) return;
@@ -76,15 +84,26 @@ class _VotingPageState extends State<VotingPage> {
     User data = await Database()
         .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
     final provider = Provider.of<CardProvider>(context, listen: false);
+    List<BOTWAnswer> answers = getAnswers(nblank.answers, data);
 
-    provider.setAnswers(getAnswers(nblank.answers, data));
+    provider.setAnswers(answers);
     provider.setOnLike(voteForAnswer);
     provider.setOnDislike(skipAnswer);
+    int longestAnswer = 0;
+    for (var answer in answers) {
+      if (answer.answer.split("").length > longestAnswer) {
+        longestAnswer = answer.answer.split("").length;
+      }
+    }
+
     setState(() {
       profileData = data;
       votesLeft = data.votesLeft;
-      votedAnswers = getVotedBOTW(blank.answers, data);
-      answers = getAnswers(blank.answers, data);
+      votedAnswers = getVotedBOTW(nblank.answers, data);
+      this.answers = [...answers];
+      answersList = [...answers];
+      pastAnswers = [...answers];
+      mostLinesInAnswer = (longestAnswer / 18).ceil();
     });
   }
 
@@ -102,226 +121,303 @@ class _VotingPageState extends State<VotingPage> {
       provider.goBack(answer);
       return;
     }
-    HapticFeedback.mediumImpact();
+    String hapticFeedback = await HelperFunctions.getHapticFeedbackSF();
+    if (hapticFeedback == "normal") {
+      HapticFeedback.mediumImpact();
+    } else if (hapticFeedback == "light") {
+      HapticFeedback.lightImpact();
+    } else if (hapticFeedback == "heavy") {
+      HapticFeedback.heavyImpact();
+    }
     setState(() {
       hasSavedVotes = false;
       movedAnswers.add(answer);
       votedAnswers.add(answer);
       votesLeft--;
-      if (removedVotedAnswers.contains(answer)) {
-        removedVotedAnswers.remove(answer);
-      }
     });
     await Future.delayed(const Duration(milliseconds: 400));
     setState(() {
       answers.remove(answer);
+      answersList.remove(answer);
     });
   }
 
-  void skipAnswer(BOTWAnswer answer) {
-    HapticFeedback.mediumImpact();
+  void skipAnswer(BOTWAnswer answer) async {
+    String hapticFeedback = await HelperFunctions.getHapticFeedbackSF();
+    if (hapticFeedback == "normal") {
+      HapticFeedback.mediumImpact();
+    } else if (hapticFeedback == "light") {
+      HapticFeedback.lightImpact();
+    } else if (hapticFeedback == "heavy") {
+      HapticFeedback.heavyImpact();
+    }
     setState(() {
       movedAnswers.add(answer);
+      skippedAnswers.add(answer);
+    });
+    await Future.delayed(const Duration(milliseconds: 400));
+    setState(() {
+      answersList.remove(answer);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        resizeToAvoidBottomInset: true,
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: CustomAppBar(
-            title: "Voting",
-            showHelpButton: true,
-            onHelpButtonPressed: () {
-              showVotingHelp();
-            },
-            showBackButton: true,
-            onBackButtonPressed: () async {
-              for (var answer in votedAnswers) {
-                if (answer.voters.contains(profileData.userId)) continue;
-                answer.votes += 1;
-                answer.voters.add(auth.FirebaseAuth.instance.currentUser!.uid);
-                await Database().updateBOTWAnswer(answer);
-                await FBDatabase(
-                        uid: auth.FirebaseAuth.instance.currentUser!.uid)
-                    .updateUserVotesLeft(votesLeft);
-                PushNotifications().sendNotification(
-                    title:
-                        "${profileData.displayName} voted for your ${blank.blank}",
-                    body: "Click here to see how many votes it now has!",
-                    targetIds: [answer.FCMToken],
-                    data: {"type": "voted"});
-              }
-              for (var answer in removedVotedAnswers) {
-                answer.votes -= 1;
-                answer.voters.remove(profileData.userId);
-                await Database().updateBOTWAnswer(answer);
-                await FBDatabase(
-                        uid: auth.FirebaseAuth.instance.currentUser!.uid)
-                    .updateUserVotesLeft(votesLeft);
-              }
-              //update votes left
-              await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
-                  .updateUserVotesLeft(votesLeft);
-              Navigator.pop(context, true);
-            },
-          ),
-        ),
-        backgroundColor: ColorSys.background,
-        body: SizedBox(
-          width: MediaQuery.of(context).size.width,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  "Best ${blank.blank}",
-                  style: const TextStyle(color: Colors.white, fontSize: 26),
-                  textAlign: TextAlign.center,
-                ),
+    return Stack(
+      children: [
+        BackgroundTile(),
+        Scaffold(
+            resizeToAvoidBottomInset: true,
+            appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(kToolbarHeight),
+              child: CustomAppBar(
+                title: "Voting",
+                showHelpButton: true,
+                onHelpButtonPressed: () {
+                  showVotingHelp();
+                },
+                showBackButton: true,
+                onBackButtonPressed: () async {
+                  List<BOTWAnswer> removedVotedAnswers = [];
+                  for (var answer in pastAnswers) {
+                    if (!votedAnswers.contains(answer)) {
+                      removedVotedAnswers.add(answer);
+                    }
+                  }
+                  for (var answer in votedAnswers) {
+                    if (answer.voters.contains(profileData.userId)) continue;
+                    answer.votes += 1;
+                    answer.voters
+                        .add(auth.FirebaseAuth.instance.currentUser!.uid);
+                    await Database().updateBOTWAnswer(answer);
+
+                    // PushNotifications().sendNotification(
+                    //     title:
+                    //         "${profileData.displayName} voted for your ${blank.blank}",
+                    //     body: "Click here to see how many votes it now has!",
+                    //     targetIds: [answer.FCMToken],
+                    //     data: {"type": "voted"});
+                  }
+                  for (var answer in removedVotedAnswers) {
+                    answer.votes -= 1;
+                    answer.voters.remove(profileData.userId);
+                    await Database().updateBOTWAnswer(answer);
+                  }
+                  //update votes left
+                  await FBDatabase(
+                          uid: auth.FirebaseAuth.instance.currentUser!.uid)
+                      .updateUserVotesLeft(votesLeft);
+                  Navigator.pop(context, true);
+                },
               ),
-              const Text("Vote for the best three answers",
-                  style: TextStyle(color: Colors.white, fontSize: 16)),
-              const SizedBox(height: 10),
-              Text("Votes left: $votesLeft",
-                  style: const TextStyle(color: Colors.white, fontSize: 20)),
-              const SizedBox(height: 20),
-              buildCards(),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+            ),
+            backgroundColor: Colors.transparent,
+            body: SizedBox(
+              width: MediaQuery.of(context).size.width,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(50),
-                      border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: ColorSys.primary.withOpacity(0.5),
-                          spreadRadius: 7,
-                          blurRadius: 7,
-                          offset:
-                              const Offset(0, 3), // changes position of shadow
-                        )
-                      ],
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      "Best ${blank.blank}",
+                      style: TextStyle(
+                          color: styling.backgroundText, fontSize: 26),
+                      textAlign: TextAlign.center,
                     ),
-                    child: IconButton(
-                        onPressed: () {
-                          if (movedAnswers.isEmpty) return;
-                          HapticFeedback.mediumImpact();
-                          final provider =
-                              Provider.of<CardProvider>(context, listen: false);
-                          provider.goBack(movedAnswers.last);
-                          setState(() {
-                            if (votedAnswers.contains(movedAnswers.last)) {
-                              votedAnswers.removeLast();
-                              votesLeft++;
-                            }
-                            answers.add(movedAnswers.last);
-                            movedAnswers.removeLast();
-                          });
-                        },
-                        splashColor: ColorSys.primary,
-                        icon: const Icon(Icons.rotate_left,
-                            color: Colors.white, size: 30)),
                   ),
-                  const SizedBox(width: 20),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(50),
-                      border: Border.all(color: Colors.white, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: ColorSys.primary.withOpacity(0.5),
-                          spreadRadius: 7,
-                          blurRadius: 7,
-                          offset:
-                              const Offset(0, 3), // changes position of shadow
-                        )
-                      ],
+                  Text("Vote for the best three answers",
+                      style: TextStyle(
+                          color: styling.backgroundText, fontSize: 16)),
+                  const SizedBox(height: 10),
+                  Text("Votes left: $votesLeft",
+                      style: TextStyle(
+                          color: styling.backgroundText, fontSize: 20)),
+                  const SizedBox(height: 20),
+                  buildCards(context),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(50),
+                          border: Border.all(color: Colors.white, width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: styling.primary.withOpacity(0.5),
+                              spreadRadius: 7,
+                              blurRadius: 7,
+                              offset: const Offset(
+                                  0, 3), // changes position of shadow
+                            )
+                          ],
+                        ),
+                        child: IconButton(
+                            onPressed: () async {
+                              if (movedAnswers.isEmpty) return;
+                              String hapticFeedback =
+                                  await HelperFunctions.getHapticFeedbackSF();
+                              if (hapticFeedback == "normal") {
+                                HapticFeedback.mediumImpact();
+                              } else if (hapticFeedback == "light") {
+                                HapticFeedback.lightImpact();
+                              } else if (hapticFeedback == "heavy") {
+                                HapticFeedback.heavyImpact();
+                              }
+                              final provider = Provider.of<CardProvider>(
+                                  context,
+                                  listen: false);
+                              provider.goBack(movedAnswers.last);
+                              setState(() {
+                                if (votedAnswers.contains(movedAnswers.last)) {
+                                  votedAnswers.removeLast();
+                                  votesLeft++;
+                                }
+                                if (skippedAnswers
+                                    .contains(movedAnswers.last)) {
+                                  skippedAnswers.remove(movedAnswers.last);
+                                }
+                                answers.add(movedAnswers.last);
+                                movedAnswers.removeLast();
+                              });
+                            },
+                            splashColor: styling.primary,
+                            icon: const Icon(Icons.rotate_left,
+                                color: Colors.white, size: 30)),
+                      ),
+                      const SizedBox(width: 20),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(50),
+                          border: Border.all(color: Colors.white, width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: styling.primary.withOpacity(0.5),
+                              spreadRadius: 7,
+                              blurRadius: 7,
+                              offset: const Offset(
+                                  0, 3), // changes position of shadow
+                            )
+                          ],
+                        ),
+                        child: IconButton(
+                            onPressed: () async {
+                              String hapticFeedback =
+                                  await HelperFunctions.getHapticFeedbackSF();
+                              if (hapticFeedback == "normal") {
+                                HapticFeedback.mediumImpact();
+                              } else if (hapticFeedback == "light") {
+                                HapticFeedback.lightImpact();
+                              } else if (hapticFeedback == "heavy") {
+                                HapticFeedback.heavyImpact();
+                              }
+                              if (votesLeft == 0) {
+                                showOutOfVotes();
+                                return;
+                              }
+                              if (answers.isEmpty) return;
+                              final provider = Provider.of<CardProvider>(
+                                  context,
+                                  listen: false);
+                              provider.like();
+                            },
+                            splashColor: styling.primary,
+                            icon: const Icon(Icons.check,
+                                color: Colors.white, size: 30)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Text("Answers Voted For",
+                      style: TextStyle(
+                          color: styling.backgroundText, fontSize: 20)),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: votedAnswers.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Material(
+                              elevation: 10,
+                              shadowColor:
+                                  styling.getPurpleBlueGradient().colors[1],
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                  width: 300,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 5, vertical: 10),
+                                  decoration: ShapeDecoration(
+                                    gradient: styling.getPurpleBlueGradient(),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: ListTile(
+                                    title: Text(votedAnswers[index].answer,
+                                        style: TextStyle(
+                                            color: styling.theme ==
+                                                    "colorful-light"
+                                                ? styling.primaryDark
+                                                : Colors.black,
+                                            fontSize: 16)),
+                                    subtitle: Text(
+                                        votedAnswers[index].displayName,
+                                        style: TextStyle(
+                                            color: styling.theme ==
+                                                    "colorful-light"
+                                                ? styling.primaryDark
+                                                : Colors.black,
+                                            fontSize: 14)),
+                                    trailing: IconButton(
+                                        onPressed: () async {
+                                          String hapticFeedback =
+                                              await HelperFunctions
+                                                  .getHapticFeedbackSF();
+                                          if (hapticFeedback == "normal") {
+                                            HapticFeedback.mediumImpact();
+                                          } else if (hapticFeedback ==
+                                              "light") {
+                                            HapticFeedback.lightImpact();
+                                          } else if (hapticFeedback ==
+                                              "heavy") {
+                                            HapticFeedback.heavyImpact();
+                                          }
+                                          setState(() {
+                                            //Add back to answers
+                                            final provider =
+                                                Provider.of<CardProvider>(
+                                                    context,
+                                                    listen: false);
+                                            provider
+                                                .goBack(votedAnswers[index]);
+                                            answers.add(votedAnswers[index]);
+                                            movedAnswers
+                                                .remove(votedAnswers[index]);
+
+                                            votedAnswers.removeAt(index);
+                                            votesLeft++;
+                                          });
+                                        },
+                                        splashColor: styling.primary,
+                                        icon: Icon(Icons.delete,
+                                            color: styling.theme ==
+                                                    "colorful-light"
+                                                ? styling.primary
+                                                : Colors.white,
+                                            size: 30)),
+                                  ))),
+                        );
+                      },
                     ),
-                    child: IconButton(
-                        onPressed: () {
-                          HapticFeedback.mediumImpact();
-                          if (votesLeft == 0) {
-                            showOutOfVotes();
-                            return;
-                          }
-                          if (answers.isEmpty) return;
-                          final provider =
-                              Provider.of<CardProvider>(context, listen: false);
-                          provider.like();
-                        },
-                        splashColor: ColorSys.primary,
-                        icon: const Icon(Icons.check,
-                            color: Colors.white, size: 30)),
-                  ),
+                  )
                 ],
               ),
-              const SizedBox(height: 20),
-              const Text("Answers Voted For",
-                  style: TextStyle(color: Colors.white, fontSize: 20)),
-              const SizedBox(height: 10),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: votedAnswers.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Material(
-                          elevation: 10,
-                          shadowColor: ColorSys.purpleBlueGradient.colors[1],
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                              width: 300,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 5, vertical: 10),
-                              decoration: ShapeDecoration(
-                                gradient: ColorSys.purpleBlueGradient,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: ListTile(
-                                title: Text(votedAnswers[index].answer,
-                                    style: const TextStyle(
-                                        color: Colors.black, fontSize: 16)),
-                                subtitle: Text(votedAnswers[index].displayName,
-                                    style: const TextStyle(
-                                        color: Colors.black, fontSize: 14)),
-                                trailing: IconButton(
-                                    onPressed: () {
-                                      HapticFeedback.mediumImpact();
-                                      setState(() {
-                                        //Add back to answers
-                                        final provider =
-                                            Provider.of<CardProvider>(context,
-                                                listen: false);
-                                        provider.goBack(votedAnswers[index]);
-                                        answers.add(votedAnswers[index]);
-                                        movedAnswers
-                                            .remove(votedAnswers[index]);
-                                        removedVotedAnswers
-                                            .add(votedAnswers[index]);
-                                        votedAnswers.removeAt(index);
-                                        votesLeft++;
-                                      });
-                                    },
-                                    splashColor: ColorSys.primary,
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.white, size: 30)),
-                              ))),
-                    );
-                  },
-                ),
-              )
-            ],
-          ),
-        ));
+            )),
+      ],
+    );
   }
 
   void showOutOfVotes() {
@@ -333,8 +429,16 @@ class _VotingPageState extends State<VotingPage> {
             content: const Text("You have no votes left"),
             actions: [
               TextButton(
-                onPressed: () {
-                  HapticFeedback.mediumImpact();
+                onPressed: () async {
+                  String hapticFeedback =
+                      await HelperFunctions.getHapticFeedbackSF();
+                  if (hapticFeedback == "normal") {
+                    HapticFeedback.mediumImpact();
+                  } else if (hapticFeedback == "light") {
+                    HapticFeedback.lightImpact();
+                  } else if (hapticFeedback == "heavy") {
+                    HapticFeedback.heavyImpact();
+                  }
                   Navigator.of(context).pop();
                 },
                 child: const Text("OK"),
@@ -354,8 +458,16 @@ class _VotingPageState extends State<VotingPage> {
                 "Swipe left to see more answers\nSwipe right to vote for answer or click checkmark\nClick the left arrow to undo your last action"),
             actions: [
               TextButton(
-                onPressed: () {
-                  HapticFeedback.mediumImpact();
+                onPressed: () async {
+                  String hapticFeedback =
+                      await HelperFunctions.getHapticFeedbackSF();
+                  if (hapticFeedback == "normal") {
+                    HapticFeedback.mediumImpact();
+                  } else if (hapticFeedback == "light") {
+                    HapticFeedback.lightImpact();
+                  } else if (hapticFeedback == "heavy") {
+                    HapticFeedback.heavyImpact();
+                  }
                   Navigator.of(context).pop();
                 },
                 child: const Text("OK"),
@@ -365,26 +477,67 @@ class _VotingPageState extends State<VotingPage> {
         });
   }
 
-  Widget buildCards() {
+  Widget buildCards(BuildContext context) {
     final provider = Provider.of<CardProvider>(context);
-    final answers = provider.answers;
+    // List<BOTWAnswer> answers = provider.answers;
 
-    return answers.isEmpty
-        ? const Text("No more answers",
-            style: TextStyle(color: Colors.white, fontSize: 20))
-        : answers.isNotEmpty
+    return provider.answers.isEmpty
+        ? Column(
+            children: [
+              Text("No more answers",
+                  style:
+                      TextStyle(color: styling.backgroundText, fontSize: 20)),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                  onPressed: () async {
+                    String hapticFeedback =
+                        await HelperFunctions.getHapticFeedbackSF();
+                    if (hapticFeedback == "normal") {
+                      HapticFeedback.mediumImpact();
+                    } else if (hapticFeedback == "light") {
+                      HapticFeedback.lightImpact();
+                    } else if (hapticFeedback == "heavy") {
+                      HapticFeedback.heavyImpact();
+                    }
+                    setState(() {
+                      print(skippedAnswers);
+                      provider.setAnswers(skippedAnswers);
+                      // for (var answer in skippedAnswers) {
+                      //   provider.goBack(answer);
+                      // }
+                      answers = provider.answers;
+                      print(provider.answers);
+                      skippedAnswers = [];
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: styling.primary,
+                    elevation: 10,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        side: BorderSide(color: styling.primary, width: 2)),
+                  ),
+                  child: const Text("View skipped answers",
+                      style: TextStyle(color: Colors.white)))
+            ],
+          )
+        : provider.answers.isNotEmpty
             ? Stack(
-                children: answers.map((answer) {
+                children: provider.answers.map((answer) {
                 return BOTWVotingCard(
                     displayName: answer.displayName,
                     answer: answer.answer,
-                    isFront: answers.last == answer);
+                    numberOfLines: mostLinesInAnswer,
+                    isSecond: provider.answers.indexOf(answer) ==
+                        provider.answers.length - 2,
+                    isFront: provider.answers.last == answer);
               }).toList())
             : Container(
-                child: const Column(
+                child: Column(
                   children: [
                     Text("No more answers",
-                        style: TextStyle(color: Colors.white, fontSize: 20)),
+                        style: TextStyle(
+                            color: styling.backgroundText, fontSize: 20)),
                   ],
                 ),
               );

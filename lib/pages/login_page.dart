@@ -6,11 +6,6 @@ import 'package:snippets/api/auth.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 
-import 'package:snippets/templates/colorsSys.dart';
-import 'package:snippets/templates/input_decoration.dart';
-
-
-
 class WelcomePage extends StatefulWidget {
   final bool? toProfile;
   final String? uid;
@@ -27,30 +22,32 @@ class _WelcomePageState extends State<WelcomePage> {
   bool _isLoading = false;
   Auth authService = Auth();
 
-  void login() {
-
-
+  void login() async {
     if (formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
-      HapticFeedback.mediumImpact();
+      String hapticFeedback = await HelperFunctions.getHapticFeedbackSF();
+      if (hapticFeedback == "normal") {
+        HapticFeedback.mediumImpact();
+      } else if (hapticFeedback == "light") {
+        HapticFeedback.lightImpact();
+      } else if (hapticFeedback == "heavy") {
+        HapticFeedback.heavyImpact();
+      }
       authService.loginWithEmailandPassword(email, password).then((val) {
         if (val == true) {
-          if(widget.toProfile == true){
+          if (widget.toProfile == true) {
             router.pushReplacement("/home");
             router.push("/home/profile/${widget.uid}");
           } else {
             router.pushReplacement("/home");
           }
-          
-
         } else {
           setState(() {
             _isLoading = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-
             SnackBar(
               content: Text(val!.toString()),
               backgroundColor: Colors.red,
@@ -99,29 +96,38 @@ class _WelcomePageState extends State<WelcomePage> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 10),
-                        const Text("Creating real conversations without filters",
+                        const Text(
+                            "Creating real conversations without filters",
                             style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w400,
                                 color: Colors.white)),
                         const SizedBox(height: 50),
                         TextFormField(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
+                          onTap: () async {
+                            String hapticFeedback =
+                                await HelperFunctions.getHapticFeedbackSF();
+                            if (hapticFeedback == "normal") {
+                              HapticFeedback.selectionClick();
+                            } else if (hapticFeedback == "light") {
+                              HapticFeedback.selectionClick();
+                            } else if (hapticFeedback == "heavy") {
+                              HapticFeedback.mediumImpact();
+                            }
                           },
-                          decoration: textInputDecoration.copyWith(
+                          decoration: styling.textInputDecoration().copyWith(
                               labelText: "Email",
-                              fillColor: ColorSys.secondary,
+                              fillColor: styling.secondary,
                               prefixIcon: Icon(
                                 Icons.email,
                                 color: Theme.of(context).primaryColor,
                               )),
                           onChanged: (val) {
                             setState(() {
-                              email = val;
+                              email = val.trim();
                             });
                           },
-      
+
                           //Check email validation
                           validator: (val) {
                             return RegExp(
@@ -134,12 +140,20 @@ class _WelcomePageState extends State<WelcomePage> {
                         const SizedBox(height: 10),
                         TextFormField(
                           obscureText: true,
-                          onTap: () {
-                            HapticFeedback.selectionClick();
+                          onTap: () async {
+                            String hapticFeedback =
+                                await HelperFunctions.getHapticFeedbackSF();
+                            if (hapticFeedback == "normal") {
+                              HapticFeedback.selectionClick();
+                            } else if (hapticFeedback == "light") {
+                              HapticFeedback.selectionClick();
+                            } else if (hapticFeedback == "heavy") {
+                              HapticFeedback.mediumImpact();
+                            }
                           },
-                          decoration: textInputDecoration.copyWith(
+                          decoration: styling.textInputDecoration().copyWith(
                               labelText: "Password",
-                              fillColor: ColorSys.secondary,
+                              fillColor: styling.secondary,
                               prefixIcon: Icon(
                                 Icons.lock,
                                 color: Theme.of(context).primaryColor,
@@ -153,31 +167,40 @@ class _WelcomePageState extends State<WelcomePage> {
                           },
                           onChanged: (val) {
                             setState(() {
-                              password = val;
+                              password = val.trim();
                             });
                           },
                         ),
                         Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                                onPressed: () {
-                                  HapticFeedback.mediumImpact();
-                                  router.pushReplacement("/forgotPassword/${widget.uid}/${widget.toProfile}");
+                                onPressed: () async {
+                                  String hapticFeedback = await HelperFunctions
+                                      .getHapticFeedbackSF();
+                                  if (hapticFeedback == "normal") {
+                                    HapticFeedback.mediumImpact();
+                                  } else if (hapticFeedback == "light") {
+                                    HapticFeedback.lightImpact();
+                                  } else if (hapticFeedback == "heavy") {
+                                    HapticFeedback.heavyImpact();
+                                  }
+                                  router.pushReplacement(
+                                      "/forgotPassword/${widget.uid}/${widget.toProfile}");
                                 },
                                 child: Text(
                                   "Forgot Password?",
-                                  style: TextStyle(color: ColorSys.primary),
+                                  style: TextStyle(color: styling.primary),
                                 ))),
                         const SizedBox(height: 20),
                         _isLoading
                             ? CircularProgressIndicator(
-                                color: ColorSys.primary,
+                                color: styling.primary,
                               )
                             : SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                      backgroundColor: ColorSys.primaryDark,
+                                      backgroundColor: styling.primaryDark,
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(
                                           borderRadius:
@@ -216,13 +239,23 @@ class _WelcomePageState extends State<WelcomePage> {
                               TextSpan(
                                   text: "Register here",
                                   style: TextStyle(
-                                      color: ColorSys.primary,
+                                      color: styling.primary,
                                       fontWeight: FontWeight.bold),
                                   recognizer: TapGestureRecognizer()
-                                    ..onTap = () {
-                                      HapticFeedback.mediumImpact();
+                                    ..onTap = () async {
+                                      String hapticFeedback =
+                                          await HelperFunctions
+                                              .getHapticFeedbackSF();
+                                      if (hapticFeedback == "normal") {
+                                        HapticFeedback.mediumImpact();
+                                      } else if (hapticFeedback == "light") {
+                                        HapticFeedback.lightImpact();
+                                      } else if (hapticFeedback == "heavy") {
+                                        HapticFeedback.heavyImpact();
+                                      }
 
-                                      router.pushReplacement("/createAccount/${widget.uid}/${widget.toProfile}");
+                                      router.pushReplacement(
+                                          "/createAccount/${widget.uid}/${widget.toProfile}");
                                     })
                             ]))
                       ]),

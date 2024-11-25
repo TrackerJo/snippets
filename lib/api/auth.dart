@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_widgetkit/flutter_widgetkit.dart';
 import 'package:phone_input/phone_input_package.dart';
 import 'package:snippets/api/local_database.dart';
 import 'package:snippets/api/notifications.dart';
+import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 
 import 'fb_database.dart';
@@ -19,7 +21,10 @@ class Auth {
           .user!;
 
       await PushNotifications().initNotifications();
-      await PushNotifications().subscribeToTopic("all");
+      List<String> topics = await HelperFunctions.getTopicNotifications();
+      for (String topic in topics) {
+        await PushNotifications().subscribeToTopic(topic);
+      }
 
       return true;
     } on FirebaseAuthException catch (e) {
@@ -54,8 +59,15 @@ class Auth {
           .user!;
 
       await FBDatabase(uid: user.uid).savingUserData(fullName, email, username);
+      await HelperFunctions.addTopicNotification("all");
+      await HelperFunctions.addTopicNotification("botw");
+      await HelperFunctions.addTopicNotification("snippets");
+      await HelperFunctions.addAllowedNotification("friend");
+      await HelperFunctions.addAllowedNotification("discussion");
+      await HelperFunctions.addAllowedNotification("snippets");
+      await HelperFunctions.addAllowedNotification("botw");
+      await HelperFunctions.addAllowedNotification("snippetResponse");
 
-      await PushNotifications().subscribeToTopic("all");
       return true;
     } on FirebaseAuthException catch (e) {
       return e.message;
@@ -66,36 +78,43 @@ class Auth {
   Future signOut() async {
     try {
       // router.pushReplacement("/login");
+      List<String> topics = await HelperFunctions.getTopicNotifications();
+      for (String topic in topics) {
+        await PushNotifications().unsubscribeFromTopic(topic);
+      }
 
-      print("Step 2");
-      await PushNotifications().unsubscribeFromTopic("all");
-      print("Step 3");
       //Clear widgetData
-      WidgetKit.removeItem("botwData", "group.kazoom_snippets");
-      WidgetKit.removeItem("snippetsData", "group.kazoom_snippets");
-      WidgetKit.removeItem("snippetsResponsesData", "group.kazoom_snippets");
+      if (Platform.isIOS) {
+        WidgetKit.removeItem("botwData", "group.kazoom_snippets");
+        WidgetKit.removeItem("snippetsData", "group.kazoom_snippets");
+        WidgetKit.removeItem("snippetsResponsesData", "group.kazoom_snippets");
+        WidgetKit.reloadAllTimelines();
+      }
 
-      WidgetKit.reloadAllTimelines();
-      print("Step 3.5");
       await LocalDatabase().clearDB();
-      print("Step 4");
+
       await _auth.signOut();
-      print("Step 5");
+
       router.pushReplacement("/login");
-      print("Signed out");
     } catch (e) {
+      print(e.toString());
       return null;
     }
   }
 
   Future<void> deleteAccount() async {
-    await PushNotifications().unsubscribeFromTopic("all");
+    List<String> topics = await HelperFunctions.getTopicNotifications();
+    for (String topic in topics) {
+      await PushNotifications().unsubscribeFromTopic(topic);
+    }
     //Clear widgetData
-    WidgetKit.removeItem("botwData", "group.kazoom_snippets");
-    WidgetKit.removeItem("snippetsData", "group.kazoom_snippets");
-    WidgetKit.removeItem("snippetsResponsesData", "group.kazoom_snippets");
+    if (Platform.isIOS) {
+      WidgetKit.removeItem("botwData", "group.kazoom_snippets");
+      WidgetKit.removeItem("snippetsData", "group.kazoom_snippets");
+      WidgetKit.removeItem("snippetsResponsesData", "group.kazoom_snippets");
 
-    WidgetKit.reloadAllTimelines();
+      WidgetKit.reloadAllTimelines();
+    }
     await LocalDatabase().clearDB();
     await FirebaseAuth.instance.currentUser!.delete();
   }
@@ -107,7 +126,6 @@ class Auth {
   }
 
   Future<String?> reauthenticateUser(String email, String password) async {
-    print("authing");
     try {
       await FirebaseAuth.instance.currentUser!.reauthenticateWithCredential(
           EmailAuthProvider.credential(email: email, password: password));
@@ -164,7 +182,6 @@ class Auth {
         // router.pushReplacement("/login");
         stream.cancel();
       } else {
-        print("Reloading user data");
         stream = FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
             .userDataStream(streamController);
       }

@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:245390768336:android:3e6961bfba63ef8f4c46d5",
+        "mobilesdk_app_id": "1:245390768336:android:b4faf7b7b1d3200f4c46d5",
         "android_client_info": {
-          "package_name": "com.example.snippets"
+          "package_name": "com.kazoom.snippets"
         }
       },
       "oauth_client": [],

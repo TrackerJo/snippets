@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/main.dart';
 import 'package:snippets/pages/discussion_page.dart';
-import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/widgets/helper_functions.dart';
 import 'package:snippets/widgets/response_tile.dart';
 
@@ -17,7 +18,6 @@ class DiscussionTile extends StatelessWidget {
   final String theme;
   final bool isAnonymous;
 
-
   const DiscussionTile(
       {super.key,
       required this.snippetId,
@@ -29,7 +29,6 @@ class DiscussionTile extends StatelessWidget {
       required this.lastMessage,
       required this.hasBeenRead,
       required this.isAnonymous,
-
       required this.theme});
 
   @override
@@ -38,35 +37,41 @@ class DiscussionTile extends StatelessWidget {
       padding: const EdgeInsets.all(10.0),
       child: Material(
           elevation: 10,
-          shadowColor: theme == "sunset"
-          ? ColorSys.sunset
-          : theme == "sunrise"
-              ? ColorSys.sunriseGradient.colors[1]
-              : theme == "blue"
-                  ? ColorSys.blueGreenGradient.colors[1]
-                  : ColorSys.purpleBlueGradient.colors[1],
+          shadowColor: styling.primaryDark,
           borderRadius: BorderRadius.circular(12),
           child: Container(
               width: 350,
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
               decoration: ShapeDecoration(
-                gradient: theme == "sunset"
-              ? ColorSys.sunsetGradient
-              : theme == "sunrise"
-                  ? ColorSys.sunriseGradient
-                  : theme == "blue"
-                      ? ColorSys.blueGreenGradient
-                      : ColorSys.purpleBlueGradient,
+                gradient: styling.getSnippetGradient(),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
               child: ListTile(
                   title: Text("$answerUser - $question",
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text("${lastMessageSender == "" ? "" : "$lastMessageSender: "}$lastMessage", style: const TextStyle(fontSize: 12, color: Colors.black)),
-                  onTap: () {
-                    HapticFeedback.mediumImpact();
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: styling.theme == "colorful-light"
+                              ? styling.primaryDark
+                              : Colors.black)),
+                  subtitle: Text(
+                      "${lastMessageSender == "" ? "" : "$lastMessageSender: "}$lastMessage",
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: styling.theme == "colorful-light"
+                              ? styling.primaryDark
+                              : Colors.black)),
+                  onTap: () async {
+                    String hapticFeedback =
+                        await HelperFunctions.getHapticFeedbackSF();
+                    if (hapticFeedback == "normal") {
+                      HapticFeedback.mediumImpact();
+                    } else if (hapticFeedback == "light") {
+                      HapticFeedback.lightImpact();
+                    } else if (hapticFeedback == "heavy") {
+                      HapticFeedback.heavyImpact();
+                    }
 
                     // navigate to discussion page
                     nextScreen(
@@ -82,18 +87,20 @@ class DiscussionTile extends StatelessWidget {
                             isAnonymous: isAnonymous,
                             isDisplayOnly: true,
                           ),
-
                           theme: theme,
                         ));
                   },
-                  trailing: const Icon(Icons.arrow_forward_ios, color: Colors.black),
+                  trailing: Icon(Icons.arrow_forward_ios,
+                      color: styling.theme == "colorful-light"
+                          ? styling.primaryDark
+                          : Colors.black),
                   leading: //Make a blue dot
                       !hasBeenRead && lastMessageSender != ""
                           ? Container(
                               height: 10,
                               width: 10,
                               decoration: BoxDecoration(
-                                  color: Colors.blue,
+                                  color: styling.primary,
                                   borderRadius: BorderRadius.circular(50)))
                           : null))),
     );

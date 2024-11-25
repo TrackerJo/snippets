@@ -6,18 +6,14 @@ import 'package:snippets/api/notifications.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 
-import 'package:snippets/templates/colorsSys.dart';
-import 'package:snippets/templates/input_decoration.dart';
-
-
 import '../widgets/custom_app_bar.dart';
-
 
 class OnBoardingPage extends StatefulWidget {
   final bool? toProfile;
   final String? uid;
   final bool? alreadyOnboarded;
-  const OnBoardingPage({super.key, this.toProfile, this.uid, this.alreadyOnboarded});
+  const OnBoardingPage(
+      {super.key, this.toProfile, this.uid, this.alreadyOnboarded});
 
   @override
   State<OnBoardingPage> createState() => _OnBoardingPageState();
@@ -52,13 +48,24 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
       resizeToAvoidBottomInset: false,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: CustomAppBar(title: 'Welcome to Snippets', showBackButton: widget.alreadyOnboarded == true ? true : false, onBackButtonPressed: () {
-          HapticFeedback.mediumImpact();
-          Navigator.of(context).pop();
-        },
-        fixRight: widget.alreadyOnboarded == true ? true : false,),
+        child: CustomAppBar(
+          title: 'Welcome to Snippets',
+          showBackButton: widget.alreadyOnboarded == true ? true : false,
+          onBackButtonPressed: () async {
+            String hapticFeedback = await HelperFunctions.getHapticFeedbackSF();
+            if (hapticFeedback == "normal") {
+              HapticFeedback.mediumImpact();
+            } else if (hapticFeedback == "light") {
+              HapticFeedback.lightImpact();
+            } else if (hapticFeedback == "heavy") {
+              HapticFeedback.heavyImpact();
+            }
+            Navigator.of(context).pop();
+          },
+          fixRight: widget.alreadyOnboarded == true ? true : false,
+        ),
       ),
-      backgroundColor: const Color(0xFF232323),
+      backgroundColor: styling.background,
       body: Stack(
         alignment: Alignment.bottomCenter,
         children: <Widget>[
@@ -74,18 +81,17 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                   image: 'assets/slide_1.png',
                   title: 'Real conversations with real people',
                   content: 'No filters, only conversations'),
-              
               makePage(
                   image: 'assets/slide_3.png',
                   title: '3 prompts daily,  1 anonymous prompt weekly',
                   content:
                       'Answer each prompt, view your friends responses. Every week at a random time, there will be an public anonymous snippet for all to answer.',
                   smallText: true),
-                  
               makePage(
                   image: 'assets/slide_2.png',
                   title: 'One public snippet of the week',
-                  content: 'Every week one question will be asked to all users. Responses will be public and can be viewed by all users. On the weekend, vote for your favorite response.'),
+                  content:
+                      'Every week one question will be asked to all users. Responses will be public and can be viewed by all users. On the weekend, vote for your favorite response.'),
               makePage(
                   image: 'assets/slide_4.png',
                   title: 'Stay in touch with new and old friends',
@@ -106,7 +112,8 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
     );
   }
 
-  Widget makePage({image, title, content, lastPage = false, smallText = false}) {
+  Widget makePage(
+      {image, title, content, lastPage = false, smallText = false}) {
     return Container(
       padding: const EdgeInsets.only(left: 50, right: 50, bottom: 60),
       child: Column(
@@ -121,9 +128,9 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
             ),
             Text(title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 30,
-                    color: Colors.white,
+                    color: styling.backgroundText,
                     fontWeight: FontWeight.bold)),
             const SizedBox(
               height: 20,
@@ -140,11 +147,18 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
               ),
             if (lastPage)
               ElevatedButton(
-                onPressed: () {
-
-                  if(widget.alreadyOnboarded == true){
+                onPressed: () async {
+                  if (widget.alreadyOnboarded == true) {
                     // router.pushReplacement("/home");
-                    HapticFeedback.mediumImpact();
+                    String hapticFeedback =
+                        await HelperFunctions.getHapticFeedbackSF();
+                    if (hapticFeedback == "normal") {
+                      HapticFeedback.mediumImpact();
+                    } else if (hapticFeedback == "light") {
+                      HapticFeedback.lightImpact();
+                    } else if (hapticFeedback == "heavy") {
+                      HapticFeedback.heavyImpact();
+                    }
                     Navigator.of(context).pop();
                     return;
                   }
@@ -156,15 +170,17 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorSys.primaryDark,
+                  backgroundColor: styling.primaryDark,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                 ),
                 child: Text(
-                  widget.alreadyOnboarded == true ? 'Back to Home' :
-                  'Get Started',
+                  widget.alreadyOnboarded == true
+                      ? 'Back to Home'
+                      : 'Get Started',
                   style: const TextStyle(color: Colors.white, fontSize: 15),
                 ),
               ),
@@ -179,7 +195,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
       width: isActive ? 30 : 8,
       margin: const EdgeInsets.only(right: 5),
       decoration: BoxDecoration(
-          color: ColorSys.primary, borderRadius: BorderRadius.circular(5)),
+          color: styling.primary, borderRadius: BorderRadius.circular(5)),
     );
   }
 
@@ -198,79 +214,99 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
   Widget showDiscriptionPopup() {
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-      child: SingleChildScrollView(
-        child: AlertDialog(
-          backgroundColor: ColorSys.background,
-          title: Text("Profile's Description",
-              style: TextStyle(color: ColorSys.primary)),
-          content: SizedBox(
-            width: 300,
-            height: 375,
-            child: Column(
-              children: [
-                const Text(
-                    "Enter a short description about yourself. This will be visible to other users.",
-                    style: TextStyle(color: Colors.white)),
-                const SizedBox(
-                  height: 20,
-                ),
-                TextFormField(
-                    initialValue: editDescription,
-                    maxLines: 7,
-                    decoration: textInputDecoration.copyWith(
-                      hintText: 'Description',
-                      counterStyle: const TextStyle(color: Colors.white),
-
-                    ),
-                    onChanged: (value) => editDescription = value,
-                    maxLength: 125,
-                    maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                  ),
-                const SizedBox(
-                  height: 20,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+      child: Center(
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height * 0.8,
+          child: SingleChildScrollView(
+            child: AlertDialog(
+              backgroundColor: styling.background,
+              title: Text("Profile's Description",
+                  style: TextStyle(color: styling.primary)),
+              content: SizedBox(
+                width: 300,
+                height: 375,
+                child: Column(
                   children: [
-                    TextButton(
-                      onPressed: () async {
-                        Navigator.of(context).pop();
-                        await PushNotifications().initNotifications();
-                        if(widget.toProfile == true){
+                    const Text(
+                        "Enter a short description about yourself. This will be visible to other users.",
+                        style: TextStyle(color: Colors.white)),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    TextFormField(
+                      initialValue: editDescription,
+                      maxLines: 7,
+                      decoration: styling.textInputDecoration().copyWith(
+                            hintText: 'Description',
+                            counterStyle: const TextStyle(color: Colors.white),
+                          ),
+                      onChanged: (value) => editDescription = value,
+                      maxLength: 125,
+                      maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () async {
+                            Navigator.of(context).pop();
+                            await PushNotifications().initNotifications();
+                            List<String> topics =
+                                await HelperFunctions.getTopicNotifications();
+                            for (String topic in topics) {
+                              await PushNotifications().subscribeToTopic(topic);
+                            }
+                            if (widget.toProfile == true) {
+                              router.pushReplacement("/home");
+                              router.push("/home/profile/${widget.uid}");
+                            } else {
+                              router.pushReplacement("/home");
+                            }
+                          },
+                          child: const Text("Skip"),
+                        ),
+                        TextButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: styling.primary,
+                          ),
+                          onPressed: () async {
+                            Navigator.of(context).pop();
+                            await PushNotifications().initNotifications();
 
-                          router.pushReplacement("/home");
-                          router.push("/home/profile/${widget.uid}");
-                        } else {
-                        router.pushReplacement("/home");
-                        }
-                      },
-                      child: const Text("Skip"),
-                    ),
-                    TextButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorSys.primary,
-                      ),
-                      onPressed: () async {
-                        Navigator.of(context).pop();
-                        await PushNotifications().initNotifications();
-                        await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-                            .updateUserDescription(editDescription);
-                
-                        if(widget.toProfile == true){
-                          router.pushReplacement("/home");
-                          router.push("/home/profile/${widget.uid}");
-                        } else {
-                        router.pushReplacement("/home");
-                        }
-                      },
-                      child: const Text("Save", style: TextStyle(color: Colors.white)),
-                    ),
+                            List<String> topics =
+                                await HelperFunctions.getTopicNotifications();
+                            for (String topic in topics) {
+                              await PushNotifications().subscribeToTopic(topic);
+                            }
+
+                            await FBDatabase(
+                                    uid: FirebaseAuth.instance.currentUser!.uid)
+                                .updateUserDescription(
+                                    editDescription.trim().isEmpty
+                                        ? "Hey there! I'm using Snippets."
+                                        : editDescription.trim());
+
+                            if (widget.toProfile == true) {
+                              router.pushReplacement("/home");
+                              router.push("/home/profile/${widget.uid}");
+                            } else {
+                              router.pushReplacement("/home");
+                            }
+                          },
+                          child: const Text("Save",
+                              style: TextStyle(color: Colors.white)),
+                        ),
+                      ],
+                    )
                   ],
-                )
-              ],
+                ),
+              ),
             ),
           ),
-         
         ),
       ),
     );

@@ -8,7 +8,6 @@ import 'package:snippets/constants.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 
-import 'package:snippets/templates/colorsSys.dart';
 import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
 
@@ -78,8 +77,6 @@ class _ResponsesPageState extends State<ResponsesPage> {
       friends.add(auth.FirebaseAuth.instance.currentUser!.uid);
       List<String> responsesIDs =
           await LocalDatabase().getCachedResponsesIDs(widget.snippetId);
-      print("Friends: $friends");
-      print("Responses: $responsesIDs");
 
       if (!compareLists(friends, responsesIDs)) {
         for (var item in friends) {
@@ -104,7 +101,7 @@ class _ResponsesPageState extends State<ResponsesPage> {
 
     responsesList.stream.listen((event) {
       if (responsesStream.isClosed) return;
-      print("Local Responses: $event");
+
       //Check for duplicates
       List<SnippetResponse> newResponses = [];
       List<String> responseIDs = [];
@@ -137,7 +134,7 @@ class _ResponsesPageState extends State<ResponsesPage> {
       if (widget.isAnonymous) {
         return;
       }
-      print("Getting user response");
+
       SnippetResponse response = (await Database().getSnippetResponse(
           widget.snippetId, auth.FirebaseAuth.instance.currentUser!.uid));
       if (mounted) {
@@ -174,35 +171,39 @@ class _ResponsesPageState extends State<ResponsesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: CustomAppBar(
-          title: "Responses",
-          theme: widget.theme,
-          showBackButton: true,
-          onBackButtonPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-      ),
-      backgroundColor: ColorSys.background,
-      body: Stack(
-        children: [
-          const BackgroundTile(),
-          SizedBox(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 20),
-                responsesList(),
-              ],
+    return Stack(
+      children: [
+        BackgroundTile(),
+        Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight),
+            child: CustomAppBar(
+              title: "Responses",
+              theme: "purple",
+              showBackButton: true,
+              onBackButtonPressed: () {
+                Navigator.of(context).pop();
+              },
             ),
           ),
-        ],
-      ),
+          backgroundColor: Colors.transparent,
+          body: Stack(
+            children: [
+              SizedBox(
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 20),
+                    responsesList(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -241,11 +242,7 @@ class _ResponsesPageState extends State<ResponsesPage> {
                           );
                         }
                         index -= 1;
-                        // if (snapshot.data.docs[0] == "EMPTY") {
-                        //   return const Center(
-                        //     child: Text("No responses yet"),
-                        //   );
-                        // }
+
                         SnippetResponse response = snapshot.data[index];
                         return Padding(
                           padding: const EdgeInsets.all(8.0),
@@ -261,10 +258,14 @@ class _ResponsesPageState extends State<ResponsesPage> {
                         );
                       }));
             } else {
-              return const Center();
+              return const Center(
+                child: Text("No responses yet"),
+              );
             }
           } else {
-            return const Center();
+            return const Center(
+              child: Text("No responses yet"),
+            );
           }
         } else {
           return Center(

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,16 +13,20 @@ import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/constants.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
-import 'package:snippets/templates/colorsSys.dart';
 
 class PushNotifications {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   Future<String> getDeviceToken() async {
+    //TODO: Remove this
+    // return "cPEeTaGU7EOXpQvg5_95QK:APA91bGMRlmrs5hMkY9NR1zvyqOfo4lrWYeVDMl1CkpuaT3gLSskFa5450FE7fXzPGLbT3rIUSLiW66nIB2YAu-tt_-OxJqK5yIDS2fLtFMudhE3AgbR4lNxuNgKolNuzkV6WJRierfO";
+
     String? token = await _firebaseMessaging.getToken();
     return (token != null) ? token : "";
   }
 
   Future<void> initNotifications() async {
+    // return;
+
     await _firebaseMessaging.requestPermission();
     await _firebaseMessaging.getToken();
 
@@ -35,7 +40,7 @@ class PushNotifications {
     if (message.data["type"] == "notification") {
       return;
     }
-    if (message.data["type"].contains("widget-")) {
+    if (message.data["type"].contains("widget-") && Platform.isIOS) {
       if (message.data["type"] == "widget-botw") {
         Map<String, dynamic> data =
             WidgetData(message.data["blank"].split(" of")[0], answers: [])
@@ -44,7 +49,7 @@ class PushNotifications {
         WidgetKit.setItem(
             'botwData', jsonEncode(data), 'group.kazoom_snippets');
         WidgetKit.reloadAllTimelines();
-      } else if (message.data["type"] == "widget-question") {
+      } else if (message.data["type"] == "widget-question" && Platform.isIOS) {
         Map<String, dynamic> oldSnippets = json.decode(
             await WidgetKit.getItem('snippetsData', 'group.kazoom_snippets'));
 
@@ -105,7 +110,8 @@ class PushNotifications {
         WidgetKit.setItem(
             'snippetsData', jsonEncode(snippetData), 'group.kazoom_snippets');
         WidgetKit.reloadAllTimelines();
-      } else if (message.data["type"] == "widget-botw-answer") {
+      } else if (message.data["type"] == "widget-botw-answer" &&
+          Platform.isIOS) {
         Map<String, dynamic> oldBOTW = json.decode(
             await WidgetKit.getItem('botwData', 'group.kazoom_snippets'));
         Map<String, dynamic> answer = {
@@ -136,7 +142,8 @@ class PushNotifications {
         WidgetKit.setItem(
             'botwData', jsonEncode(oldBOTW), 'group.kazoom_snippets');
         WidgetKit.reloadAllTimelines();
-      } else if (message.data["type"] == "widget-snippet-response") {
+      } else if (message.data["type"] == "widget-snippet-response" &&
+          Platform.isIOS) {
         Map<String, dynamic> oldResponsesMap = json.decode(
             await WidgetKit.getItem(
                 'snippetsResponsesData', 'group.kazoom_snippets'));
@@ -182,12 +189,14 @@ class PushNotifications {
         currentPage.split("-")[2] == message.data['responseId']) {
       return;
     }
-
-    HapticFeedback.vibrate();
+    String hapticFeedback = await HelperFunctions.getHapticFeedbackSF();
+    if (hapticFeedback != "none") {
+      HapticFeedback.vibrate();
+    }
 
     showOverlayNotification((context) {
       return Card(
-        color: ColorSys.secondarySolid,
+        color: styling.secondarySolid,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: ListTile(
           onTap: () {
@@ -357,13 +366,42 @@ class PushNotifications {
       handleMessage(message);
     });
 
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      handleMessage(message);
-    });
+    if (!onMessageOpenedAppStream.hasListener) {
+      onMessageOpenedAppStream.addStream(FirebaseMessaging.onMessageOpenedApp);
 
-    FirebaseMessaging.onMessage.listen((message) {
-      handleInAppMessage(message);
-    });
+      onMessageOpenedAppStream.stream.listen((message) {
+        handleMessage(message);
+      });
+    }
+
+    if (!onMessageStream.hasListener) {
+      onMessageStream.addStream(FirebaseMessaging.onMessage);
+
+      onMessageStream.stream.listen((message) async {
+        //wait 1 second to check if user has already listened to the message
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        bool hasListenedToMessage =
+            await HelperFunctions.getListenToMessagesSF();
+
+        if (hasListenedToMessage) return;
+        await HelperFunctions.saveListenToMessagesSF(true);
+        handleInAppMessage(message);
+        await Future.delayed(const Duration(seconds: 1));
+
+        HelperFunctions.saveListenToMessagesSF(false);
+      });
+    }
+
+    // FirebaseMessaging.onMessageOpenedApp.listen((message) {
+    //   handleMessage(message);
+    // });
+
+    //check if already added listener
+
+    // FirebaseMessaging.onMessage.listen((message) async {
+    //
+    // });
   }
 
   Future subscribeToTopic(String topic) async {
@@ -399,15 +437,13 @@ class PushNotifications {
     required String body,
     required List<String> targetIds,
     required Map<String, dynamic> data,
+    required String thread,
   }) async {
     if (data["type"] == "discussion") {
       data["discussionUsers"] =
           createDiscussionUsersString(data["discussionUsers"]);
     }
 
-    print("Sending notification");
-    print(data);
-    print(targetIds);
     HttpsCallableResult result = await FirebaseFunctions.instance
         .httpsCallable('sendNotifications')
         .call({
@@ -415,6 +451,7 @@ class PushNotifications {
       "body": body,
       "targetIds": targetIds,
       "data": data,
+      "thread": thread,
     });
     return result.data;
   }

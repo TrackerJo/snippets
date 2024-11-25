@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/main.dart';
 import 'package:snippets/pages/responses_page.dart';
-import 'package:snippets/templates/colorsSys.dart';
-import 'package:snippets/templates/input_decoration.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 import 'helper_functions.dart';
 
@@ -41,35 +41,79 @@ class _SnippetTileState extends State<SnippetTile> {
     super.initState();
   }
 
+  void showAnonymousInfoDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Anonymous Snippets"),
+          content: const Text(
+              "Your response will be completely anonymous to everyone and will be public, not just to your friends."),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () async {
+                await HelperFunctions.saveSeenAnonymousSnippetSF(true);
+
+                Navigator.of(context).pop();
+              },
+              child: const Text("I understand"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Material(
-      elevation: 10,
-      shadowColor: widget.type == "anonymous"
-          ? ColorSys.blackGradient.colors[0]
-          : ColorSys.blueGreenGradient.colors[1],
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 350,
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-        decoration: ShapeDecoration(
-          gradient: widget.type == "anonymous"
-              ? ColorSys.blackGradient
-              : ColorSys.blueGreenGradient,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+    WidgetsBinding.instance!.addPostFrameCallback((_) {
+      print("Post frame callback home page ${mounted}");
+    });
+    return VisibilityDetector(
+      key: Key(widget.snippetId),
+      onVisibilityChanged: (info) async {
+        if (info.visibleFraction > 0 && widget.type == "anonymous") {
+          bool hasSeenAnonymous =
+              await HelperFunctions.checkIfSeenAnonymousSnippetSF();
+          ;
+
+          if (!hasSeenAnonymous) {
+            showAnonymousInfoDialog(context);
+          }
+        }
+      },
+      child: Material(
+        elevation: 10,
+        shadowColor: widget.type == "anonymous"
+            ? styling.getBlackGradient().colors[0]
+            : styling.getSnippetGradient().colors[1],
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 350,
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+          decoration: ShapeDecoration(
+            gradient: widget.type == "anonymous"
+                ? styling.getBlackGradient()
+                : styling.getSnippetGradient(),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
-        ),
-        child: ListTile(
-          onTap: () => {
-            if (!widget.isAnswered)
-              {
+          child: ListTile(
+            onTap: () async {
+              if (!widget.isAnswered) {
                 //Remove focus from textfield
-                FocusScope.of(context).unfocus(),
-              }
-            else
-              {
-                HapticFeedback.mediumImpact(),
+                FocusScope.of(context).unfocus();
+              } else {
+                String hapticFeedback =
+                    await HelperFunctions.getHapticFeedbackSF();
+                if (hapticFeedback == "normal") {
+                  HapticFeedback.mediumImpact();
+                } else if (hapticFeedback == "light") {
+                  HapticFeedback.lightImpact();
+                } else if (hapticFeedback == "heavy") {
+                  HapticFeedback.heavyImpact();
+                }
                 nextScreen(
                   context,
                   ResponsesPage(
@@ -78,118 +122,152 @@ class _SnippetTileState extends State<SnippetTile> {
                     theme: widget.theme,
                     isAnonymous: widget.type == "anonymous",
                   ),
-                ),
+                );
               }
-          },
-          trailing: isLoading
-              ? CircularProgressIndicator(
-                  color: ColorSys.primaryDark,
-                )
-              : IconButton(
-                  icon: !widget.isAnswered
-                      ? const Icon(Icons.send, color: Colors.black)
-                      : const Icon(Icons.arrow_forward_ios,
-                          color: Colors.black),
-                  onPressed: () async {
-                    // show options
-                    if (!widget.isAnswered) {
-                      if (answerController.text.isEmpty) {
-                        return;
-                      }
-                      setState(() {
-                        isLoading = true;
-                      });
-                      if (widget.type == "anonymous") {
-                        String anonymousID =
-                            await HelperFunctions.saveAnonymouseIDSF();
-                        await FBDatabase(
-                                uid: FirebaseAuth.instance.currentUser!.uid)
-                            .submitAnswer(
-                                widget.snippetId,
-                                answerController.text,
-                                widget.question,
-                                widget.theme,
-                                anonymousID);
+            },
+            trailing: isLoading
+                ? CircularProgressIndicator(
+                    color: styling.primaryDark,
+                  )
+                : IconButton(
+                    icon: !widget.isAnswered
+                        ? Icon(Icons.send,
+                            color: styling.theme == "colorful-light"
+                                ? widget.type == "anonymous"
+                                    ? Colors.white
+                                    : styling.primary
+                                : Colors.black)
+                        : Icon(Icons.arrow_forward_ios,
+                            color: styling.theme == "colorful-light"
+                                ? widget.type == "anonymous"
+                                    ? Colors.white
+                                    : styling.primary
+                                : Colors.black),
+                    onPressed: () async {
+                      // show options
+                      if (!widget.isAnswered) {
+                        if (answerController.text.isEmpty) {
+                          return;
+                        }
+                        setState(() {
+                          isLoading = true;
+                        });
+                        if (widget.type == "anonymous") {
+                          String anonymousID =
+                              await HelperFunctions.saveAnonymouseIDSF();
+                          await FBDatabase(
+                                  uid: FirebaseAuth.instance.currentUser!.uid)
+                              .submitAnswer(
+                                  widget.snippetId,
+                                  answerController.text.trim(),
+                                  widget.question,
+                                  widget.theme,
+                                  anonymousID);
+                        } else {
+                          await FBDatabase(
+                                  uid: FirebaseAuth.instance.currentUser!.uid)
+                              .submitAnswer(
+                                  widget.snippetId,
+                                  answerController.text.trim(),
+                                  widget.question,
+                                  widget.theme,
+                                  null);
+                        }
+                        setState(() {
+                          isLoading = false;
+                        });
+
+                        // Navigator.of(context).pop();
+                        //Go to responses page
+                        // nextScreen(
+                        //     context,
+                        //     ResponsesPage(
+                        //       snippetId: widget.snippetId,
+                        //       userResponse: answerController.text,
+                        //       userDiscussionUsers: [
+                        //         FirebaseAuth.instance.currentUser!.uid
+                        //       ],
+                        //       question: widget.question,
+                        //       theme: widget.theme,
+                        //       isAnonymous: widget.type == "anonymous",
+                        //     ));
+                        setState(() {
+                          answerController.clear();
+                        });
                       } else {
-                        await FBDatabase(
-                                uid: FirebaseAuth.instance.currentUser!.uid)
-                            .submitAnswer(
-                                widget.snippetId,
-                                answerController.text,
-                                widget.question,
-                                widget.theme,
-                                null);
-                      }
-                      setState(() {
-                        isLoading = false;
-                      });
-
-                      // Navigator.of(context).pop();
-                      //Go to responses page
-                      // nextScreen(
-                      //     context,
-                      //     ResponsesPage(
-                      //       snippetId: widget.snippetId,
-                      //       userResponse: answerController.text,
-                      //       userDiscussionUsers: [
-                      //         FirebaseAuth.instance.currentUser!.uid
-                      //       ],
-                      //       question: widget.question,
-                      //       theme: widget.theme,
-                      //       isAnonymous: widget.type == "anonymous",
-                      //     ));
-                      setState(() {
-                        answerController.clear();
-                      });
-                    } else {
-                      HapticFeedback.mediumImpact();
-                      nextScreen(
-                        context,
-                        ResponsesPage(
-                          snippetId: widget.snippetId,
-                          question: widget.question,
-                          theme: widget.theme,
-                          isAnonymous: widget.type == "anonymous",
-                        ),
-                      );
-                    }
-                  },
-                ),
-          title: Text(
-            widget.question,
-            style: const TextStyle(
-              color: Color.fromARGB(255, 0, 0, 0),
-              fontSize: 20,
-              fontFamily: 'Inknut Antiqua',
-              fontWeight: FontWeight.w400,
-              height: 0,
-            ),
-          ),
-          subtitle: !widget.isAnswered
-              ? Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                      },
-                      controller: answerController,
-                      decoration: textInputDecoration.copyWith(
-                          hintText: "Enter answer here",
-                          //Border color: color: ColorSys.primarySolid,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20.0),
+                        String hapticFeedback =
+                            await HelperFunctions.getHapticFeedbackSF();
+                        if (hapticFeedback == "normal") {
+                          HapticFeedback.mediumImpact();
+                        } else if (hapticFeedback == "light") {
+                          HapticFeedback.lightImpact();
+                        } else if (hapticFeedback == "heavy") {
+                          HapticFeedback.heavyImpact();
+                        }
+                        nextScreen(
+                          context,
+                          ResponsesPage(
+                            snippetId: widget.snippetId,
+                            question: widget.question,
+                            theme: widget.theme,
+                            isAnonymous: widget.type == "anonymous",
                           ),
-                          fillColor: ColorSys.primaryInput
+                        );
+                      }
+                    },
+                  ),
+            title: Text(
+              widget.question,
+              style: TextStyle(
+                color: styling.theme == "colorful-light"
+                    ? widget.type == "anonymous"
+                        ? Colors.white
+                        : styling.primaryDark
+                    : Color.fromARGB(255, 0, 0, 0),
+                fontSize: 20,
+                fontWeight: FontWeight.w400,
+                height: 0,
+              ),
+            ),
+            subtitle: !widget.isAnswered
+                ? Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextFormField(
+                        onTap: () async {
+                          String hapticFeedback =
+                              await HelperFunctions.getHapticFeedbackSF();
+                          if (hapticFeedback == "normal") {
+                            HapticFeedback.mediumImpact();
+                          } else if (hapticFeedback == "light") {
+                            HapticFeedback.lightImpact();
+                          } else if (hapticFeedback == "heavy") {
+                            HapticFeedback.heavyImpact();
+                          }
+                        },
+                        controller: answerController,
+                        decoration: styling.textInputDecoration().copyWith(
+                              hintText: "Enter answer here",
+                              hintStyle: TextStyle(
+                                color: styling.theme == "colorful-light"
+                                    ? Colors.white
+                                    : Colors.black,
+                              ),
+                              //Border color: color: ColorSys.primarySolid,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(20.0),
+                              ),
+                              fillColor: styling.primaryInput,
 
-                          //   borderRadius: BorderRadius.circular(20.0),
-                          //   borderSide: BorderSide(
-                          //     color: ColorSys.primarySolid,
-                          //     width: 20,
-                          //   ),
-                          // ),
-                          )),
-                )
-              : null,
+                              //   borderRadius: BorderRadius.circular(20.0),
+                              //   borderSide: BorderSide(
+                              //     color: ColorSys.primarySolid,
+                              //     width: 20,
+                              //   ),
+                              // ),
+                            )),
+                  )
+                : null,
+          ),
         ),
       ),
     );

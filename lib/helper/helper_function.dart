@@ -10,6 +10,109 @@ class HelperFunctions {
   static String votedBeforeKey = "VOTEDBEFOREKEY";
   static String appBadgeKey = "appBadge";
   static String updateLocalDatabaseKey = "UPDATELOCALDATABASEKEY";
+  static String listenToMessagesKey = "LISTENTOMESSAGESKEY";
+  static String topicNotificationsKey = "TOPICNOTIFICATIONSKEY";
+  static String allowedNotificationsKey = "ALLOWEDNOTIFICATIONSKEY";
+  static String snippetResponseDelayKey = "SNIPPETRESPONSEDELAYKEY";
+  static String hapticFeedbackKey = "HAPTICFEEDBACKKEY";
+  static String seenUpdateDialogKey = "SEENUPDATEDIALOGKEY";
+  static String themeKey = "THEMEKEY";
+
+  static Future<bool> saveThemeSF(String theme) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setString(themeKey, theme);
+  }
+
+  static Future<String> getThemeSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getString(themeKey) ?? "dark";
+  }
+
+  static Future<bool> saveSeenUpdateDialogSF(int num) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setInt(seenUpdateDialogKey, num);
+  }
+
+  static Future<int> getSeenUpdateDialogSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getInt(seenUpdateDialogKey) ?? 0;
+  }
+
+  static Future<bool> saveListenToMessagesSF(bool status) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setBool(listenToMessagesKey, status);
+  }
+
+  static Future<bool> getListenToMessagesSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getBool(listenToMessagesKey) ?? false;
+  }
+
+  static Future<bool> saveHapticFeedbackSF(String status) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setString(hapticFeedbackKey, status);
+  }
+
+  static Future<String> getHapticFeedbackSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getString(hapticFeedbackKey) ?? "normal";
+  }
+
+  static Future<bool> saveSnippetResponseDelaySF(int delay) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setInt(snippetResponseDelayKey, delay);
+  }
+
+  static Future<int> getSnippetResponseDelaySF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getInt(snippetResponseDelayKey) ?? 5;
+  }
+
+  static Future<bool> addTopicNotification(String topic) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    List<String> topics = sf.getStringList(topicNotificationsKey) ?? [];
+    if (topics.contains(topic)) {
+      return true;
+    }
+    return await sf.setStringList(topicNotificationsKey, [...topics, topic]);
+  }
+
+  static Future<bool> removeTopicNotification(String topic) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    List<String> topics = sf.getStringList(topicNotificationsKey) ?? [];
+    topics.remove(topic);
+    return await sf.setStringList(topicNotificationsKey, topics);
+  }
+
+  static Future<List<String>> getTopicNotifications() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getStringList(topicNotificationsKey) ?? [];
+  }
+
+  static Future<bool> addAllowedNotification(String type) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    List<String> allowedNotifications =
+        sf.getStringList(allowedNotificationsKey) ?? [];
+    if (allowedNotifications.contains(type)) {
+      return true;
+    }
+    return await sf.setStringList(
+        allowedNotificationsKey, [...allowedNotifications, type]);
+  }
+
+  static Future<bool> removeAllowedNotification(String type) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    List<String> allowedNotifications =
+        sf.getStringList(allowedNotificationsKey) ?? [];
+    allowedNotifications.remove(type);
+    return await sf.setStringList(
+        allowedNotificationsKey, allowedNotifications);
+  }
+
+  static Future<List<String>> getAllowedNotifications() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getStringList(allowedNotificationsKey) ?? [];
+  }
 
   //Saving data to SF
   static Future<bool> saveLocalDatabaseUpdateSF(int update) async {

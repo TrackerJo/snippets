@@ -13,6 +13,7 @@ class RemoteConfig {
       fetchTimeout: const Duration(minutes: 1),
       minimumFetchInterval: Duration.zero,
     ));
+
     await remoteConfig.fetchAndActivate();
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
 
@@ -20,8 +21,9 @@ class RemoteConfig {
       var requiredBuildNumber =
           remoteConfig.getString('requiredBuildNumberAndroid');
       String currentBuildNumber = packageInfo.buildNumber;
-      var devBuild = remoteConfig.getString('devBuildNumberIOS');
-      if (devBuild == currentBuildNumber) {
+      var devBuild = remoteConfig.getString('devBuildNumberIOS').split(",");
+
+      if (devBuild.contains(currentBuildNumber)) {
         return false;
       }
       return currentBuildNumber != requiredBuildNumber;
@@ -29,8 +31,10 @@ class RemoteConfig {
       var requiredBuildNumber =
           remoteConfig.getString('requiredBuildNumberIOS');
       String currentBuildNumber = packageInfo.buildNumber;
-      var devBuild = remoteConfig.getString('devBuildNumberIOS');
-      if (devBuild == currentBuildNumber) {
+
+      var devBuild = remoteConfig.getString('devBuildNumberIOS').split(",");
+
+      if (devBuild.contains(currentBuildNumber)) {
         return false;
       }
 

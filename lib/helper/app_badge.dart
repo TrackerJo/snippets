@@ -10,7 +10,6 @@ class AppBadge {
     badgeCount += count;
     FlutterAppBadgeControl.updateBadgeCount(badgeCount);
     await HelperFunctions.saveAppBadgeSF(badgeCount);
-
   }
 
   static Future removeBadge(int count) async {

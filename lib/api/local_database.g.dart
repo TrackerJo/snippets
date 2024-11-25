@@ -1847,6 +1847,24 @@ class $UserDataTableTable extends UserDataTable
   late final GeneratedColumn<int> votesLeft = GeneratedColumn<int>(
       'votes_left', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _snippetsRespondedToMeta =
+      const VerificationMeta('snippetsRespondedTo');
+  @override
+  late final GeneratedColumn<int> snippetsRespondedTo = GeneratedColumn<int>(
+      'snippets_responded_to', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _messagesSentMeta =
+      const VerificationMeta('messagesSent');
+  @override
+  late final GeneratedColumn<int> messagesSent = GeneratedColumn<int>(
+      'messages_sent', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _discussionsStartedMeta =
+      const VerificationMeta('discussionsStarted');
+  @override
+  late final GeneratedColumn<int> discussionsStarted = GeneratedColumn<int>(
+      'discussions_started', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -1863,7 +1881,10 @@ class $UserDataTableTable extends UserDataTable
         searchKey,
         userId,
         lastUpdatedMillis,
-        votesLeft
+        votesLeft,
+        snippetsRespondedTo,
+        messagesSent,
+        discussionsStarted
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1976,6 +1997,30 @@ class $UserDataTableTable extends UserDataTable
     } else if (isInserting) {
       context.missing(_votesLeftMeta);
     }
+    if (data.containsKey('snippets_responded_to')) {
+      context.handle(
+          _snippetsRespondedToMeta,
+          snippetsRespondedTo.isAcceptableOrUnknown(
+              data['snippets_responded_to']!, _snippetsRespondedToMeta));
+    } else if (isInserting) {
+      context.missing(_snippetsRespondedToMeta);
+    }
+    if (data.containsKey('messages_sent')) {
+      context.handle(
+          _messagesSentMeta,
+          messagesSent.isAcceptableOrUnknown(
+              data['messages_sent']!, _messagesSentMeta));
+    } else if (isInserting) {
+      context.missing(_messagesSentMeta);
+    }
+    if (data.containsKey('discussions_started')) {
+      context.handle(
+          _discussionsStartedMeta,
+          discussionsStarted.isAcceptableOrUnknown(
+              data['discussions_started']!, _discussionsStartedMeta));
+    } else if (isInserting) {
+      context.missing(_discussionsStartedMeta);
+    }
     return context;
   }
 
@@ -2016,6 +2061,12 @@ class $UserDataTableTable extends UserDataTable
           DriftSqlType.int, data['${effectivePrefix}last_updated_millis'])!,
       votesLeft: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}votes_left'])!,
+      snippetsRespondedTo: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}snippets_responded_to'])!,
+      messagesSent: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}messages_sent'])!,
+      discussionsStarted: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}discussions_started'])!,
     );
   }
 
@@ -2042,6 +2093,9 @@ class UserDataTableData extends DataClass
   final String userId;
   final int lastUpdatedMillis;
   final int votesLeft;
+  final int snippetsRespondedTo;
+  final int messagesSent;
+  final int discussionsStarted;
   const UserDataTableData(
       {required this.id,
       required this.FCMToken,
@@ -2057,7 +2111,10 @@ class UserDataTableData extends DataClass
       required this.searchKey,
       required this.userId,
       required this.lastUpdatedMillis,
-      required this.votesLeft});
+      required this.votesLeft,
+      required this.snippetsRespondedTo,
+      required this.messagesSent,
+      required this.discussionsStarted});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2076,6 +2133,9 @@ class UserDataTableData extends DataClass
     map['user_id'] = Variable<String>(userId);
     map['last_updated_millis'] = Variable<int>(lastUpdatedMillis);
     map['votes_left'] = Variable<int>(votesLeft);
+    map['snippets_responded_to'] = Variable<int>(snippetsRespondedTo);
+    map['messages_sent'] = Variable<int>(messagesSent);
+    map['discussions_started'] = Variable<int>(discussionsStarted);
     return map;
   }
 
@@ -2096,6 +2156,9 @@ class UserDataTableData extends DataClass
       userId: Value(userId),
       lastUpdatedMillis: Value(lastUpdatedMillis),
       votesLeft: Value(votesLeft),
+      snippetsRespondedTo: Value(snippetsRespondedTo),
+      messagesSent: Value(messagesSent),
+      discussionsStarted: Value(discussionsStarted),
     );
   }
 
@@ -2119,6 +2182,10 @@ class UserDataTableData extends DataClass
       userId: serializer.fromJson<String>(json['userId']),
       lastUpdatedMillis: serializer.fromJson<int>(json['lastUpdatedMillis']),
       votesLeft: serializer.fromJson<int>(json['votesLeft']),
+      snippetsRespondedTo:
+          serializer.fromJson<int>(json['snippetsRespondedTo']),
+      messagesSent: serializer.fromJson<int>(json['messagesSent']),
+      discussionsStarted: serializer.fromJson<int>(json['discussionsStarted']),
     );
   }
   @override
@@ -2141,6 +2208,9 @@ class UserDataTableData extends DataClass
       'userId': serializer.toJson<String>(userId),
       'lastUpdatedMillis': serializer.toJson<int>(lastUpdatedMillis),
       'votesLeft': serializer.toJson<int>(votesLeft),
+      'snippetsRespondedTo': serializer.toJson<int>(snippetsRespondedTo),
+      'messagesSent': serializer.toJson<int>(messagesSent),
+      'discussionsStarted': serializer.toJson<int>(discussionsStarted),
     };
   }
 
@@ -2159,7 +2229,10 @@ class UserDataTableData extends DataClass
           String? searchKey,
           String? userId,
           int? lastUpdatedMillis,
-          int? votesLeft}) =>
+          int? votesLeft,
+          int? snippetsRespondedTo,
+          int? messagesSent,
+          int? discussionsStarted}) =>
       UserDataTableData(
         id: id ?? this.id,
         FCMToken: FCMToken ?? this.FCMToken,
@@ -2177,6 +2250,9 @@ class UserDataTableData extends DataClass
         userId: userId ?? this.userId,
         lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
         votesLeft: votesLeft ?? this.votesLeft,
+        snippetsRespondedTo: snippetsRespondedTo ?? this.snippetsRespondedTo,
+        messagesSent: messagesSent ?? this.messagesSent,
+        discussionsStarted: discussionsStarted ?? this.discussionsStarted,
       );
   UserDataTableData copyWithCompanion(UserDataTableCompanion data) {
     return UserDataTableData(
@@ -2205,6 +2281,15 @@ class UserDataTableData extends DataClass
           ? data.lastUpdatedMillis.value
           : this.lastUpdatedMillis,
       votesLeft: data.votesLeft.present ? data.votesLeft.value : this.votesLeft,
+      snippetsRespondedTo: data.snippetsRespondedTo.present
+          ? data.snippetsRespondedTo.value
+          : this.snippetsRespondedTo,
+      messagesSent: data.messagesSent.present
+          ? data.messagesSent.value
+          : this.messagesSent,
+      discussionsStarted: data.discussionsStarted.present
+          ? data.discussionsStarted.value
+          : this.discussionsStarted,
     );
   }
 
@@ -2225,7 +2310,10 @@ class UserDataTableData extends DataClass
           ..write('searchKey: $searchKey, ')
           ..write('userId: $userId, ')
           ..write('lastUpdatedMillis: $lastUpdatedMillis, ')
-          ..write('votesLeft: $votesLeft')
+          ..write('votesLeft: $votesLeft, ')
+          ..write('snippetsRespondedTo: $snippetsRespondedTo, ')
+          ..write('messagesSent: $messagesSent, ')
+          ..write('discussionsStarted: $discussionsStarted')
           ..write(')'))
         .toString();
   }
@@ -2246,7 +2334,10 @@ class UserDataTableData extends DataClass
       searchKey,
       userId,
       lastUpdatedMillis,
-      votesLeft);
+      votesLeft,
+      snippetsRespondedTo,
+      messagesSent,
+      discussionsStarted);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2265,7 +2356,10 @@ class UserDataTableData extends DataClass
           other.searchKey == this.searchKey &&
           other.userId == this.userId &&
           other.lastUpdatedMillis == this.lastUpdatedMillis &&
-          other.votesLeft == this.votesLeft);
+          other.votesLeft == this.votesLeft &&
+          other.snippetsRespondedTo == this.snippetsRespondedTo &&
+          other.messagesSent == this.messagesSent &&
+          other.discussionsStarted == this.discussionsStarted);
 }
 
 class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
@@ -2284,6 +2378,9 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
   final Value<String> userId;
   final Value<int> lastUpdatedMillis;
   final Value<int> votesLeft;
+  final Value<int> snippetsRespondedTo;
+  final Value<int> messagesSent;
+  final Value<int> discussionsStarted;
   const UserDataTableCompanion({
     this.id = const Value.absent(),
     this.FCMToken = const Value.absent(),
@@ -2300,6 +2397,9 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
     this.userId = const Value.absent(),
     this.lastUpdatedMillis = const Value.absent(),
     this.votesLeft = const Value.absent(),
+    this.snippetsRespondedTo = const Value.absent(),
+    this.messagesSent = const Value.absent(),
+    this.discussionsStarted = const Value.absent(),
   });
   UserDataTableCompanion.insert({
     this.id = const Value.absent(),
@@ -2317,6 +2417,9 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
     required String userId,
     required int lastUpdatedMillis,
     required int votesLeft,
+    required int snippetsRespondedTo,
+    required int messagesSent,
+    required int discussionsStarted,
   })  : FCMToken = Value(FCMToken),
         displayName = Value(displayName),
         BOTWStatus = Value(BOTWStatus),
@@ -2330,7 +2433,10 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
         searchKey = Value(searchKey),
         userId = Value(userId),
         lastUpdatedMillis = Value(lastUpdatedMillis),
-        votesLeft = Value(votesLeft);
+        votesLeft = Value(votesLeft),
+        snippetsRespondedTo = Value(snippetsRespondedTo),
+        messagesSent = Value(messagesSent),
+        discussionsStarted = Value(discussionsStarted);
   static Insertable<UserDataTableData> custom({
     Expression<int>? id,
     Expression<String>? FCMToken,
@@ -2347,6 +2453,9 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
     Expression<String>? userId,
     Expression<int>? lastUpdatedMillis,
     Expression<int>? votesLeft,
+    Expression<int>? snippetsRespondedTo,
+    Expression<int>? messagesSent,
+    Expression<int>? discussionsStarted,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2365,6 +2474,10 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
       if (userId != null) 'user_id': userId,
       if (lastUpdatedMillis != null) 'last_updated_millis': lastUpdatedMillis,
       if (votesLeft != null) 'votes_left': votesLeft,
+      if (snippetsRespondedTo != null)
+        'snippets_responded_to': snippetsRespondedTo,
+      if (messagesSent != null) 'messages_sent': messagesSent,
+      if (discussionsStarted != null) 'discussions_started': discussionsStarted,
     });
   }
 
@@ -2383,7 +2496,10 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
       Value<String>? searchKey,
       Value<String>? userId,
       Value<int>? lastUpdatedMillis,
-      Value<int>? votesLeft}) {
+      Value<int>? votesLeft,
+      Value<int>? snippetsRespondedTo,
+      Value<int>? messagesSent,
+      Value<int>? discussionsStarted}) {
     return UserDataTableCompanion(
       id: id ?? this.id,
       FCMToken: FCMToken ?? this.FCMToken,
@@ -2401,6 +2517,9 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
       userId: userId ?? this.userId,
       lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
       votesLeft: votesLeft ?? this.votesLeft,
+      snippetsRespondedTo: snippetsRespondedTo ?? this.snippetsRespondedTo,
+      messagesSent: messagesSent ?? this.messagesSent,
+      discussionsStarted: discussionsStarted ?? this.discussionsStarted,
     );
   }
 
@@ -2453,6 +2572,15 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
     if (votesLeft.present) {
       map['votes_left'] = Variable<int>(votesLeft.value);
     }
+    if (snippetsRespondedTo.present) {
+      map['snippets_responded_to'] = Variable<int>(snippetsRespondedTo.value);
+    }
+    if (messagesSent.present) {
+      map['messages_sent'] = Variable<int>(messagesSent.value);
+    }
+    if (discussionsStarted.present) {
+      map['discussions_started'] = Variable<int>(discussionsStarted.value);
+    }
     return map;
   }
 
@@ -2473,7 +2601,10 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
           ..write('searchKey: $searchKey, ')
           ..write('userId: $userId, ')
           ..write('lastUpdatedMillis: $lastUpdatedMillis, ')
-          ..write('votesLeft: $votesLeft')
+          ..write('votesLeft: $votesLeft, ')
+          ..write('snippetsRespondedTo: $snippetsRespondedTo, ')
+          ..write('messagesSent: $messagesSent, ')
+          ..write('discussionsStarted: $discussionsStarted')
           ..write(')'))
         .toString();
   }
@@ -3205,6 +3336,9 @@ typedef $$UserDataTableTableCreateCompanionBuilder = UserDataTableCompanion
   required String userId,
   required int lastUpdatedMillis,
   required int votesLeft,
+  required int snippetsRespondedTo,
+  required int messagesSent,
+  required int discussionsStarted,
 });
 typedef $$UserDataTableTableUpdateCompanionBuilder = UserDataTableCompanion
     Function({
@@ -3223,6 +3357,9 @@ typedef $$UserDataTableTableUpdateCompanionBuilder = UserDataTableCompanion
   Value<String> userId,
   Value<int> lastUpdatedMillis,
   Value<int> votesLeft,
+  Value<int> snippetsRespondedTo,
+  Value<int> messagesSent,
+  Value<int> discussionsStarted,
 });
 
 class $$UserDataTableTableTableManager extends RootTableManager<
@@ -3257,6 +3394,9 @@ class $$UserDataTableTableTableManager extends RootTableManager<
             Value<String> userId = const Value.absent(),
             Value<int> lastUpdatedMillis = const Value.absent(),
             Value<int> votesLeft = const Value.absent(),
+            Value<int> snippetsRespondedTo = const Value.absent(),
+            Value<int> messagesSent = const Value.absent(),
+            Value<int> discussionsStarted = const Value.absent(),
           }) =>
               UserDataTableCompanion(
             id: id,
@@ -3274,6 +3414,9 @@ class $$UserDataTableTableTableManager extends RootTableManager<
             userId: userId,
             lastUpdatedMillis: lastUpdatedMillis,
             votesLeft: votesLeft,
+            snippetsRespondedTo: snippetsRespondedTo,
+            messagesSent: messagesSent,
+            discussionsStarted: discussionsStarted,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -3291,6 +3434,9 @@ class $$UserDataTableTableTableManager extends RootTableManager<
             required String userId,
             required int lastUpdatedMillis,
             required int votesLeft,
+            required int snippetsRespondedTo,
+            required int messagesSent,
+            required int discussionsStarted,
           }) =>
               UserDataTableCompanion.insert(
             id: id,
@@ -3308,6 +3454,9 @@ class $$UserDataTableTableTableManager extends RootTableManager<
             userId: userId,
             lastUpdatedMillis: lastUpdatedMillis,
             votesLeft: votesLeft,
+            snippetsRespondedTo: snippetsRespondedTo,
+            messagesSent: messagesSent,
+            discussionsStarted: discussionsStarted,
           ),
         ));
 }
@@ -3389,6 +3538,21 @@ class $$UserDataTableTableFilterComposer
       column: $state.table.votesLeft,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get snippetsRespondedTo => $state.composableBuilder(
+      column: $state.table.snippetsRespondedTo,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get messagesSent => $state.composableBuilder(
+      column: $state.table.messagesSent,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get discussionsStarted => $state.composableBuilder(
+      column: $state.table.discussionsStarted,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
 }
 
 class $$UserDataTableTableOrderingComposer
@@ -3467,6 +3631,21 @@ class $$UserDataTableTableOrderingComposer
 
   ColumnOrderings<int> get votesLeft => $state.composableBuilder(
       column: $state.table.votesLeft,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get snippetsRespondedTo => $state.composableBuilder(
+      column: $state.table.snippetsRespondedTo,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get messagesSent => $state.composableBuilder(
+      column: $state.table.messagesSent,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get discussionsStarted => $state.composableBuilder(
+      column: $state.table.discussionsStarted,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }

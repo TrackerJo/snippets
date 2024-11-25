@@ -1,9 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/main.dart';
 import 'package:snippets/pages/discussion_page.dart';
 import 'package:snippets/pages/profile_page.dart';
-import 'package:snippets/templates/colorsSys.dart';
+import 'package:snippets/templates/styling.dart';
 
 import 'helper_functions.dart';
 
@@ -27,9 +29,7 @@ class ResponseTile extends StatefulWidget {
       required this.question,
       required this.theme,
       this.isDisplayOnly = false,
-      required this.isAnonymous
-
-});
+      required this.isAnonymous});
 
   @override
   State<ResponseTile> createState() => _ResponseTileState();
@@ -60,119 +60,182 @@ class _ResponseTileState extends State<ResponseTile> {
   Widget build(BuildContext context) {
     return Material(
       elevation: 10,
-      shadowColor: ColorSys.blueGreenGradient.colors[0],
-
+      shadowColor: styling.getSnippetGradient().colors[0],
       borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 350,
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-        decoration: ShapeDecoration(
-          gradient: ColorSys.blueGreenGradient,
-
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+      child: GestureDetector(
+        onTap: () async {
+          if (widget.isDisplayOnly) return;
+          String hapticFeedback = await HelperFunctions.getHapticFeedbackSF();
+          if (hapticFeedback == "normal") {
+            HapticFeedback.mediumImpact();
+          } else if (hapticFeedback == "light") {
+            HapticFeedback.lightImpact();
+          } else if (hapticFeedback == "heavy") {
+            HapticFeedback.heavyImpact();
+          }
+          nextScreen(
+              context,
+              DiscussionPage(
+                responseTile: widget,
+                theme: widget.theme,
+              ));
+        },
+        child: Container(
+          width: 350,
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+          decoration: ShapeDecoration(
+            gradient: styling.getSnippetGradient(),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: 35,
-                // width: 300,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        if (isCurrentUser) return;
-                        HapticFeedback.mediumImpact();
-                        nextScreen(
-                          context,
-                          ProfilePage(
-                            uid: widget.userId,
-                            showNavBar: false,
-                            showBackButton: true,
-                          ),
-                        );
-                      },
-                      child: SizedBox(
-                        width: MediaQuery.of(context).size.width - 175,
-                        child: Text(
-                          widget.isDisplayOnly
-                              ? "${widget.displayName}'s Response"
-                              : widget.displayName,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // if (!isCurrentUser)
-                    //   Align(
-                    //     alignment: Alignment.topRight,
-                    //     child: IconButton(
-                    //         onPressed: () {},
-                    //         icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black)),
-                    //   )
-                  ],
-                ),
-              ),
-              const Divider(
-                thickness: 2,
-                color: Colors.black,
-              ),
-              Text(
-                widget.response,
-                style: const TextStyle(
-                  fontSize: 15,
-                ),
-              ),
-              if (widget.isDisplayOnly) const SizedBox(height: 10),
-              if (!widget.isDisplayOnly)
-                Row(
-                  children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:const Color.fromARGB(255, 180, 133, 242),
-
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(32.0),
-                        ),
-                      ),
-                      onPressed: () {
-                        if (widget.isDisplayOnly) return;
-                        HapticFeedback.mediumImpact();
-                        nextScreen(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: 35,
+                  // width: 300,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      GestureDetector(
+                        onTap: () async {
+                          if (isCurrentUser) return;
+                          String hapticFeedback =
+                              await HelperFunctions.getHapticFeedbackSF();
+                          if (hapticFeedback == "normal") {
+                            HapticFeedback.mediumImpact();
+                          } else if (hapticFeedback == "light") {
+                            HapticFeedback.lightImpact();
+                          } else if (hapticFeedback == "heavy") {
+                            HapticFeedback.heavyImpact();
+                          }
+                          nextScreen(
                             context,
-                            DiscussionPage(
-                              responseTile: widget,
-                              theme: widget.theme,
-                            ));
-                      },
-                      child:  const Text("Open Discussion", style: TextStyle(color: Colors.white)),
-                    ),
-
-                    // IconButton(
-                    //   icon: Icon(Icons.favorite,
-                    //       color: userHasLiked ? Colors.red : Colors.black),
-                    //   onPressed: () {
-                    //     if (!canLike) return;
-                    //     if (!userHasLiked) {
-                    //       likeResponse();
-                    //     } else {
-                    //       unlikeResponse();
-                    //     }
-                    //   },
-                    // ),
-                    // Text(likes.toString()),
-                  ],
+                            ProfilePage(
+                              uid: widget.userId,
+                              showNavBar: false,
+                              showBackButton: true,
+                            ),
+                          );
+                        },
+                        child: SizedBox(
+                          width: MediaQuery.of(context).size.width - 175,
+                          child: Text(
+                            widget.isDisplayOnly
+                                ? "${widget.displayName}'s Response"
+                                : widget.displayName,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: styling.theme == "colorful-light"
+                                  ? styling.primaryDark
+                                  : Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // if (!isCurrentUser)
+                      //   Align(
+                      //     alignment: Alignment.topRight,
+                      //     child: IconButton(
+                      //         onPressed: () {},
+                      //         icon: const Icon(Icons.more_horiz, size: 20, color: Colors.black)),
+                      //   )
+                    ],
+                  ),
                 ),
-            ],
+                Divider(
+                  thickness: 2,
+                  color: styling.theme == "colorful-light"
+                      ? styling.primaryDark
+                      : Colors.black,
+                ),
+                if (widget.isDisplayOnly) const SizedBox(height: 10),
+                if (!widget.isDisplayOnly)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxWidth: 300,
+                        ),
+                        child: Text(
+                          widget.response,
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: styling.theme == "colorful-light"
+                                ? styling.primaryDark
+                                : Colors.black,
+                          ),
+                        ),
+                      ),
+                      // ElevatedButton(
+                      //   style: ElevatedButton.styleFrom(
+                      //     backgroundColor: styling.primaryDark,
+                      //     shape: RoundedRectangleBorder(
+                      //       borderRadius: BorderRadius.circular(32.0),
+                      //     ),
+                      //   ),
+                      //   onPressed: () {
+                      //     if (widget.isDisplayOnly) return;
+                      //     HapticFeedback.mediumImpact();
+                      //     nextScreen(
+                      //         context,
+                      //         DiscussionPage(
+                      //           responseTile: widget,
+                      //           theme: widget.theme,
+                      //         ));
+                      //   },
+                      //   child: const Text("Open Discussion",
+                      //       style: TextStyle(color: Colors.white)),
+                      // ),
+                      IconButton(
+                          onPressed: () async {
+                            if (widget.isDisplayOnly) return;
+                            String hapticFeedback =
+                                await HelperFunctions.getHapticFeedbackSF();
+                            if (hapticFeedback == "normal") {
+                              HapticFeedback.mediumImpact();
+                            } else if (hapticFeedback == "light") {
+                              HapticFeedback.lightImpact();
+                            } else if (hapticFeedback == "heavy") {
+                              HapticFeedback.heavyImpact();
+                            }
+                            nextScreen(
+                                context,
+                                DiscussionPage(
+                                  responseTile: widget,
+                                  theme: widget.theme,
+                                ));
+                          },
+                          icon: Icon(Icons.chat_rounded,
+                              size: 25,
+                              color: styling.theme == "colorful-light"
+                                  ? styling.primaryDark
+                                  : Colors.black)),
+
+                      // IconButton(
+                      //   icon: Icon(Icons.favorite,
+                      //       color: userHasLiked ? Colors.red : Colors.black),
+                      //   onPressed: () {
+                      //     if (!canLike) return;
+                      //     if (!userHasLiked) {
+                      //       likeResponse();
+                      //     } else {
+                      //       unlikeResponse();
+                      //     }
+                      //   },
+                      // ),
+                      // Text(likes.toString()),
+                    ],
+                  ),
+              ],
+            ),
           ),
         ),
       ),

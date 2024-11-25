@@ -23,6 +23,7 @@ class CardProvider extends ChangeNotifier {
 
   void setAnswers(List<BOTWAnswer> answers) {
     _answers = answers.reversed.toList();
+    resetPosition();
   }
 
   void setOnLike(void Function(BOTWAnswer answer) onLike) {
