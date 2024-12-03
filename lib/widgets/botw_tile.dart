@@ -33,6 +33,17 @@ class _BOTWTileState extends State<BOTWTile> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    print("Answer: ${widget.answer.voters[0]}");
+  }
+
+  List<String> removeEmptyStrings(List<String> list) {
+    List<String> newList = [];
+    list.forEach((element) {
+      if (element != "") {
+        newList.add(element);
+      }
+    });
+    return newList;
   }
 
   @override
@@ -162,7 +173,8 @@ class _BOTWTileState extends State<BOTWTile> {
                                   color: Colors.black, fontSize: 16))),
                     if (widget.status == BOTWStatusType.voting &&
                         widget.isCurrentUser)
-                      Text("Votes: ${widget.answer.votes}",
+                      Text(
+                          "Votes: ${removeEmptyStrings(widget.answer.voters).length}",
                           style: TextStyle(
                               color: styling.theme == "colorful-light"
                                   ? styling.primaryDark

@@ -162,7 +162,7 @@ class _ResponseTileState extends State<ResponseTile> {
                     children: [
                       ConstrainedBox(
                         constraints: const BoxConstraints(
-                          maxWidth: 300,
+                          maxWidth: 280,
                         ),
                         child: Text(
                           widget.response,

@@ -26,6 +26,16 @@ class _BotwResultsPageState extends State<BotwResultsPage> {
       voters: [],
       votes: 0);
 
+  List<String> removeEmptyStrings(List<String> list) {
+    List<String> newList = [];
+    list.forEach((element) {
+      if (element != "") {
+        newList.add(element);
+      }
+    });
+    return newList;
+  }
+
   void getResults() async {
     Map<String, BOTWAnswer> botwAnswers = widget.answers;
     if (botwAnswers.isEmpty) {
@@ -38,7 +48,9 @@ class _BotwResultsPageState extends State<BotwResultsPage> {
       }
       botwResults.add(value);
     });
-    botwResults.sort((a, b) => b.votes.compareTo(a.votes));
+    botwResults.sort((a, b) => removeEmptyStrings(b.voters)
+        .length
+        .compareTo(removeEmptyStrings(a.voters).length));
     setState(() {
       results = botwResults;
     });
@@ -84,7 +96,8 @@ class _BotwResultsPageState extends State<BotwResultsPage> {
                             child: BOTWResultTile(
                                 displayName: results[0].displayName,
                                 answer: results[0].answer,
-                                votes: results[0].votes,
+                                votes: removeEmptyStrings(results[0].voters)
+                                    .length,
                                 ranking: 1,
                                 userId: results[0].userId),
                           ),
@@ -94,7 +107,8 @@ class _BotwResultsPageState extends State<BotwResultsPage> {
                             child: BOTWResultTile(
                                 displayName: results[1].displayName,
                                 answer: results[1].answer,
-                                votes: results[1].votes,
+                                votes: removeEmptyStrings(results[1].voters)
+                                    .length,
                                 ranking: 2,
                                 userId: results[1].userId),
                           ),
@@ -104,7 +118,8 @@ class _BotwResultsPageState extends State<BotwResultsPage> {
                             child: BOTWResultTile(
                                 displayName: results[2].displayName,
                                 answer: results[2].answer,
-                                votes: results[2].votes,
+                                votes: removeEmptyStrings(results[2].voters)
+                                    .length,
                                 ranking: 3,
                                 userId: results[2].userId),
                           ),
@@ -114,7 +129,8 @@ class _BotwResultsPageState extends State<BotwResultsPage> {
                             child: BOTWResultTile(
                                 displayName: userAnswer.displayName,
                                 answer: userAnswer.answer,
-                                votes: userAnswer.votes,
+                                votes: removeEmptyStrings(userAnswer.voters)
+                                    .length,
                                 ranking: results.indexOf(userAnswer) + 1,
                                 userId: userAnswer.userId),
                           ),

@@ -107,6 +107,7 @@ class _AppPreferencesPageState extends State<AppPreferencesPage> {
                             width: 100,
                             child: DropdownButtonFormField(
                               value: hapticFeedback,
+                              
                               decoration: styling
                                   .textInputDecoration()
                                   .copyWith(
@@ -142,6 +143,8 @@ class _AppPreferencesPageState extends State<AppPreferencesPage> {
                                   HapticFeedback.mediumImpact();
                                 } else if (value == "light") {
                                   HapticFeedback.lightImpact();
+                                } else if (value == "heavy") {
+                                  HapticFeedback.heavyImpact();
                                 }
                               },
                               onChanged: (String? value) async {
@@ -151,6 +154,8 @@ class _AppPreferencesPageState extends State<AppPreferencesPage> {
                                   HapticFeedback.mediumImpact();
                                 } else if (value == "light") {
                                   HapticFeedback.lightImpact();
+                                } else if (value == "heavy") {
+                                  HapticFeedback.heavyImpact();
                                 }
                                 setState(() {
                                   hapticFeedback = value;

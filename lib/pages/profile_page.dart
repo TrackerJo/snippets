@@ -84,6 +84,7 @@ class _ProfilePageState extends State<ProfilePage> {
             voters: [],
             votes: 0);
       }
+      print("BOTW: ${data.answers[profileData.userId]!.toMap()}");
       setState(() {
         blankOfTheWeek = data;
       });

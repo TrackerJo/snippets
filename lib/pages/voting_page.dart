@@ -102,7 +102,7 @@ class _VotingPageState extends State<VotingPage> {
       votedAnswers = getVotedBOTW(nblank.answers, data);
       this.answers = [...answers];
       answersList = [...answers];
-      pastAnswers = [...answers];
+      pastAnswers = [...votedAnswers];
       mostLinesInAnswer = (longestAnswer / 18).ceil();
     });
   }

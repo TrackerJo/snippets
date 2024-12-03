@@ -348,82 +348,134 @@ class FBDatabase {
       if (friendsList.isEmpty && !isAnonymous) {
         return;
       }
-      Stream querySnapshot;
+      List<Stream<QuerySnapshot>> streams = [];
       if (isAnonymous) {
-        querySnapshot = currentSnippetsCollection
+        Stream<QuerySnapshot> querySnapshot = currentSnippetsCollection
             .doc(snippetId)
             .collection("answers")
             .snapshots();
+        streams.add(querySnapshot);
       } else {
         if (friendsList.isEmpty) {
           return;
         }
-        querySnapshot = currentSnippetsCollection
-            .doc(snippetId)
-            .collection("answers")
-            .where("uid", whereIn: friendsList)
-            .snapshots();
+        List<List<String>> chunks = [];
+        for (var i = 0; i < friendsList.length; i += 30) {
+          chunks.add(
+            friendsList.sublist(
+              i,
+              i + 30 > friendsList.length ? friendsList.length : i + 30,
+            ),
+          );
+        }
+
+        // Create stream for each chunk
+        List<Stream<QuerySnapshot>> chunkStreams = chunks.map((chunk) {
+          return currentSnippetsCollection
+              .doc(snippetId)
+              .collection("answers")
+              .where("uid", whereIn: chunk)
+              .snapshots();
+        }).toList();
+        streams.addAll(chunkStreams);
       }
 
-      querySnapshot.listen((event) {
-        if (controller.isClosed) return;
-        List<SnippetResponse> responses = [];
-        for (var element in event.docs) {
-          Map<String, dynamic> data = element.data() as Map<String, dynamic>;
-          data["snippetId"] = snippetId;
-          responses.add(SnippetResponse.fromMap(data));
-        }
+      for (var stream in streams) {
+        stream.listen((event) {
+          if (controller.isClosed) return;
+          List<SnippetResponse> responses = [];
+          for (var element in event.docs) {
+            Map<String, dynamic> data = element.data() as Map<String, dynamic>;
+            data["snippetId"] = snippetId;
+            responses.add(SnippetResponse.fromMap(data));
+          }
 
-        controller.add(responses);
-      });
+          controller.add(responses);
+        });
+      }
     }
     if (getFriends && !isAnonymous) {
-      Stream querySnapshot = currentSnippetsCollection
-          .doc(snippetId)
-          .collection("answers")
-          .where("uid", whereIn: friendsToGet)
-          .snapshots();
+      List<Stream<QuerySnapshot>> streams = [];
+      List<List<String>> chunks = [];
+      for (var i = 0; i < friendsToGet.length; i += 30) {
+        chunks.add(
+          friendsToGet.sublist(
+            i,
+            i + 30 > friendsToGet.length ? friendsToGet.length : i + 30,
+          ),
+        );
+      }
 
-      querySnapshot.listen((event) {
-        if (controller.isClosed) return;
-        List<SnippetResponse> responses = [];
-        for (var element in event.docs) {
-          Map<String, dynamic> data = element.data() as Map<String, dynamic>;
-          data["snippetId"] = snippetId;
-          responses.add(SnippetResponse.fromMap(data));
-        }
-        controller.add(responses);
-      });
+      // Create stream for each chunk
+      List<Stream<QuerySnapshot>> chunkStreams = chunks.map((chunk) {
+        return currentSnippetsCollection
+            .doc(snippetId)
+            .collection("answers")
+            .where("uid", whereIn: chunk)
+            .snapshots();
+      }).toList();
+      streams.addAll(chunkStreams);
+
+      for (var stream in streams) {
+        stream.listen((event) {
+          if (controller.isClosed) return;
+          List<SnippetResponse> responses = [];
+          for (var element in event.docs) {
+            Map<String, dynamic> data = element.data() as Map<String, dynamic>;
+            data["snippetId"] = snippetId;
+            responses.add(SnippetResponse.fromMap(data));
+          }
+          controller.add(responses);
+        });
+      }
     }
-    Stream querySnapshot;
+    List<Stream<QuerySnapshot>> streams = [];
     if (isAnonymous) {
-      querySnapshot = currentSnippetsCollection
+      Stream<QuerySnapshot> querySnapshot = currentSnippetsCollection
           .doc(snippetId)
           .collection("answers")
           .where("lastUpdatedMillis", isGreaterThan: date)
           .snapshots();
+      streams.add(querySnapshot);
     } else {
       if (friendsList.isEmpty) {
         return;
       }
-      querySnapshot = currentSnippetsCollection
-          .doc(snippetId)
-          .collection("answers")
-          .where("uid", whereIn: friendsList)
-          .where("lastUpdatedMillis", isGreaterThan: date)
-          .snapshots();
+      List<List<String>> chunks = [];
+      for (var i = 0; i < friendsList.length; i += 30) {
+        chunks.add(
+          friendsList.sublist(
+            i,
+            i + 30 > friendsList.length ? friendsList.length : i + 30,
+          ),
+        );
+      }
+
+      // Create stream for each chunk
+      List<Stream<QuerySnapshot>> chunkStreams = chunks.map((chunk) {
+        return currentSnippetsCollection
+            .doc(snippetId)
+            .collection("answers")
+            .where("uid", whereIn: chunk)
+            .where("lastUpdatedMillis", isGreaterThan: date)
+            .snapshots();
+      }).toList();
+
+      streams.addAll(chunkStreams);
     }
 
-    querySnapshot.listen((event) {
-      if (controller.isClosed) return;
-      List<SnippetResponse> responses = [];
-      for (var element in event.docs) {
-        Map<String, dynamic> data = element.data() as Map<String, dynamic>;
-        data["snippetId"] = snippetId;
-        responses.add(SnippetResponse.fromMap(data));
-      }
-      controller.add(responses);
-    });
+    for (var stream in streams) {
+      stream.listen((event) {
+        if (controller.isClosed) return;
+        List<SnippetResponse> responses = [];
+        for (var element in event.docs) {
+          Map<String, dynamic> data = element.data() as Map<String, dynamic>;
+          data["snippetId"] = snippetId;
+          responses.add(SnippetResponse.fromMap(data));
+        }
+        controller.add(responses);
+      });
+    }
   }
 
   Future<SnippetResponse> getSnippetResponse(
@@ -1385,54 +1437,71 @@ class FBDatabase {
 
   Future<List<SnippetResponse>> getSnippetResponses(
       String snippetId, int? lastUpdated, bool isAnonymous) async {
-    QuerySnapshot snapshot;
-    List<String> friendsList = [];
-    if (!isAnonymous) {
-      friendsList = await getFriendsList();
+    if (lastUpdated == null && isAnonymous) {
+      QuerySnapshot snapshot = await currentSnippetsCollection
+          .doc(snippetId)
+          .collection("answers")
+          .get();
+      return _processAnswerSnapshot(snapshot, snippetId);
+    } else if (isAnonymous) {
+      QuerySnapshot snapshot = await currentSnippetsCollection
+          .doc(snippetId)
+          .collection("answers")
+          .where("lastUpdatedMillis", isGreaterThan: lastUpdated! + 1)
+          .get();
+
+      return _processAnswerSnapshot(snapshot, snippetId);
     }
-    if (friendsList.isEmpty && !isAnonymous) {
-      return [];
+    // Get friends list and handle empty case
+    List<String> friendsList = await getFriendsList();
+    if (friendsList.isEmpty) return [];
+
+    // Split friends list into chunks of 30
+    List<List<String>> chunks = [];
+    for (var i = 0; i < friendsList.length; i += 30) {
+      chunks.add(
+        friendsList.sublist(
+          i,
+          i + 30 > friendsList.length ? friendsList.length : i + 30,
+        ),
+      );
     }
-    if (lastUpdated == null) {
-      if (isAnonymous) {
+
+    // Query each chunk and combine results
+    List<SnippetResponse> allAnswers = [];
+    for (var chunk in chunks) {
+      QuerySnapshot snapshot;
+      if (lastUpdated == null) {
         snapshot = await currentSnippetsCollection
             .doc(snippetId)
             .collection("answers")
+            .where("uid", whereIn: chunk)
             .get();
       } else {
         snapshot = await currentSnippetsCollection
             .doc(snippetId)
             .collection("answers")
-            .where("uid", whereIn: friendsList)
-            .get();
-      }
-    } else {
-      if (isAnonymous) {
-        snapshot = await currentSnippetsCollection
-            .doc(snippetId)
-            .collection("answers")
-            .where("lastUpdatedMillis", isGreaterThan: lastUpdated + 1)
-            .get();
-      } else {
-        snapshot = await currentSnippetsCollection
-            .doc(snippetId)
-            .collection("answers")
-            .where("uid", whereIn: friendsList)
+            .where("uid", whereIn: chunk)
             .where("lastUpdatedMillis", isGreaterThan: lastUpdated + 1)
             .get();
       }
+      allAnswers.addAll(_processAnswerSnapshot(snapshot, snippetId));
     }
-    List<SnippetResponse> responses = [];
-    for (var element in snapshot.docs) {
-      Map<String, dynamic> data = element.data() as Map<String, dynamic>;
-      data["answerId"] = element.id;
+
+    return allAnswers;
+  }
+
+  List<SnippetResponse> _processAnswerSnapshot(
+      QuerySnapshot snapshot, String snippetId) {
+    return snapshot.docs.map((doc) {
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      data["answerId"] = doc.id;
       data["date"] = data["date"].toDate();
       data["lastUpdated"] = data["lastUpdated"].toDate();
 
       data["snippetId"] = snippetId;
-      responses.add(SnippetResponse.fromMap(data));
-    }
-    return responses;
+      return SnippetResponse.fromMap(data);
+    }).toList();
   }
 
   Future<void> addBacklog(Map<String, dynamic> snippet) async {
