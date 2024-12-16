@@ -95,8 +95,12 @@ class _MessageTileState extends State<MessageTile> {
               color: styling.theme == "colorful-light"
                   ? Colors.white
                   : widget.sentByMe
-                      ? styling.primary
-                      : styling.secondary),
+                      ? styling.theme == "christmas"
+                          ? styling.green
+                          : styling.primary
+                      : styling.theme == "christmas"
+                          ? Colors.white
+                          : styling.secondary),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -110,7 +114,11 @@ class _MessageTileState extends State<MessageTile> {
                         ? widget.sentByMe
                             ? styling.primaryDark
                             : styling.secondaryDark
-                        : Colors.white,
+                        : styling.theme == "christmas"
+                            ? widget.sentByMe
+                                ? Colors.white
+                                : styling.red
+                            : Colors.white,
                     letterSpacing: -0.5),
               ),
               const SizedBox(height: 8),
@@ -139,7 +147,11 @@ class _MessageTileState extends State<MessageTile> {
                             ? widget.sentByMe
                                 ? styling.primaryDark
                                 : styling.secondaryDark
-                            : Colors.white,
+                            : styling.theme == "christmas"
+                                ? widget.sentByMe
+                                    ? Colors.white
+                                    : styling.red
+                                : Colors.white,
                       ),
                     ),
                   ),
@@ -153,7 +165,11 @@ class _MessageTileState extends State<MessageTile> {
                           ? widget.sentByMe
                               ? styling.primaryDark
                               : styling.secondaryDark
-                          : Colors.white,
+                          : styling.theme == "christmas"
+                              ? widget.sentByMe
+                                  ? Colors.white
+                                  : styling.red
+                              : Colors.white,
                     ),
                   )
                 ],

@@ -6,7 +6,11 @@ import 'package:snippets/api/database.dart';
 
 import 'package:snippets/api/local_database.dart';
 import 'package:snippets/constants.dart';
+import 'package:snippets/helper/app_icon_changer.dart';
 import 'package:snippets/helper/helper_function.dart';
+import 'package:snippets/main.dart';
+import 'package:snippets/pages/splash_page.dart';
+import 'package:snippets/widgets/helper_functions.dart';
 
 import 'package:snippets/widgets/snippet_tile.dart';
 
@@ -227,7 +231,8 @@ class _HomePageState extends State<HomePage> {
         } else {
           return Center(
               child: CircularProgressIndicator(
-            color: Theme.of(context).primaryColor,
+            color:
+                styling.theme == "christmas" ? styling.green : styling.primary,
           ));
         }
       },

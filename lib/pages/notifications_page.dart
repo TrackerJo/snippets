@@ -193,7 +193,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                   BorderRadius.all(Radius.circular(10))),
                           tileColor: styling.theme == "colorful-light"
                               ? Colors.white
-                              : styling.secondary,
+                              : styling.theme == "christmas"
+                                  ? styling.green
+                                  : styling.secondary,
                           title: Text("Snippet Response Delay",
                               style: TextStyle(
                                   color: styling.theme == "colorful-light"
@@ -210,7 +212,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             child: TextFormField(
                               controller: delayController,
                               textAlign: TextAlign.center,
-                              decoration: styling.textInputDecoration(),
+                              decoration: styling
+                                  .textInputDecoration()
+                                  .copyWith(
+                                      fillColor: styling.theme == "christmas"
+                                          ? styling.red
+                                          : styling.primary),
                               onChanged: (val) async {
                                 print("val: $val");
                                 if (val == null) {

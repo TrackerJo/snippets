@@ -52,7 +52,8 @@ class CustomAppBar extends StatelessWidget {
       children: [
         Material(
           elevation: 10,
-          shadowColor: styling.primary,
+          shadowColor:
+              styling.theme == "christmas" ? styling.green : styling.primary,
           borderRadius: const BorderRadius.only(
             bottomLeft: Radius.circular(23),
             bottomRight: Radius.circular(23),

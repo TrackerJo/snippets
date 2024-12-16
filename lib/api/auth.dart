@@ -19,7 +19,6 @@ class Auth {
       User user = (await _auth.signInWithEmailAndPassword(
               email: email, password: password))
           .user!;
-
       await PushNotifications().initNotifications();
       List<String> topics = await HelperFunctions.getTopicNotifications();
       for (String topic in topics) {
@@ -170,7 +169,8 @@ class Auth {
     return "Done";
   }
 
-  void listenToAuthState(StreamController streamController) {
+  void listenToAuthState(StreamController streamController) async {
+    await HelperFunctions.saveListenedToUserSF(true);
     StreamSubscription stream = const Stream.empty().listen((event) {});
     if (FirebaseAuth.instance.currentUser != null) {
       stream = FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)

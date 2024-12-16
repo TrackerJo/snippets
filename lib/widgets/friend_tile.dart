@@ -36,13 +36,16 @@ class _FriendTileState extends State<FriendTile> {
   Widget build(BuildContext context) {
     return Material(
         elevation: 10,
-        shadowColor: styling.secondary,
+        shadowColor:
+            styling.theme == "christmas" ? styling.green : styling.secondary,
         borderRadius: BorderRadius.circular(12),
         // color: ColorSys.primary,
         child: ListTile(
           tileColor: styling.theme == "colorful-light"
               ? Colors.white
-              : styling.secondary,
+              : styling.theme == "christmas"
+                  ? styling.green
+                  : styling.secondary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

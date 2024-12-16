@@ -202,7 +202,8 @@ class _SwipePagesState extends State<SwipePages> {
   void viewUpdateSheet() {
     showModalBottomSheet<void>(
         context: context,
-        backgroundColor: styling.secondary,
+        backgroundColor:
+            styling.theme == "christmas" ? styling.green : styling.secondary,
         isScrollControlled: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
@@ -222,7 +223,7 @@ class _SwipePagesState extends State<SwipePages> {
                       style: const TextStyle(color: Colors.white, fontSize: 40),
                     ),
                     Text(
-                      "Version 1.0.10",
+                      "Version 1.0.13",
                       style: const TextStyle(color: Colors.white, fontSize: 20),
                     ),
                     const SizedBox(height: 10),
@@ -231,8 +232,7 @@ class _SwipePagesState extends State<SwipePages> {
                         children: [
                           BulletList(
                             [
-                              "Added coloful, colorful light, dotted light, and dotted dark themes",
-                              "Added heavy option for haptic feedback",
+                              "Added a christmas themed splash screen",
                             ],
                           )
                         ],
@@ -247,12 +247,12 @@ class _SwipePagesState extends State<SwipePages> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       print("Post frame callback");
       int lastSeenUpdate = await HelperFunctions.getSeenUpdateDialogSF();
-      if (lastSeenUpdate < 10 && !seenUpdateDialog) {
+      if (lastSeenUpdate < 14 && !seenUpdateDialog) {
         setState(() {
           seenUpdateDialog = true;
         });
         viewUpdateSheet();
-        await HelperFunctions.saveSeenUpdateDialogSF(10);
+        await HelperFunctions.saveSeenUpdateDialogSF(14);
       }
     });
     return Stack(
@@ -313,8 +313,12 @@ class _SwipePagesState extends State<SwipePages> {
                 hasAnsweredBOTW: hasAnsweredBOTW),
           ),
           body: !loggedIn
-              ? const Center(
-                  child: CircularProgressIndicator(),
+              ? Center(
+                  child: CircularProgressIndicator(
+                    color: styling.theme == "christmas"
+                        ? styling.green
+                        : styling.primary,
+                  ),
                 )
               : Stack(
                   children: [

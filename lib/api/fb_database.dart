@@ -1128,27 +1128,14 @@ class FBDatabase {
   Future getBlankOfTheWeek(
       StreamController<BOTW> controller, int? lastUpdated) async {
     Stream snapshot;
-    if (lastUpdated == null) {
-      snapshot = botwCollection.doc("currentBlank").snapshots();
-      snapshot.listen((event) {
-        DocumentSnapshot snapshot = event;
-        snapshot.data();
 
-        controller.add(BOTW.fromMap(snapshot.data() as Map<String, dynamic>));
-      });
-    } else {
-      snapshot = botwCollection
-          .where("lastUpdatedMillis", isGreaterThan: lastUpdated)
-          .snapshots();
-      snapshot.listen((event) {
-        //Get the first document
-        if (event.docs.isNotEmpty) {
-          DocumentSnapshot snapshot = event.docs[0];
+    snapshot = botwCollection.doc("currentBlank").snapshots();
+    snapshot.listen((event) {
+      DocumentSnapshot snapshot = event;
+      snapshot.data();
 
-          controller.add(BOTW.fromMap(snapshot.data() as Map<String, dynamic>));
-        }
-      });
-    }
+      controller.add(BOTW.fromMap(snapshot.data() as Map<String, dynamic>));
+    });
   }
 
   Future<BOTW?> getBlankOfTheWeekData(int? LastUpdated) async {

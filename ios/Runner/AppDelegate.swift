@@ -27,11 +27,41 @@ import WidgetKit
           }
           UserDefaults.init(suiteName: "group.kazoom_snippets")?.set(0, forKey: "badgeCount")
           
+          let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
+          let appIconChannel = FlutterMethodChannel(name: "appIconChannel", binaryMessenger: controller as! FlutterBinaryMessenger)
+          
+          appIconChannel.setMethodCallHandler({
+              [weak self](call: FlutterMethodCall, result: FlutterResult) -> Void in
+              guard call.method == "changeIcon" else {
+              result(FlutterMethodNotImplemented)
+              return
+              }
+              self?.changeAppIcon(call: call)
+          })
+          
        
 
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
       }
     
+    private func changeAppIcon(call: FlutterMethodCall){
+    if #available(iOS 10.3, *) {
+    guard UIApplication.shared.supportsAlternateIcons else {
+    return
+    }
+    let arguments : String = call.arguments as! String
+        if arguments == "Christmas" {
+        UIApplication.shared.setAlternateIconName("christmas_icon")
+        } else if arguments == "Premium" {
+            UIApplication.shared.setAlternateIconName("premium_icon")
+        }
+        else {
+        UIApplication.shared.setAlternateIconName(nil)
+        }
+    } else {
+    // Fallback on earlier versions
+    }
+    }
     
     
     struct AnyCodable: Codable {
@@ -140,10 +170,10 @@ import WidgetKit
 //                  flutterData = SnippetsData(questions: [], ids: [], indexes: [], isAnonymous: [], hasAnswereds: [])
 //              }
 //
-//         
+//
 //
 //              var indexData = Int(userInfo["index"] as! String);
-//             
+//
 //              var index = flutterData!.indexes.firstIndex(of: indexData!)
 //              if(index == nil){
 //                  index = -1
@@ -153,7 +183,7 @@ import WidgetKit
 //
 //                flutterData!.questions.append(userInfo["question"] as! String);
 //                flutterData!.ids.append(userInfo["snippetId"] as! String);
-//              
+//
 //            flutterData!.indexes.append(indexData!);
 //                flutterData!.isAnonymous.append(userInfo["snippetType"] as! String == "anonymous");
 //                flutterData!.hasAnswereds.append(false);
@@ -173,21 +203,21 @@ import WidgetKit
 //                newResponses.append(response);
 //              }
 //                oldResponses!.responses = newResponses;
-//             
+//
 //                sharedDefaults?.set(encodeSnippetRDataToJSON(snippetsRData: oldResponses!), forKey: "snippetsResponsesData")
 //                flutterData!.questions[index!] = userInfo["question"] as! String;
 //                flutterData!.ids[index!] = userInfo["snippetId"] as! String;
-//            
+//
 //                flutterData!.indexes[index!] = indexData!;
 //                flutterData!.isAnonymous[index!] = userInfo["snippetType"] as! String == "anonymous";
 //                flutterData!.hasAnswereds[index!] = false;
 //            }
-//           
-//             
 //
-//            
+//
+//
+//
 //              sharedDefaults?.set(encodeSnippetsDataToJSON(snippetsData: flutterData!), forKey: "snippetsData")
-//              
+//
 //              WidgetCenter.shared.reloadAllTimelines()
 //              if #available(iOS 13.0.0, *) {
 //                  var badgeManager = AppAlertBadgeManager(application: UIApplication.shared)
@@ -199,9 +229,9 @@ import WidgetKit
 //          } else if(userInfo["type"] as! String == "widget-botw-answer"){
 //              var flutterData = try? JSONDecoder().decode(BOTWData.self, from: (sharedDefaults?
 //                  .string(forKey: "botwData")?.data(using: .utf8)) ?? Data())
-//             
+//
 //              let answer = Answer(uid: userInfo["uid"] as! String, answer: userInfo["answer"] as! String, displayName: userInfo["displayName"] as! String)
-//              
+//
 //              var oldAnswers = flutterData!.answers
 //            //Check if answer already exists
 //             var oldAnswer = oldAnswers.first(where: {$0.uid == userInfo["uid"] as! String})
@@ -211,13 +241,13 @@ import WidgetKit
 //                if let i = oldAnswers.firstIndex(of: oldAnswer!) {
 //                    oldAnswers[i] = answer
 //                }
-//                
+//
 //            }
 //              flutterData!.answers = oldAnswers;
-//            
+//
 //              sharedDefaults?.set(encodeBOTWToJSON(botwData: flutterData!), forKey: "botwData")
 //              WidgetCenter.shared.reloadAllTimelines()
-//            
+//
 //
 //          } else if(userInfo["type"] as! String == "widget-snippet-response"){
 //              var flutterData = try? JSONDecoder().decode(SnippetsRData.self, from: (sharedDefaults?
@@ -233,7 +263,7 @@ import WidgetKit
 //                  var splitR = response.split(separator: "|")
 //                  if(splitR[6] == "true" && !answeredSnippets.contains(String(splitR[3]))) {
 //                      answeredSnippets.append(String(splitR[3]))
-//                      
+//
 //                  }
 //              }
 //              for response in oldResponses {
@@ -241,19 +271,19 @@ import WidgetKit
 //                  if(splitR[6] != "true" && answeredSnippets.contains(String(splitR[3]))) {
 //                      splitR[6] = "true"
 //                      oldResponses[oldResponses.firstIndex(of: response)!] = splitR.joined(separator: "|")
-//                      
+//
 //                  }
 //              }
-//            
-//           
+//
+//
 //              flutterData!.responses = oldResponses
 //              print("RESPONSES: \(oldResponses)")
-//             
+//
 //              sharedDefaults?.set(encodeSnippetRDataToJSON(snippetsRData: flutterData!), forKey: "snippetsResponsesData")
 //                  WidgetCenter.shared.reloadAllTimelines()
-//              
+//
 //                  // Fallback on earlier versions
-//              
+//
 //              if #available(iOS 13.0.0, *) {
 //                  var badgeManager = AppAlertBadgeManager(application: UIApplication.shared)
 //                  badgeManager.addAlertBadge()
@@ -267,9 +297,9 @@ import WidgetKit
 //              } else {
 //                  // Fallback on earlier versions
 //              }
-//            
+//
 //          }
-//        
+//
 //        var badgeManager = AppAlertBadgeManager(application: UIApplication.shared)
 //                          badgeManager.addAlertBadge()
                print("INFO: \(userInfo)")

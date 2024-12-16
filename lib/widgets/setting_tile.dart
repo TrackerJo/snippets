@@ -21,12 +21,16 @@ class SettingTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: ListTile(
-        splashColor: styling.secondaryDark,
+        splashColor: styling.theme == "christmas"
+            ? styling.green
+            : styling.secondaryDark,
         shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(10))),
         tileColor: styling.theme == "colorful-light"
             ? Colors.white
-            : styling.secondary,
+            : styling.theme == "christmas"
+                ? styling.green
+                : styling.secondary,
         title: Text(setting,
             style: TextStyle(
                 color: styling.theme == "colorful-light"

@@ -84,7 +84,6 @@ class _ProfilePageState extends State<ProfilePage> {
             voters: [],
             votes: 0);
       }
-      print("BOTW: ${data.answers[profileData.userId]!.toMap()}");
       setState(() {
         blankOfTheWeek = data;
       });
@@ -103,6 +102,8 @@ class _ProfilePageState extends State<ProfilePage> {
     bool currentUser = false;
     if (widget.uid == "") {
       userStreamSub = currentUserStream.stream.listen((event) {
+
+
         setState(() {
           profileData = event;
           numberOfFriends = profileData.friends.length;
@@ -134,6 +135,8 @@ class _ProfilePageState extends State<ProfilePage> {
     } else if (widget.uid == auth.FirebaseAuth.instance.currentUser!.uid) {
       currentUser = true;
       currentUserStream.stream.listen((event) {
+
+
         setState(() {
           profileData = event;
           numberOfFriends = profileData.friends.length;
@@ -425,7 +428,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
     showModalBottomSheet<void>(
         context: context,
-        backgroundColor: styling.background,
+        backgroundColor: Colors.transparent,
         isScrollControlled: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
@@ -437,33 +440,40 @@ class _ProfilePageState extends State<ProfilePage> {
           return SizedBox(
               height: MediaQuery.of(context).size.height - 100,
               width: MediaQuery.of(context).size.width,
-              child: Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: Column(
-                    children: [
-                      Text("Friends",
-                          style: TextStyle(
-                            color: styling.backgroundText,
-                            fontSize: 30,
-                          )),
-                      const SizedBox(height: 20),
-                      Expanded(
-                        child: ListView.builder(
-                            itemCount: profileData.friends.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: FriendTile(
-                                    displayName:
-                                        profileData.friends[index].displayName,
-                                    uid: profileData.friends[index].userId,
-                                    username:
-                                        profileData.friends[index].username),
-                              );
-                            }),
-                      ),
-                    ],
-                  )));
+              child: Stack(
+                children: [
+                  BackgroundTile(
+                    rounded: true,
+                  ),
+                  Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Column(
+                        children: [
+                          Text("Friends",
+                              style: TextStyle(
+                                color: styling.backgroundText,
+                                fontSize: 30,
+                              )),
+                          const SizedBox(height: 20),
+                          Expanded(
+                            child: ListView.builder(
+                                itemCount: profileData.friends.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  return Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: FriendTile(
+                                        displayName: profileData
+                                            .friends[index].displayName,
+                                        uid: profileData.friends[index].userId,
+                                        username: profileData
+                                            .friends[index].username),
+                                  );
+                                }),
+                          ),
+                        ],
+                      )),
+                ],
+              ));
         });
   }
 
@@ -478,7 +488,8 @@ class _ProfilePageState extends State<ProfilePage> {
     }
     showModalBottomSheet<void>(
         context: context,
-        backgroundColor: styling.background,
+        backgroundColor:
+            Colors.transparent, //styling.background, //Colors.transparent,
         isScrollControlled: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
@@ -490,32 +501,40 @@ class _ProfilePageState extends State<ProfilePage> {
           return SizedBox(
               height: MediaQuery.of(context).size.height - 100,
               width: MediaQuery.of(context).size.width,
-              child: Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: Column(
-                    children: [
-                      Text("Mutual Friends",
-                          style: TextStyle(
-                            color: styling.backgroundText,
-                            fontSize: 30,
-                          )),
-                      const SizedBox(height: 20),
-                      Expanded(
-                        child: ListView.builder(
-                            itemCount: mutualFriends.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: FriendTile(
-                                    displayName:
-                                        mutualFriends[index].displayName,
-                                    uid: mutualFriends[index].userId,
-                                    username: mutualFriends[index].username),
-                              );
-                            }),
-                      ),
-                    ],
-                  )));
+              child: Stack(
+                children: [
+                  BackgroundTile(
+                    rounded: true,
+                  ),
+                  Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Column(
+                        children: [
+                          Text("Mutual Friends",
+                              style: TextStyle(
+                                color: styling.backgroundText,
+                                fontSize: 30,
+                              )),
+                          const SizedBox(height: 20),
+                          Expanded(
+                            child: ListView.builder(
+                                itemCount: mutualFriends.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  return Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: FriendTile(
+                                        displayName:
+                                            mutualFriends[index].displayName,
+                                        uid: mutualFriends[index].userId,
+                                        username:
+                                            mutualFriends[index].username),
+                                  );
+                                }),
+                          ),
+                        ],
+                      )),
+                ],
+              ));
         });
   }
 
@@ -691,7 +710,10 @@ class _ProfilePageState extends State<ProfilePage> {
                                     children: [
                                       isLoading
                                           ? CircularProgressIndicator(
-                                              color: styling.primary,
+                                              color:
+                                                  styling.theme == "christmas"
+                                                      ? styling.green
+                                                      : styling.primary,
                                             )
                                           : SizedBox(
                                               width: 250,
@@ -742,7 +764,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                                             sentFriendRequest ||
                                                             hasFriendRequest
                                                         ? Colors.transparent
-                                                        : styling.primaryDark,
+                                                        : styling.theme ==
+                                                                "christmas"
+                                                            ? styling.green
+                                                            : styling
+                                                                .primaryDark,
                                                     elevation: 10,
                                                     shadowColor:
                                                         Colors.transparent,
@@ -752,7 +778,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                                                 .circular(30),
                                                         side: BorderSide(
                                                             color: styling
-                                                                .primaryDark,
+                                                                        .theme ==
+                                                                    "christmas"
+                                                                ? styling.green
+                                                                : styling
+                                                                    .primaryDark,
                                                             width: 3)),
                                                   ),
                                                   child: Text(

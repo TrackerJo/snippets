@@ -37,7 +37,9 @@ class DiscussionTile extends StatelessWidget {
       padding: const EdgeInsets.all(10.0),
       child: Material(
           elevation: 10,
-          shadowColor: styling.primaryDark,
+          shadowColor: styling.theme == "christmas"
+              ? styling.green
+              : styling.primaryDark,
           borderRadius: BorderRadius.circular(12),
           child: Container(
               width: 350,
@@ -100,7 +102,9 @@ class DiscussionTile extends StatelessWidget {
                               height: 10,
                               width: 10,
                               decoration: BoxDecoration(
-                                  color: styling.primary,
+                                  color: styling.theme == "christmas"
+                                      ? styling.red
+                                      : styling.primary,
                                   borderRadius: BorderRadius.circular(50)))
                           : null))),
     );

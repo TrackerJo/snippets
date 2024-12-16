@@ -49,7 +49,9 @@ class _NoWifiPageState extends State<NoWifiPage> {
                         color: styling.theme == "colorful" ||
                                 styling.theme == "colorful-light"
                             ? Colors.white
-                            : styling.primary,
+                            : styling.theme == "christmas"
+                                ? styling.green
+                                : styling.primary,
                         fontSize: 30,
                         fontWeight: FontWeight.bold,
                       ),
@@ -61,7 +63,9 @@ class _NoWifiPageState extends State<NoWifiPage> {
                         color: styling.theme == "colorful" ||
                                 styling.theme == "colorful-light"
                             ? Colors.white
-                            : styling.primary,
+                            : styling.theme == "christmas"
+                                ? styling.green
+                                : styling.primary,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -70,7 +74,9 @@ class _NoWifiPageState extends State<NoWifiPage> {
                     const SizedBox(height: 20),
                     isLoading
                         ? CircularProgressIndicator(
-                            color: styling.primary,
+                            color: styling.theme == "christmas"
+                                ? styling.green
+                                : styling.primary,
                           )
                         : ElevatedButton(
                             onPressed: () async {

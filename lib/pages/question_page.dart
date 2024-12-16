@@ -69,7 +69,7 @@ class _QuestionPageState extends State<QuestionPage> {
         return AlertDialog(
           title: const Text("Anonymous Snippets"),
           content: const Text(
-              "Your response will be completely anonymous to everyone and will be public, not just to your friends."),
+              "Your response will be completely anonymous to everyone and will be public, not just to your friends. Anonymous snippets are signified by their black gradient as a background."),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -175,9 +175,9 @@ class _QuestionPageState extends State<QuestionPage> {
                     maxLines: 5,
                     decoration: styling.textInputDecoration().copyWith(
                         hintText: "Enter Answer",
-                        fillColor: widget.theme == "blue"
-                            ? styling.secondarySolid
-                            : styling.primarySolid),
+                        fillColor: styling.theme == "christmas"
+                            ? styling.green
+                            : styling.secondarySolid),
                     onChanged: (value) => {
                       setState(() {
                         answer = value;
@@ -189,29 +189,19 @@ class _QuestionPageState extends State<QuestionPage> {
                 isLoading
                     ? Center(
                         child: CircularProgressIndicator(
-                          color: styling.primary,
+                          color: styling.theme == "christmas"
+                              ? styling.green
+                              : styling.primary,
                         ),
                       )
                     : ElevatedButton(
                         onPressed: () => {
                           submitAnswer(),
                         },
-                        style: ElevatedButton.styleFrom(
-                          elevation: 10,
-                          shadowColor: widget.theme == "blue"
-                              ? styling.secondarySolid
-                              : styling.primarySolid,
-                          minimumSize: const Size(150, 50),
-                          backgroundColor: widget.theme == "blue"
-                              ? styling.secondarySolid
-                              : styling.primarySolid,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20.0),
-                          ),
-                        ),
+                        style: styling.elevatedButtonDecoration(),
                         child: Text('Submit',
-                            style: TextStyle(
-                                fontSize: 20, color: styling.backgroundText)),
+                            style:
+                                TextStyle(fontSize: 20, color: Colors.white)),
                       ),
               ],
             ),

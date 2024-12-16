@@ -45,7 +45,7 @@ class _UpdatePageState extends State<UpdatePage> {
                   style: TextStyle(
                     fontSize: 30,
                     color: styling.theme == "colorful" ||
-                            styling.theme == "colorful-light"
+                            styling.theme == "colorful-light" || styling.theme == "christmas"
                         ? Colors.white
                         : styling.primary,
                   ),

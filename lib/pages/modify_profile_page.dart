@@ -110,10 +110,14 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                           },
                           decoration: styling.textInputDecoration().copyWith(
                               labelText: "Display Name",
-                              fillColor: styling.secondary,
+                              fillColor: styling.theme == "christmas"
+                                  ? styling.green
+                                  : styling.secondary,
                               prefixIcon: Icon(
                                 Icons.person,
-                                color: Theme.of(context).primaryColor,
+                                color: styling.theme == "christmas"
+                                    ? styling.red
+                                    : styling.primary,
                               )),
 
                           //Check email validation
@@ -142,10 +146,14 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                         },
                         decoration: styling.textInputDecoration().copyWith(
                             labelText: "Username",
-                            fillColor: styling.secondary,
+                            fillColor: styling.theme == "christmas"
+                                ? styling.green
+                                : styling.secondary,
                             prefixIcon: Icon(
                               Icons.person,
-                              color: Theme.of(context).primaryColor,
+                              color: styling.theme == "christmas"
+                                  ? styling.red
+                                  : styling.primary,
                             )),
                         validator: (val) {
                           if (val!.isEmpty) {
@@ -177,7 +185,9 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                         maxLines: 6,
                         decoration: styling.textInputDecoration().copyWith(
                               labelText: 'Description',
-                              fillColor: styling.secondary,
+                              fillColor: styling.theme == "christmas"
+                                  ? styling.green
+                                  : styling.secondary,
                               counterStyle:
                                   const TextStyle(color: Colors.white),
                               // counter: Text("Characters: ${editDescription.length}/125", style: TextStyle(color: Colors.white, fontSize: 11)),
@@ -244,12 +254,16 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                                                 .copyWith(
                                                     labelText:
                                                         "Current Password",
-                                                    fillColor:
-                                                        styling.secondary,
+                                                    fillColor: styling.theme ==
+                                                            "christmas"
+                                                        ? styling.green
+                                                        : styling.secondary,
                                                     prefixIcon: Icon(
                                                       Icons.lock,
-                                                      color: Theme.of(context)
-                                                          .primaryColor,
+                                                      color: styling.theme ==
+                                                              "christmas"
+                                                          ? styling.red
+                                                          : styling.primary,
                                                     )),
                                             validator: (val) {
                                               if (val!.length < 6) {
@@ -281,12 +295,16 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                                                 .textInputDecoration()
                                                 .copyWith(
                                                     labelText: "New Password",
-                                                    fillColor:
-                                                        styling.secondary,
+                                                    fillColor: styling.theme ==
+                                                            "christmas"
+                                                        ? styling.green
+                                                        : styling.secondary,
                                                     prefixIcon: Icon(
                                                       Icons.lock,
-                                                      color: Theme.of(context)
-                                                          .primaryColor,
+                                                      color: styling.theme ==
+                                                              "christmas"
+                                                          ? styling.red
+                                                          : styling.primary,
                                                     )),
                                             validator: (val) {
                                               if (val!.length < 6) {
@@ -320,12 +338,16 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                                                 .copyWith(
                                                     labelText:
                                                         "Confirm New Password",
-                                                    fillColor:
-                                                        styling.secondary,
+                                                    fillColor: styling.theme ==
+                                                            "christmas"
+                                                        ? styling.green
+                                                        : styling.secondary,
                                                     prefixIcon: Icon(
                                                       Icons.lock,
-                                                      color: Theme.of(context)
-                                                          .primaryColor,
+                                                      color: styling.theme ==
+                                                              "christmas"
+                                                          ? styling.red
+                                                          : styling.primary,
                                                     )),
                                             validator: (val) {
                                               if (val!.length < 6) {
@@ -368,7 +390,9 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                                         ),
                                         isLoadingPassword
                                             ? CircularProgressIndicator(
-                                                color: styling.secondary,
+                                                color: styling.theme == "christmas"
+                ? styling.green
+                :styling.secondary,
                                               )
                                             : ElevatedButton(
                                                 onPressed: () async {
@@ -498,12 +522,17 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                                                   .textInputDecoration()
                                                   .copyWith(
                                                       labelText: "New Email",
-                                                      fillColor:
-                                                          styling.secondary,
+                                                      fillColor: styling
+                                                                  .theme ==
+                                                              "christmas"
+                                                          ? styling.green
+                                                          : styling.secondary,
                                                       prefixIcon: Icon(
                                                         Icons.email,
-                                                        color: Theme.of(context)
-                                                            .primaryColor,
+                                                        color: styling.theme ==
+                                                                "christmas"
+                                                            ? styling.red
+                                                            : styling.primary,
                                                       )),
 
                                               //Check email validation
@@ -539,12 +568,17 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                                                   .copyWith(
                                                       labelText:
                                                           "Current Password",
-                                                      fillColor:
-                                                          styling.secondary,
+                                                      fillColor: styling
+                                                                  .theme ==
+                                                              "christmas"
+                                                          ? styling.green
+                                                          : styling.secondary,
                                                       prefixIcon: Icon(
                                                         Icons.lock,
-                                                        color: Theme.of(context)
-                                                            .primaryColor,
+                                                        color: styling.theme ==
+                                                                "christmas"
+                                                            ? styling.red
+                                                            : styling.primary,
                                                       )),
                                               validator: (val) {
                                                 if (val!.length < 6) {
@@ -583,7 +617,9 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                                           ),
                                           isLoadingEmail
                                               ? CircularProgressIndicator(
-                                                  color: styling.secondary,
+                                                  color: styling.theme == "christmas"
+                ? styling.green
+                :styling.secondary,
                                                 )
                                               : ElevatedButton(
                                                   onPressed: () async {
@@ -669,7 +705,9 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                       isLoading
                           ? Center(
                               child: CircularProgressIndicator(
-                                color: styling.primary,
+                                color: styling.theme == "christmas"
+                ? styling.green
+                :styling.primary,
                               ),
                             )
                           : ElevatedButton(

@@ -17,6 +17,61 @@ class HelperFunctions {
   static String hapticFeedbackKey = "HAPTICFEEDBACKKEY";
   static String seenUpdateDialogKey = "SEENUPDATEDIALOGKEY";
   static String themeKey = "THEMEKEY";
+  static String setChristmasThemeKey = "SETCHRISTMASTHEMEKEY";
+  static String setChristmasAppIconKey = "SETCHRISTMASAPPICONKEY";
+  static String appIconKey = "APPICONKEY";
+  static String showDisplayTileKey = "SHOWDISPLAYTILEKEY";
+  static String listenedToUserKey = "LISTENEDTOUSERKEY";
+
+  static Future<bool> saveListenedToUserSF(bool status) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setBool(listenedToUserKey, status);
+  }
+
+  static Future<bool> getListenedToUserSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getBool(listenedToUserKey) ?? false;
+  }
+
+  static Future<bool> saveShowDisplayTileSF(bool status) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setBool(showDisplayTileKey, status);
+  }
+
+  static Future<bool> getShowDisplayTileSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getBool(showDisplayTileKey) ?? true;
+  }
+
+  static Future<bool> saveSetChristmasAppIconSF(bool status) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setBool(setChristmasAppIconKey, status);
+  }
+
+  static Future<bool> getSetChristmasAppIconSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getBool(setChristmasAppIconKey) ?? false;
+  }
+
+  static Future<bool> saveAppIconSF(String icon) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setString(appIconKey, icon);
+  }
+
+  static Future<String> getAppIconSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getString(appIconKey) ?? "default";
+  }
+
+  static Future<bool> saveSetChristmasThemeSF(bool status) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setBool(setChristmasThemeKey, status);
+  }
+
+  static Future<bool> getSetChristmasThemeSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getBool(setChristmasThemeKey) ?? false;
+  }
 
   static Future<bool> saveThemeSF(String theme) async {
     SharedPreferences sf = await SharedPreferences.getInstance();

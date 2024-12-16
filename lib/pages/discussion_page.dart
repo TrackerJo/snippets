@@ -55,6 +55,12 @@ class _DiscussionPageState extends State<DiscussionPage> {
   //Generate messageId of 9 random digits
 
   void getDiscussion() async {
+    bool showDisplayTile = await HelperFunctions.getShowDisplayTileSF();
+    if (!showDisplayTile) {
+      setState(() {
+        showResponseTile = false;
+      });
+    }
     List<Snippet> snippets = await Database().getSnippetsList();
     bool snippetExists =
         snippets.any((e) => e.snippetId == widget.responseTile.snippetId);
@@ -170,7 +176,9 @@ class _DiscussionPageState extends State<DiscussionPage> {
                                 decoration: BoxDecoration(
                                   color: styling.theme == "colorful-light"
                                       ? Colors.white
-                                      : styling.secondary,
+                                      : styling.theme == "christmas"
+                                          ? styling.green
+                                          : styling.secondary,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Column(
@@ -232,7 +240,9 @@ class _DiscussionPageState extends State<DiscussionPage> {
                           horizontal: 20, vertical: 9),
                       width: MediaQuery.of(context).size.width,
                       decoration: BoxDecoration(
-                        color: styling.primaryInput,
+                        color: styling.theme == "christmas"
+                            ? styling.green
+                            : styling.primaryInput,
                         borderRadius: BorderRadius.circular(30),
                       ),
                       child: Row(
@@ -274,7 +284,9 @@ class _DiscussionPageState extends State<DiscussionPage> {
                               height: 50,
                               width: 50,
                               decoration: BoxDecoration(
-                                color: styling.primaryDark,
+                                color: styling.theme == "christmas"
+                                    ? styling.red
+                                    : styling.primaryDark,
                                 borderRadius: BorderRadius.circular(30),
                               ),
                               child: const Center(

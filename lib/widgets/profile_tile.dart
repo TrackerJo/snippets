@@ -26,14 +26,19 @@ class _ProfileTileState extends State<ProfileTile> {
   Widget build(BuildContext context) {
     return Material(
         elevation: 10,
-        shadowColor: styling.secondary,
+        shadowColor:
+            styling.theme == "christmas" ? styling.green : styling.secondary,
         borderRadius: BorderRadius.circular(12),
         // color: ColorSys.primary,
         child: ListTile(
           tileColor: styling.theme == "colorful-light"
               ? Colors.white
-              : styling.secondary,
-          splashColor: styling.secondaryDark,
+              : styling.theme == "christmas"
+                  ? styling.green
+                  : styling.secondary,
+          splashColor: styling.theme == "christmas"
+              ? styling.green
+              : styling.secondaryDark,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

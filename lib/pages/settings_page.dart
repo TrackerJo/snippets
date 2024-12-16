@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -70,11 +72,12 @@ class _SettingsPageState extends State<SettingsPage> {
                         router.pushReplacement("/app_preferences");
                         // nextScreen(context, const AppPreferencesPage());
                       }),
-                  SettingTile(
-                      setting: "Customize Widgets",
-                      onTap: () {
-                        nextScreen(context, const CustomizeWidgetsPage());
-                      }),
+                  if (false)
+                    SettingTile(
+                        setting: "Customize Widgets",
+                        onTap: () {
+                          nextScreen(context, const CustomizeWidgetsPage());
+                        }),
                   SettingTile(
                       setting: "View Onboarding",
                       onTap: () {
@@ -134,7 +137,7 @@ class _SettingsPageState extends State<SettingsPage> {
   void showAboutTheDeveloperSheet(BuildContext context) {
     showModalBottomSheet<void>(
         context: context,
-        backgroundColor: styling.background,
+        backgroundColor: Colors.transparent,
         isScrollControlled: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
@@ -145,108 +148,123 @@ class _SettingsPageState extends State<SettingsPage> {
         builder: (BuildContext context) {
           return SizedBox(
               height: 600,
-              child: Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: Column(
-                    children: [
-                      //  Text("About the Developer", style: TextStyle(color: ColorSys.primary, fontSize: 30),),
-                      // const SizedBox(height: 20),
-                      Text(
-                        "Hi! I'm Nathaniel Kemme Nash",
-                        style: TextStyle(
-                            color: styling.primary,
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        "I'm a self taught programmer, who made Snippets in high school",
-                        style: TextStyle(
-                            color: styling.backgroundText,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        "My passion is making websites and apps that help people, even if it's just one person",
-                        style: TextStyle(
-                            color: styling.backgroundText,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        "I've been coding for about 7 years, and in that time I've co-founded a sports recruiting profiles company, made a few small video games, a programming language, an e-commerce store for a school, and so much more!",
-                        style: TextStyle(
-                            color: styling.backgroundText,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 10),
-
-                      ElevatedButton(
-                          onPressed: () async {
-                            String hapticFeedback =
-                                await HelperFunctions.getHapticFeedbackSF();
-                            if (hapticFeedback == "normal") {
-                              HapticFeedback.mediumImpact();
-                            } else if (hapticFeedback == "light") {
-                              HapticFeedback.lightImpact();
-                            } else if (hapticFeedback == "heavy") {
-                              HapticFeedback.heavyImpact();
-                            }
-                            Uri sms = Uri.parse('https://github.com/TrackerJo');
-                            if (await launchUrl(sms)) {
-                            } else {
-                              showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: const Text(
-                                          "Unable to open messaging app"),
-                                      content:
-                                          const Text("Please try again later."),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: const Text("Okay"),
-                                        ),
-                                      ],
-                                    );
-                                  });
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            elevation: 10,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(
-                                    color: styling.primaryDark, width: 2)),
-                            surfaceTintColor: styling.primaryDark,
-
-                            // shadowColor: ColorSys.primaryDark,
-                            // Change the shadow position
+              child: Stack(
+                children: [
+                  BackgroundTile(
+                    rounded: true,
+                  ),
+                  Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Column(
+                        children: [
+                          //  Text("About the Developer", style: TextStyle(color: ColorSys.primary, fontSize: 30),),
+                          // const SizedBox(height: 20),
+                          Text(
+                            "Hi! I'm Nathaniel Kemme Nash",
+                            style: TextStyle(
+                                color: styling.theme == "christmas"
+                                    ? styling.green
+                                    : styling.primary,
+                                fontSize: 30,
+                                fontWeight: FontWeight.bold),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Image.asset(
-                                "assets/github.png",
-                                width: 20,
-                                height: 20,
+                          const SizedBox(height: 20),
+                          Text(
+                            "I'm a self taught programmer, who made Snippets in high school",
+                            style: TextStyle(
+                                color: styling.backgroundText,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            "My passion is making websites and apps that help people, even if it's just one person",
+                            style: TextStyle(
+                                color: styling.backgroundText,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            "I've been coding for about 7 years, and in that time I've co-founded a sports recruiting profiles company, made a few small video games, a programming language, an e-commerce store for a school, and so much more!",
+                            style: TextStyle(
+                                color: styling.backgroundText,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: 10),
+
+                          ElevatedButton(
+                              onPressed: () async {
+                                String hapticFeedback =
+                                    await HelperFunctions.getHapticFeedbackSF();
+                                if (hapticFeedback == "normal") {
+                                  HapticFeedback.mediumImpact();
+                                } else if (hapticFeedback == "light") {
+                                  HapticFeedback.lightImpact();
+                                } else if (hapticFeedback == "heavy") {
+                                  HapticFeedback.heavyImpact();
+                                }
+                                Uri sms =
+                                    Uri.parse('https://github.com/TrackerJo');
+                                if (await launchUrl(sms)) {
+                                } else {
+                                  showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: const Text(
+                                              "Unable to open messaging app"),
+                                          content: const Text(
+                                              "Please try again later."),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: const Text("Okay"),
+                                            ),
+                                          ],
+                                        );
+                                      });
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                elevation: 10,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: BorderSide(
+                                        color: styling.theme == "christmas"
+                                            ? styling.green
+                                            : styling.primaryDark,
+                                        width: 2)),
+                                surfaceTintColor: styling.theme == "christmas"
+                                    ? styling.green
+                                    : styling.primaryDark,
+
+                                // shadowColor: ColorSys.primaryDark,
+                                // Change the shadow position
                               ),
-                              const SizedBox(width: 10),
-                              const Text(
-                                "View My Github",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ],
-                          )),
-                    ],
-                  )));
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Image.asset(
+                                    "assets/github.png",
+                                    width: 20,
+                                    height: 20,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Text(
+                                    "View My Github",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ],
+                              )),
+                        ],
+                      )),
+                ],
+              ));
         });
   }
 
@@ -257,8 +275,11 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: styling.background,
-          title:
-              Text("Share Feedback", style: TextStyle(color: styling.primary)),
+          title: Text("Share Feedback",
+              style: TextStyle(
+                  color: styling.theme == "christmas"
+                      ? styling.green
+                      : styling.primary)),
           content: SizedBox(
             width: 300,
             height: 300,
@@ -286,7 +307,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   decoration: styling.textInputDecoration().copyWith(
                         hintText: 'Feedback',
                         counterStyle: TextStyle(color: styling.backgroundText),
-                        fillColor: styling.primaryInput,
+                        fillColor: styling.theme == "christmas"
+                            ? styling.green
+                            : styling.primaryInput,
                         // counter: Text("Characters: ${editDescription.length}/125", style: TextStyle(color: Colors.white, fontSize: 11)),
                       ),
                   onChanged: (value) {
@@ -314,12 +337,11 @@ class _SettingsPageState extends State<SettingsPage> {
                 }
                 Navigator.of(context).pop();
               },
-              child: const Text("Cancel"),
+              child:
+                  const Text("Cancel", style: TextStyle(color: Colors.white)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: styling.primaryDark,
-              ),
+              style: styling.elevatedButtonDecoration(),
               onPressed: () async {
                 String hapticFeedback =
                     await HelperFunctions.getHapticFeedbackSF();
@@ -443,7 +465,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   isLoadingAccount
                       ? CircularProgressIndicator(
-                          color: styling.secondary,
+                          color: styling.theme == "christmas"
+                              ? styling.green
+                              : styling.secondary,
                         )
                       : ElevatedButton(
                           onPressed: () async {

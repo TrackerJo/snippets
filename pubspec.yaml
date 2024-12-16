@@ -1,7 +1,7 @@
 name: snippets
 description: A new social media.
 publish_to: 'none'
-version: 1.0.21+16
+version: 1.0.25+24
 
 environment:
   sdk: '>=3.0.6 <4.0.0'
@@ -45,6 +45,7 @@ dependencies:
   firebase_remote_config: ^4.4.7
   firebase_storage: ^11.7.7
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -55,11 +56,13 @@ dev_dependencies:
 
 
 flutter_launcher_icons:
-  android: "launcher_icon"
   ios: true
+  android: false
   image_path: "assets/icon/icon.png"
   min_sdk_android: 21 # android min sdk min:16, default 21
   remove_alpha_ios: true
+  # android:
+  #   image_path: "res/mipmap/christmas_icon.png"
 
 flutter:
   uses-material-design: true
@@ -68,4 +71,4 @@ flutter:
     - assets/icon/
 
 flutter_native_splash:
-  background_image: "assets/splash.png"
+  background_image: "assets/splash_christmas.png"

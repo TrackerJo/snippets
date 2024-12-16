@@ -81,7 +81,9 @@ class _FindProfilePageState extends State<FindProfilePage> {
                       },
                       decoration: styling.textInputDecoration().copyWith(
                             hintText: "Enter Profile Name",
-                            fillColor: styling.secondary,
+                            fillColor: styling.theme == "christmas"
+                                ? styling.green
+                                : styling.secondary,
                           ),
                       onChanged: (value) async {
                         if (value == "") {
@@ -108,12 +110,14 @@ class _FindProfilePageState extends State<FindProfilePage> {
             if (profileName != "") Expanded(child: profileList()),
             if (profileName == "") const SizedBox(height: 20),
             if (profileName == "")
-              Text(
-                "Suggested Friends",
-                style: TextStyle(
-                    color: styling.backgroundText,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold),
+              Container(
+                child: Text(
+                  "Suggested Friends",
+                  style: TextStyle(
+                      color: styling.backgroundText,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold),
+                ),
               ),
             if (profileName == "") const SizedBox(height: 20),
             if (profileName == "") Expanded(child: suggestedFriendsList()),

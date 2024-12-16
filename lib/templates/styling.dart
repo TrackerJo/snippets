@@ -21,6 +21,11 @@ class Styling {
 
   String theme = "dark";
 
+// Color.fromARGB(255, 135, 195, 143)
+  Color green = Color.fromARGB(255, 135, 195, 143);
+  Color greenLight = Color.fromARGB(255, 135, 195, 143);
+  Color red = Color.fromARGB(255, 218, 44, 56);
+
   Key key = UniqueKey();
 
   void refresh() {
@@ -57,6 +62,15 @@ class Styling {
         background = Colors.white;
         backgroundText = Colors.black;
         break;
+      case "christmas":
+        this.theme = "christmas";
+        background = red;
+        backgroundText = Colors.white;
+        break;
+      default:
+        this.theme = "dark";
+        background = const Color(0xFF232323);
+        backgroundText = Colors.white;
     }
   }
 
@@ -74,6 +88,17 @@ class Styling {
         begin: const Alignment(0.00, -1.00),
         end: const Alignment(0, 1),
         colors: [Colors.white, Colors.white],
+      );
+    } else if (theme == "christmas") {
+      return LinearGradient(
+        colors: [
+          green,
+          green,
+          green,
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        stops: [0.0, .5, 1.0], // Adjust for blending balance
       );
     }
     return LinearGradient(
@@ -98,6 +123,17 @@ class Styling {
         end: const Alignment(0, 1),
         colors: [Colors.white, Colors.white],
       );
+    } else if (theme == "christmas") {
+      return LinearGradient(
+        colors: [
+          green,
+          // Color(0xFFFFFFFF), // White
+          green
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        stops: [0.0, 1.0], // Adjust for blending balance
+      );
     }
     return const LinearGradient(
       begin: Alignment(0.00, -1.00),
@@ -116,6 +152,12 @@ class Styling {
         end: const Alignment(0, 1),
         colors: [primary, primary],
       );
+    } else if (theme == "christmas") {
+      return LinearGradient(
+        begin: const Alignment(0.00, -1.00),
+        end: const Alignment(0, 1),
+        colors: [green, greenLight],
+      );
     }
     return LinearGradient(
       begin: const Alignment(0.00, -1.00),
@@ -131,6 +173,12 @@ class Styling {
         end: const Alignment(0, 1),
         colors: [primary, primary],
       );
+    } else if (theme == "christmas") {
+      return LinearGradient(
+        begin: const Alignment(0.00, -1.00),
+        end: const Alignment(0, 1.5),
+        colors: [greenLight, green],
+      );
     }
 
     return LinearGradient(
@@ -141,6 +189,17 @@ class Styling {
   }
 
   LinearGradient getBlackGradient() {
+    if (theme == "christmas") {
+      return const LinearGradient(
+        begin: Alignment(0.00, -1.00),
+        end: Alignment(0, 1),
+        colors: [
+          //Sunrise gradient
+          Color.fromARGB(255, 76, 76, 76),
+          Color.fromARGB(255, 76, 76, 76),
+        ],
+      );
+    }
     return const LinearGradient(
       begin: Alignment(0.00, -1.00),
       end: Alignment(0, 1),
@@ -231,19 +290,23 @@ class Styling {
             borderRadius: BorderRadius.circular(20.0),
             borderSide: const BorderSide(color: Colors.transparent)),
         filled: true,
-        fillColor: primary,
+        fillColor:
+            theme == "christmas" ? Color.fromARGB(255, 135, 195, 143) : primary,
         floatingLabelBehavior: FloatingLabelBehavior.never);
   }
 
   ButtonStyle elevatedButtonDecoration() {
     return ElevatedButton.styleFrom(
         elevation: 10,
-        shadowColor: secondaryDark,
+        shadowColor: theme == "christmas" ? green : secondaryDark,
         minimumSize: const Size(100, 50),
         textStyle: TextStyle(
             color: theme == "colorful-light" ? primary : Colors.black),
-        backgroundColor:
-            theme == "colorful-light" ? Colors.white : secondaryInput,
+        backgroundColor: theme == "colorful-light"
+            ? Colors.white
+            : theme == "christmas"
+                ? green
+                : secondaryInput,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20.0),
         ));
@@ -252,9 +315,9 @@ class Styling {
   ButtonStyle elevatedButtonDecorationBlue() {
     return ElevatedButton.styleFrom(
         elevation: 10,
-        shadowColor: secondary,
+        shadowColor: theme == "christmas" ? green : secondary,
         minimumSize: const Size(100, 50),
-        backgroundColor: secondary,
+        backgroundColor: theme == "christmas" ? green : secondary,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20.0),
         ));
@@ -263,9 +326,9 @@ class Styling {
   ButtonStyle elevatedButtonDecorationPurple() {
     return ElevatedButton.styleFrom(
         elevation: 10,
-        shadowColor: primaryInput,
+        shadowColor: theme == "christmas" ? red : primaryInput,
         minimumSize: const Size(100, 50),
-        backgroundColor: primaryInput,
+        backgroundColor: theme == "christmas" ? red : primaryInput,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20.0),
         ));

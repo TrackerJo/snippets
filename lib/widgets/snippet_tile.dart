@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
+import 'package:snippets/pages/question_page.dart';
 import 'package:snippets/pages/responses_page.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
@@ -48,7 +49,7 @@ class _SnippetTileState extends State<SnippetTile> {
         return AlertDialog(
           title: const Text("Anonymous Snippets"),
           content: const Text(
-              "Your response will be completely anonymous to everyone and will be public, not just to your friends."),
+              "Your response will be completely anonymous to everyone and will be public, not just to your friends. Anonymous snippets are signified by their black gradient as a background."),
           actions: <Widget>[
             TextButton(
               onPressed: () async {
@@ -127,7 +128,9 @@ class _SnippetTileState extends State<SnippetTile> {
             },
             trailing: isLoading
                 ? CircularProgressIndicator(
-                    color: styling.primaryDark,
+                    color: styling.theme == "christmas"
+                        ? styling.red
+                        : styling.primaryDark,
                   )
                 : IconButton(
                     icon: !widget.isAnswered
@@ -136,13 +139,17 @@ class _SnippetTileState extends State<SnippetTile> {
                                 ? widget.type == "anonymous"
                                     ? Colors.white
                                     : styling.primary
-                                : Colors.black)
+                                : styling.theme == "christmas"
+                                    ? styling.red
+                                    : Colors.black)
                         : Icon(Icons.arrow_forward_ios,
                             color: styling.theme == "colorful-light"
                                 ? widget.type == "anonymous"
                                     ? Colors.white
                                     : styling.primary
-                                : Colors.black),
+                                : styling.theme == "christmas"
+                                    ? styling.red
+                                    : Colors.black),
                     onPressed: () async {
                       // show options
                       if (!widget.isAnswered) {
@@ -204,6 +211,16 @@ class _SnippetTileState extends State<SnippetTile> {
                         } else if (hapticFeedback == "heavy") {
                           HapticFeedback.heavyImpact();
                         }
+
+                        // nextScreen(
+                        //     context,
+                        //     QuestionPage(
+                        //       snippetId: widget.snippetId,
+                        //       question: widget.question,
+                        //       theme: widget.theme,
+                        //       type: widget.type,
+                        //     ));
+
                         nextScreen(
                           context,
                           ResponsesPage(
@@ -223,7 +240,9 @@ class _SnippetTileState extends State<SnippetTile> {
                     ? widget.type == "anonymous"
                         ? Colors.white
                         : styling.primaryDark
-                    : Color.fromARGB(255, 0, 0, 0),
+                    : styling.theme == "christmas" && widget.type == "anonymous"
+                        ? Colors.white
+                        : Color.fromARGB(255, 0, 0, 0),
                 fontSize: 20,
                 fontWeight: FontWeight.w400,
                 height: 0,
@@ -250,13 +269,17 @@ class _SnippetTileState extends State<SnippetTile> {
                               hintStyle: TextStyle(
                                 color: styling.theme == "colorful-light"
                                     ? Colors.white
-                                    : Colors.black,
+                                    : styling.theme == "christmas"
+                                        ? Colors.white
+                                        : Colors.black,
                               ),
                               //Border color: color: ColorSys.primarySolid,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(20.0),
                               ),
-                              fillColor: styling.primaryInput,
+                              fillColor: styling.theme == "christmas"
+                                  ? styling.red
+                                  : styling.primaryInput,
 
                               //   borderRadius: BorderRadius.circular(20.0),
                               //   borderSide: BorderSide(

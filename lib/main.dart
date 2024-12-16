@@ -25,6 +25,7 @@ import 'package:snippets/api/remote_config.dart';
 import 'package:snippets/api/storage.dart';
 import 'package:snippets/constants.dart';
 import 'package:snippets/helper/app_badge.dart';
+import 'package:snippets/helper/app_icon_changer.dart';
 
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/pages/app_preferences_page.dart';
@@ -492,6 +493,24 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
   bool isSignedIn = false;
   getUserLoggedInState() async {
+    bool setChristmasTheme = await HelperFunctions.getSetChristmasThemeSF();
+    if (!setChristmasTheme) {
+      await HelperFunctions.saveThemeSF("christmas");
+      await HelperFunctions.saveSetChristmasThemeSF(true);
+    }
+
+    bool setChristmasIcon = await HelperFunctions.getSetChristmasAppIconSF();
+    if (!setChristmasIcon && Platform.isIOS) {
+      await AppIconChanger.changeIcon("christmas");
+
+      await HelperFunctions.saveSetChristmasAppIconSF(true);
+    }
+    String appIcon = await HelperFunctions.getAppIconSF();
+    if(Platform.isAndroid && appIcon != "default"){
+      await AppIconChanger.changeIcon("default");
+      
+    }
+
     String theme = await HelperFunctions.getThemeSF();
     styling.setTheme(theme);
     int updateLocalDB = await HelperFunctions.getLocalDatabaseUpdateSF();
@@ -502,6 +521,11 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
     bool status = await Auth().isUserLoggedIn();
     if (status) {
+      // if (!isUserLoggedIn) {
+      //   Auth().signOut();
+      //   status = false;
+      //   return;
+      // }
       await PushNotifications().initNotifications();
       List<String> topics = await HelperFunctions.getTopicNotifications();
       if (topics.isEmpty) {
@@ -657,6 +681,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     switch (state) {
       case AppLifecycleState.resumed:
+        print("APP RESUMED");
         bool isConnected = await InternetConnection().hasInternetAccess;
         if (isConnected) {
           //Check if on /nowifi
@@ -674,8 +699,22 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           router.pushReplacement("/nowifi");
           return;
         }
+        String theme = await HelperFunctions.getThemeSF();
+        styling.setTheme(theme);
         //Check if user is logged in
         bool status = await Auth().isUserLoggedIn();
+        if (status) {
+          // if (!isUserLoggedIn) {
+          //   Auth().signOut();
+          //   status = false;
+          //   return;
+          // }
+          bool isListening = await HelperFunctions.getListenedToUserSF();
+          print("Is listening: $isListening");
+          if (!isListening) {
+            Auth().listenToAuthState(currentUserStream);
+          }
+        }
         bool needsUpdate = await RemoteConfig().checkUpdates();
         if (needsUpdate) {
           //Show update dialog

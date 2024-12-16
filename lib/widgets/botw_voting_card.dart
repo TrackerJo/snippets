@@ -90,7 +90,9 @@ class _BOTWVotingCardState extends State<BOTWVotingCard> {
   Widget buildCard() => Material(
         elevation: 10,
         shadowColor: widget.isFront || widget.isSecond
-            ? styling.primaryDark
+            ? styling.theme == "christmas"
+                ? styling.green
+                : styling.primaryDark
             : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         child: Container(

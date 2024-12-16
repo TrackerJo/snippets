@@ -11,10 +11,27 @@ class Storage {
   Future<void> setUserSnippetResponseDelay(int delay) async {
     //Get the FCM token
     String fcmToken = await PushNotifications().getDeviceToken();
+    print("FCM Token: $fcmToken");
     //Get the reference to the file
     Reference ref = _storage.ref().child("$fcmToken.json");
     //get data from the file
-    var data = await ref.getData();
+    //Check if the file exists
+    var data;
+    try {
+      data = await ref.getData();
+    } catch (e) {
+      print(e);
+      print(e.toString());
+      if (e.toString().contains(
+          "[firebase_storage/object-not-found] No object exists at the desired reference.")) {
+        //If the file does not exist, create it
+        var jsonData = jsonEncode({"delay": delay * 60000});
+        var bytes = Uint8List.fromList(jsonData.codeUnits);
+        await ref.putData(bytes);
+        return;
+      }
+    }
+
     //if the file exists
     if (data != null) {
       //update the file

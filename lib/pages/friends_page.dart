@@ -167,7 +167,11 @@ class _FriendsPageState extends State<FriendsPage> {
                             ? styling.secondary
                             : styling.theme == "colorful-light"
                                 ? styling.primary
-                                : Color.fromARGB(207, 56, 56, 56),
+                                : styling.theme == "christmas"
+                                    ? styling.green
+                                    : styling.theme == "colorful"
+                                        ? styling.secondaryDark
+                                        : Color.fromARGB(207, 56, 56, 56),
                         width: 2.0,
                       ),
                     ),
@@ -184,7 +188,9 @@ class _FriendsPageState extends State<FriendsPage> {
                               color: friendsView == "friends"
                                   ? styling.theme == "colorful-light"
                                       ? Colors.white
-                                      : styling.secondaryDark
+                                      : styling.theme == "christmas"
+                                          ? styling.green
+                                          : styling.secondaryDark
                                   : Colors.transparent,
                               width: 2.0,
                             ),
@@ -211,7 +217,9 @@ class _FriendsPageState extends State<FriendsPage> {
                             style: TextStyle(
                               color: styling.theme == "colorful-light"
                                   ? Colors.white
-                                  : styling.secondary,
+                                  : styling.theme == "christmas"
+                                      ? styling.green
+                                      : styling.secondary,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
@@ -235,7 +243,9 @@ class _FriendsPageState extends State<FriendsPage> {
                               color: friendsView == "friendRequests"
                                   ? styling.theme == "colorful-light"
                                       ? Colors.white
-                                      : styling.secondaryDark
+                                      : styling.theme == "christmas"
+                                          ? styling.green
+                                          : styling.secondaryDark
                                   : Colors.transparent,
                               width: 2.0,
                             ),
@@ -273,7 +283,9 @@ class _FriendsPageState extends State<FriendsPage> {
                                   style: TextStyle(
                                     color: styling.theme == "colorful-light"
                                         ? Colors.white
-                                        : styling.secondary,
+                                        : styling.theme == "christmas"
+                                            ? styling.green
+                                            : styling.secondary,
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -288,7 +300,9 @@ class _FriendsPageState extends State<FriendsPage> {
                                   decoration: BoxDecoration(
                                     color: styling.theme == "colorful-light"
                                         ? styling.secondaryDark
-                                        : styling.primaryDark,
+                                        : styling.theme == "christmas"
+                                            ? styling.green
+                                            : styling.primaryDark,
                                     borderRadius: BorderRadius.circular(50),
                                   ),
                                   child: Padding(
@@ -321,7 +335,9 @@ class _FriendsPageState extends State<FriendsPage> {
                               color: friendsView == "outgoingRequests"
                                   ? styling.theme == "colorful-light"
                                       ? Colors.white
-                                      : styling.secondaryDark
+                                      : styling.theme == "christmas"
+                                          ? styling.green
+                                          : styling.secondaryDark
                                   : Colors.transparent,
                               width: 2.0,
                             ),
@@ -348,7 +364,9 @@ class _FriendsPageState extends State<FriendsPage> {
                             style: TextStyle(
                               color: styling.theme == "colorful-light"
                                   ? Colors.white
-                                  : styling.secondary,
+                                  : styling.theme == "christmas"
+                                      ? styling.green
+                                      : styling.secondary,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),

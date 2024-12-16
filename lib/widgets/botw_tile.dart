@@ -33,7 +33,6 @@ class _BOTWTileState extends State<BOTWTile> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    print("Answer: ${widget.answer.voters[0]}");
   }
 
   List<String> removeEmptyStrings(List<String> list) {
@@ -98,7 +97,9 @@ class _BOTWTileState extends State<BOTWTile> {
                           maxLines: 2,
                           decoration: styling.textInputDecoration().copyWith(
                               hintText: "Enter submission here",
-                              fillColor: styling.primaryInput
+                              fillColor: styling.theme == "christmas"
+                                  ? styling.red
+                                  : styling.primaryInput
                               //Border color: color: ColorSys.primarySolid,
 
                               //   borderSide: BorderSide(

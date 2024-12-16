@@ -246,7 +246,9 @@ class _VotingPageState extends State<VotingPage> {
                           border: Border.all(color: Colors.white, width: 2),
                           boxShadow: [
                             BoxShadow(
-                              color: styling.primary.withOpacity(0.5),
+                              color: styling.theme == "christmas"
+                                  ? styling.green
+                                  : styling.primary.withOpacity(0.5),
                               spreadRadius: 7,
                               blurRadius: 7,
                               offset: const Offset(
@@ -283,7 +285,9 @@ class _VotingPageState extends State<VotingPage> {
                                 movedAnswers.removeLast();
                               });
                             },
-                            splashColor: styling.primary,
+                            splashColor: styling.theme == "christmas"
+                                ? styling.green
+                                : styling.primary,
                             icon: const Icon(Icons.rotate_left,
                                 color: Colors.white, size: 30)),
                       ),
@@ -294,7 +298,9 @@ class _VotingPageState extends State<VotingPage> {
                           border: Border.all(color: Colors.white, width: 2),
                           boxShadow: [
                             BoxShadow(
-                              color: styling.primary.withOpacity(0.5),
+                              color: styling.theme == "christmas"
+                                  ? styling.green
+                                  : styling.primary.withOpacity(0.5),
                               spreadRadius: 7,
                               blurRadius: 7,
                               offset: const Offset(
@@ -323,7 +329,9 @@ class _VotingPageState extends State<VotingPage> {
                                   listen: false);
                               provider.like();
                             },
-                            splashColor: styling.primary,
+                            splashColor: styling.theme == "christmas"
+                                ? styling.green
+                                : styling.primary,
                             icon: const Icon(Icons.check,
                                 color: Colors.white, size: 30)),
                       ),
@@ -401,7 +409,10 @@ class _VotingPageState extends State<VotingPage> {
                                             votesLeft++;
                                           });
                                         },
-                                        splashColor: styling.primary,
+                                        splashColor:
+                                            styling.theme == "christmas"
+                                                ? styling.green
+                                                : styling.primary,
                                         icon: Icon(Icons.delete,
                                             color: styling.theme ==
                                                     "colorful-light"
@@ -510,13 +521,7 @@ class _VotingPageState extends State<VotingPage> {
                       skippedAnswers = [];
                     });
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: styling.primary,
-                    elevation: 10,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        side: BorderSide(color: styling.primary, width: 2)),
-                  ),
+                  style: styling.elevatedButtonDecoration(),
                   child: const Text("View skipped answers",
                       style: TextStyle(color: Colors.white)))
             ],

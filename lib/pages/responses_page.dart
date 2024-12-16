@@ -270,7 +270,8 @@ class _ResponsesPageState extends State<ResponsesPage> {
         } else {
           return Center(
               child: CircularProgressIndicator(
-            color: Theme.of(context).primaryColor,
+            color:
+                styling.theme == "christmas" ? styling.green : styling.primary,
           ));
         }
       },

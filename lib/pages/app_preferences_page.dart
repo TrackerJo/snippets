@@ -1,18 +1,22 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_widgetkit/flutter_widgetkit.dart';
 import 'package:go_router/go_router.dart';
+import 'package:snippets/helper/app_icon_changer.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/pages/settings_page.dart';
 import 'package:snippets/pages/swipe_pages.dart';
+import 'package:snippets/widgets/app_icon_tile.dart';
 import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
 import 'package:snippets/widgets/custom_page_route.dart';
 import 'package:snippets/widgets/helper_functions.dart';
+import 'package:snippets/widgets/notification_tile.dart';
 import 'package:snippets/widgets/widget_gradient_tile.dart';
 
 class AppPreferencesPage extends StatefulWidget {
@@ -37,12 +41,19 @@ class NoAnimationPageRoute<T> extends MaterialPageRoute<T> {
 class _AppPreferencesPageState extends State<AppPreferencesPage> {
   String hapticFeedback = "normal";
   String theme = "dark";
+  String appIcon = "default";
+  bool showDiscussionResponseTile = true;
   void load() async {
     String hapticFeedback = await HelperFunctions.getHapticFeedbackSF();
     String theme = await HelperFunctions.getThemeSF();
+    String appIcon = await HelperFunctions.getAppIconSF();
+    bool showDiscussionResponseTile =
+        await HelperFunctions.getShowDisplayTileSF();
     setState(() {
       this.hapticFeedback = hapticFeedback;
       this.theme = theme;
+      this.showDiscussionResponseTile = showDiscussionResponseTile;
+      this.appIcon = appIcon;
     });
   }
 
@@ -91,14 +102,16 @@ class _AppPreferencesPageState extends State<AppPreferencesPage> {
                                   BorderRadius.all(Radius.circular(10))),
                           tileColor: styling.theme == "colorful-light"
                               ? Colors.white
-                              : styling.secondary,
+                              : styling.theme == "christmas"
+                                  ? styling.green
+                                  : styling.secondary,
                           title: Text("Haptic Feedback Intensity",
                               style: TextStyle(
                                   color: styling.theme == "colorful-light"
                                       ? styling.secondaryDark
                                       : Colors.black)),
                           subtitle: Text(
-                              "Choose the intensity of the haptic feedback",
+                              "Choose the intensity of the haptic feedback (the vibration when you interact with the app)",
                               style: TextStyle(
                                   color: styling.theme == "colorful-light"
                                       ? styling.secondaryDark
@@ -107,21 +120,26 @@ class _AppPreferencesPageState extends State<AppPreferencesPage> {
                             width: 100,
                             child: DropdownButtonFormField(
                               value: hapticFeedback,
-                              
                               decoration: styling
                                   .textInputDecoration()
                                   .copyWith(
                                       fillColor:
                                           styling.theme == "colorful-light"
                                               ? styling.secondary
-                                              : styling.primary),
+                                              : styling.theme == "christmas"
+                                                  ? styling.red
+                                                  : styling.primary),
                               dropdownColor: styling.theme == "colorful-light"
                                   ? styling.secondary
-                                  : styling.primary,
+                                  : styling.theme == "christmas"
+                                      ? styling.red
+                                      : styling.primary,
                               iconEnabledColor:
                                   styling.theme == "colorful-light"
                                       ? styling.primary
-                                      : styling.secondary,
+                                      : styling.theme == "christmas"
+                                          ? styling.green
+                                          : styling.secondary,
                               borderRadius: BorderRadius.circular(10),
                               items: [
                                 "heavy",
@@ -165,6 +183,17 @@ class _AppPreferencesPageState extends State<AppPreferencesPage> {
                           ),
                         ),
                       ),
+                      NotificationTile(
+                          type: "Show Discussion Response Tile by default",
+                          description:
+                              "When viewing a discussion, choose wether the person's response tile is shown by default",
+                          isAllowed: showDiscussionResponseTile,
+                          setIsAllowed: (show) async {
+                            await HelperFunctions.saveShowDisplayTileSF(show);
+                            setState(() {
+                              showDiscussionResponseTile = show;
+                            });
+                          }),
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: ListTile(
@@ -173,7 +202,9 @@ class _AppPreferencesPageState extends State<AppPreferencesPage> {
                                   BorderRadius.all(Radius.circular(10))),
                           tileColor: styling.theme == "colorful-light"
                               ? Colors.white
-                              : styling.secondary,
+                              : styling.theme == "christmas"
+                                  ? styling.green
+                                  : styling.secondary,
                           title: Text("Theme",
                               style: TextStyle(
                                   color: styling.theme == "colorful-light"
@@ -194,14 +225,20 @@ class _AppPreferencesPageState extends State<AppPreferencesPage> {
                                       fillColor:
                                           styling.theme == "colorful-light"
                                               ? styling.secondary
-                                              : styling.primary),
+                                              : styling.theme == "christmas"
+                                                  ? styling.red
+                                                  : styling.primary),
                               dropdownColor: styling.theme == "colorful-light"
                                   ? styling.secondary
-                                  : styling.primary,
+                                  : styling.theme == "christmas"
+                                      ? styling.red
+                                      : styling.primary,
                               iconEnabledColor:
                                   styling.theme == "colorful-light"
                                       ? styling.primary
-                                      : styling.secondary,
+                                      : styling.theme == "christmas"
+                                          ? styling.green
+                                          : styling.secondary,
                               borderRadius: BorderRadius.circular(10),
                               items: [
                                 "dark",
@@ -210,6 +247,7 @@ class _AppPreferencesPageState extends State<AppPreferencesPage> {
                                 "colorful-light",
                                 "dotted-dark",
                                 "dotted-light",
+                                "christmas",
                               ].map((String value) {
                                 return DropdownMenuItem<String>(
                                   value: value,
@@ -247,6 +285,59 @@ class _AppPreferencesPageState extends State<AppPreferencesPage> {
                           ),
                         ),
                       ),
+                      if (Platform.isIOS) const SizedBox(height: 20),
+                      if (Platform.isIOS)
+                        Text("App Icon",
+                            style: TextStyle(
+                                color: styling.theme == "colorful-light"
+                                    ? styling.secondaryDark
+                                    : styling.backgroundText,
+                                fontSize: 25,
+                                fontWeight: FontWeight.bold)),
+                      if (Platform.isIOS)
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: AppIconTile(
+                                    path: "assets/icon/icon.png",
+                                    onTap: () {
+                                      AppIconChanger.changeIcon("default");
+                                      setState(() {
+                                        appIcon = "default";
+                                      });
+                                    },
+                                    isSelected: appIcon == "default"),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: AppIconTile(
+                                    path: "assets/icon/christmas_icon.png",
+                                    onTap: () {
+                                      AppIconChanger.changeIcon("christmas");
+                                      setState(() {
+                                        appIcon = "christmas";
+                                      });
+                                    },
+                                    isSelected: appIcon == "christmas"),
+                              ),
+                              // Padding(
+                              //   padding: const EdgeInsets.all(8.0),
+                              //   child: AppIconTile(
+                              //       path: "assets/icon/premium_icon.png",
+                              //       onTap: () {
+                              //         AppIconChanger.changeIcon("premium");
+                              //         setState(() {
+                              //           appIcon = "premium";
+                              //         });
+                              //       },
+                              //       isSelected: appIcon == "premium"),
+                              // ),
+                            ],
+                          ),
+                        )
                     ],
                   ),
                 )),

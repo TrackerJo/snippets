@@ -18,14 +18,14 @@ class PushNotifications {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   Future<String> getDeviceToken() async {
     //TODO: Remove this
-    // return "cPEeTaGU7EOXpQvg5_95QK:APA91bGMRlmrs5hMkY9NR1zvyqOfo4lrWYeVDMl1CkpuaT3gLSskFa5450FE7fXzPGLbT3rIUSLiW66nIB2YAu-tt_-OxJqK5yIDS2fLtFMudhE3AgbR4lNxuNgKolNuzkV6WJRierfO";
+    return "cPEeTaGU7EOXpQvg5_95QK:APA91bGMRlmrs5hMkY9NR1zvyqOfo4lrWYeVDMl1CkpuaT3gLSskFa5450FE7fXzPGLbT3rIUSLiW66nIB2YAu-tt_-OxJqK5yIDS2fLtFMudhE3AgbR4lNxuNgKolNuzkV6WJRierfO";
 
     String? token = await _firebaseMessaging.getToken();
     return (token != null) ? token : "";
   }
 
   Future<void> initNotifications() async {
-    // return;
+    return;
 
     await _firebaseMessaging.requestPermission();
     await _firebaseMessaging.getToken();

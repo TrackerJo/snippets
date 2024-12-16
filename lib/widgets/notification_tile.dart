@@ -25,7 +25,9 @@ class NotificationTile extends StatelessWidget {
             borderRadius: BorderRadius.all(Radius.circular(10))),
         tileColor: styling.theme == "colorful-light"
             ? Colors.white
-            : styling.secondary,
+            : styling.theme == "christmas"
+                ? styling.green
+                : styling.secondary,
         title: Text(type,
             style: TextStyle(
                 color: styling.theme == "colorful-light"
@@ -37,8 +39,13 @@ class NotificationTile extends StatelessWidget {
                     ? styling.secondaryDark
                     : Colors.grey[900])),
         trailing: Switch(
-          activeColor: styling.primary,
-          inactiveThumbColor: styling.secondaryDark,
+          activeColor:
+              styling.theme == "christmas" ? styling.red : styling.primary,
+          inactiveThumbColor: styling.theme == "christmas"
+              ? styling.green
+              : styling.secondaryDark,
+          trackOutlineColor: WidgetStateProperty.all(
+              styling.theme == "christmas" ? styling.red : styling.primaryDark),
           value: isAllowed,
           onChanged: (value) async {
             String hapticFeedback = await HelperFunctions.getHapticFeedbackSF();
