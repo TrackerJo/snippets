@@ -108,6 +108,32 @@ class Styling {
     );
   }
 
+  LinearGradient getTriviaGradient() {
+    if (theme == "colorful-light") {
+      return LinearGradient(
+        begin: const Alignment(0.00, -1.00),
+        end: const Alignment(0, 1),
+        colors: [secondary, secondary],
+      );
+    } else if (theme == "christmas") {
+      return LinearGradient(
+        colors: [
+          green,
+          green,
+          green,
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        stops: [0.0, .5, 1.0], // Adjust for blending balance
+      );
+    }
+    return LinearGradient(
+      begin: const Alignment(0.00, -1.00),
+      end: const Alignment(0, 1),
+      colors: [primary, primaryInput],
+    );
+  }
+
   LinearGradient getBOTWGradient() {
     return LinearGradient(
       begin: const Alignment(0.00, -1.00),

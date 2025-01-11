@@ -81,7 +81,10 @@ class _SwipePagesState extends State<SwipePages> {
       var nowInEst = tz.TZDateTime.now(estLocation);
       if (!mounted) return;
       setState(() {
+        print("User data updated");
         userData = event;
+        pageTitles[0] =
+            "Profile${event.streak > 0 ? " • ${event.streak}🔥" : ""}";
         hasFriendRequests = userData.friendRequests.isNotEmpty;
 
         if (userData.botwStatus.hasAnswered &&
@@ -119,8 +122,7 @@ class _SwipePagesState extends State<SwipePages> {
         }
       });
     });
-    userData = await Database()
-        .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
+    userData = await Database().getCurrentUserData();
     DateTime now = DateTime.now();
     DateTime monday = now.subtract(Duration(days: now.weekday - 1));
     String mondayString = "${monday.month}-${monday.day}-${monday.year}";
@@ -133,6 +135,8 @@ class _SwipePagesState extends State<SwipePages> {
     if (!mounted) return;
     setState(() {
       if (!mounted) return;
+      pageTitles[0] =
+          "Profile${userData.streak > 0 ? " • ${userData.streak}🔥" : ""}";
 
       hasFriendRequests = userData.friendRequests.isNotEmpty;
       if (userData.botwStatus.hasAnswered &&
@@ -202,8 +206,7 @@ class _SwipePagesState extends State<SwipePages> {
   void viewUpdateSheet() {
     showModalBottomSheet<void>(
         context: context,
-        backgroundColor:
-            styling.theme == "christmas" ? styling.green : styling.secondary,
+        backgroundColor: Colors.transparent,
         isScrollControlled: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
@@ -215,30 +218,173 @@ class _SwipePagesState extends State<SwipePages> {
           return SizedBox(
               height: MediaQuery.of(context).size.height * 0.8,
               width: double.infinity,
-              child: Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: Column(children: [
-                    Text(
-                      "What's New?",
-                      style: const TextStyle(color: Colors.white, fontSize: 40),
-                    ),
-                    Text(
-                      "Version 1.0.13",
-                      style: const TextStyle(color: Colors.white, fontSize: 20),
-                    ),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: ListView(
-                        children: [
-                          BulletList(
-                            [
-                              "Added a christmas themed splash screen",
+              child: Stack(
+                children: [
+                  BackgroundTile(
+                    rounded: true,
+                    flatBack: true,
+                  ),
+                  Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Column(children: [
+                        Text(
+                          "What's New?",
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 40),
+                        ),
+                        Text(
+                          "Version 1.1.1",
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 20),
+                        ),
+                        const SizedBox(height: 10),
+                        Expanded(
+                          child: ListView(
+                            children: [
+                              BulletList(
+                                [
+                                  "Suggesting Snippets - You can now suggest snippets by going to the snippets page and tapping the lightbulb icon!",
+                                  "Saved Responses now show date saved",
+                                ],
+                              )
                             ],
-                          )
-                        ],
-                      ),
+                          ),
+                        )
+                      ])),
+                ],
+              ));
+        });
+  }
+
+  void showSuggestsSnippetsInfoDialog(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(
+              "Suggest Snippets",
+            ),
+            content: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text:
+                        "You can now suggest snippets by tapping on the lightbulb icon (",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                  WidgetSpan(
+                    child: Icon(Icons.lightbulb_outline, size: 16),
+                  ),
+                  TextSpan(
+                    text: ") on the snippets page.",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () async {
+                    await HelperFunctions.saveSeenSuggestSnippetSF(true);
+                    Navigator.pop(context);
+                  },
+                  child: Text("OK"))
+            ],
+          );
+        });
+  }
+
+  void showSuggestDialog() {
+    TextEditingController questionController = TextEditingController();
+    bool isSubmitting = false;
+    showDialog(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Suggest a snippet question",
+                  style: TextStyle(color: Colors.white)),
+              backgroundColor: styling.theme == "christmas"
+                  ? styling.green
+                  : styling.primary,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                      "Suggest a question for a snippet. This is completely anonymous.\n",
+                      style: TextStyle(color: Colors.white)),
+                  TextField(
+                    controller: questionController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: styling.textInputDecoration().copyWith(
+                        hintText: "Enter your question here",
+                        fillColor: styling.theme == "christmas"
+                            ? styling.green
+                            : styling.secondary,
+                        hintStyle: const TextStyle(color: Colors.white)),
+                  ),
+                  const SizedBox(height: 10),
+                  if (isSubmitting)
+                    CircularProgressIndicator(
+                      color: styling.theme == "christmas"
+                          ? styling.green
+                          : styling.primary,
                     )
-                  ])));
+                  else
+                    ElevatedButton(
+                        onPressed: () async {
+                          String hapticFeedback =
+                              await HelperFunctions.getHapticFeedbackSF();
+                          if (hapticFeedback == "normal") {
+                            HapticFeedback.mediumImpact();
+                          } else if (hapticFeedback == "light") {
+                            HapticFeedback.lightImpact();
+                          } else if (hapticFeedback == "heavy") {
+                            HapticFeedback.heavyImpact();
+                          }
+                          if (questionController.text.isNotEmpty) {
+                            setState(() {
+                              isSubmitting = true;
+                            });
+                            await Database()
+                                .suggestSnippet(questionController.text);
+                            Navigator.pop(context);
+                            questionController.clear();
+                            setState(() {
+                              isSubmitting = false;
+                            });
+                          }
+                        },
+                        style: styling.elevatedButtonDecoration(),
+                        child: const Text("Submit",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold))),
+
+                  //add a cancel button
+                  TextButton(
+                      onPressed: () async {
+                        String hapticFeedback =
+                            await HelperFunctions.getHapticFeedbackSF();
+                        if (hapticFeedback == "normal") {
+                          HapticFeedback.mediumImpact();
+                        } else if (hapticFeedback == "light") {
+                          HapticFeedback.lightImpact();
+                        } else if (hapticFeedback == "heavy") {
+                          HapticFeedback.heavyImpact();
+                        }
+                        Navigator.pop(context);
+                      },
+                      child: const Text("Cancel",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold)))
+                ],
+              ),
+            );
+          });
         });
   }
 
@@ -247,12 +393,17 @@ class _SwipePagesState extends State<SwipePages> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       print("Post frame callback");
       int lastSeenUpdate = await HelperFunctions.getSeenUpdateDialogSF();
-      if (lastSeenUpdate < 14 && !seenUpdateDialog) {
+      if (lastSeenUpdate < 22 && !seenUpdateDialog) {
         setState(() {
           seenUpdateDialog = true;
         });
         viewUpdateSheet();
-        await HelperFunctions.saveSeenUpdateDialogSF(14);
+        await HelperFunctions.saveSeenUpdateDialogSF(22);
+      }
+      bool seenSuggestsSnippetsInfo =
+          await HelperFunctions.getSeenSuggestSnippetSF();
+      if (!seenSuggestsSnippetsInfo) {
+        showSuggestsSnippetsInfoDialog(context);
       }
     });
     return Stack(
@@ -267,6 +418,19 @@ class _SwipePagesState extends State<SwipePages> {
               showSettingsButton: selectedIndex == 0,
               onSettingsButtonPressed: onSettingsButtonPressed,
               showFriendsButton: selectedIndex == 1,
+              showSuggestSnippetButton: selectedIndex == 1,
+              onSuggestSnippetButtonPressed: () async {
+                String hapticFeedback =
+                    await HelperFunctions.getHapticFeedbackSF();
+                if (hapticFeedback == "normal") {
+                  HapticFeedback.mediumImpact();
+                } else if (hapticFeedback == "light") {
+                  HapticFeedback.lightImpact();
+                } else if (hapticFeedback == "heavy") {
+                  HapticFeedback.heavyImpact();
+                }
+                showSuggestDialog();
+              },
               hasFriendRequests: hasFriendRequests,
               onFriendsButtonPressed: () async {
                 String hapticFeedback =
@@ -336,14 +500,17 @@ class _SwipePagesState extends State<SwipePages> {
                         } else if (index == 3) {
                           await HelperFunctions.saveOpenedPageSF("search");
                         }
+                        if (!mounted) return;
                         setState(() {
+                          if (!mounted) return;
                           selectedIndex = index;
                         });
                       },
                       children: <Widget>[
-                        const ProfilePage(
+                        ProfilePage(
                           showNavBar: false,
                           showAppBar: false,
+                          index: selectedIndex,
                         ),
                         const HomePage(),
                         DiscussionsPage(

@@ -9,6 +9,7 @@ class FriendTile extends StatefulWidget {
   final String displayName;
   final String uid;
   final String username;
+  final bool isBestFriend;
   final bool showX;
   final bool showCheck;
   final Function()? onXPressed;
@@ -20,6 +21,7 @@ class FriendTile extends StatefulWidget {
     required this.displayName,
     required this.uid,
     required this.username,
+    this.isBestFriend = false,
     this.showX = false,
     this.showCheck = false,
     this.onXPressed,
@@ -66,9 +68,13 @@ class _FriendTileState extends State<FriendTile> {
                   ProfilePage(
                     uid: widget.uid,
                     showNavBar: false,
+                    showBackButton: true,
                   ));
             }
           },
+          leading: widget.isBestFriend
+              ? Icon(Icons.star, size: 30, color: Colors.black)
+              : null,
           title: Text(
             widget.displayName,
             style: TextStyle(

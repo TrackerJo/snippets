@@ -262,7 +262,7 @@ class PushNotifications {
         // );
 
         router.push(
-            "/home/question/${message.data['snippetId']}/${message.data['theme']}/${message.data['question'].replaceAll("?", "~")}/${message.data['snippetType']}");
+            "/home/question/${message.data['snippetId']}/${message.data['theme']}/${message.data['question'].replaceAll("?", "~")}/${message.data['snippetType']}/${message.data['options'] ?? ""}/${message.data['correctAnswer'] ?? ""}");
       } else if (message.data['type'] == "discussion") {
         // navigatorKey.currentState?.push(
         //   CustomPageRoute(
@@ -315,8 +315,13 @@ class PushNotifications {
           //     },
           //   ),
           // );
-          router.push(
-              "/home/responses/${message.data['snippetId']}/${message.data['theme']}/${message.data['question']}/${message.data['snippetType']}");
+          if (message.data['snippetType'] == "trivia") {
+            router.push(
+                "/home/triviaResponses/${message.data['snippetId']}/${message.data['theme']}/${message.data['question']}/${message.data['snippetType']}");
+          } else {
+            router.push(
+                "/home/responses/${message.data['snippetId']}/${message.data['theme']}/${message.data['question']}/${message.data['snippetType']}");
+          }
         }
       } else if (message.data['type'] == "botw" ||
           message.data['type'] == "new-botw") {
@@ -415,19 +420,7 @@ class PushNotifications {
   String createDiscussionUsersString(List<DiscussionUser> discussionUsers) {
     String users = "";
     for (var value in discussionUsers) {
-      users += "|${value.userId}^${value.FCMToken}";
-    }
-    return users;
-  }
-
-  List<Map<String, dynamic>> createDiscussionUsersList(String discussionUsers) {
-    List<Map<String, dynamic>> users = [];
-    List<String> userStrings = discussionUsers.split("|");
-    for (var user in userStrings) {
-      List<String> userParts = user.split("^");
-      if (userParts.length == 2) {
-        users.add({"userId": userParts[0], "FCMToken": userParts[1]});
-      }
+      users += "DISCU|DISCU${value.userId}DISCU^DISCU${value.FCMToken}";
     }
     return users;
   }

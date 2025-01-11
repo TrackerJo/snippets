@@ -1,21 +1,21 @@
 # Summary
 
-Date : 2024-08-23 14:57:26
+Date : 2024-12-18 10:50:32
 
-Directory /Users/nathanielkemmenash/Desktop/VS Code Projects/snippets/lib/api
+Directory /Volumes/XcodeDev/Downloads/snippets/lib/api
 
-Total : 5 files,  3000 codes, 131 comments, 323 blanks, all 3454 lines
+Total : 8 files,  6891 codes, 233 comments, 543 blanks, all 7667 lines
 
 Summary / [Details](details.md) / [Diff Summary](diff.md) / [Diff Details](diff-details.md)
 
 ## Languages
 | language | files | code | comment | blank | total |
 | :--- | ---: | ---: | ---: | ---: | ---: |
-| Dart | 5 | 3,000 | 131 | 323 | 3,454 |
+| Dart | 8 | 6,891 | 233 | 543 | 7,667 |
 
 ## Directories
 | path | files | code | comment | blank | total |
 | :--- | ---: | ---: | ---: | ---: | ---: |
-| . | 5 | 3,000 | 131 | 323 | 3,454 |
+| . | 8 | 6,891 | 233 | 543 | 7,667 |
 
 Summary / [Details](details.md) / [Diff Summary](diff.md) / [Diff Details](diff-details.md)

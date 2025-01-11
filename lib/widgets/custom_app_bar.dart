@@ -22,8 +22,16 @@ class CustomAppBar extends StatelessWidget {
   final void Function()? onPreviewButtonPressed;
   final bool showLogoutButton;
   final void Function()? onLogoutButtonPressed;
+  final bool showVotesButton;
+  final void Function()? onVotesButtonPressed;
   final int? index;
   final bool fixRight;
+  final bool fixLeft;
+  final bool showBestFriendButton;
+  final void Function()? onBestFriendButtonPressed;
+  final bool isBestFriend;
+  final bool showSuggestSnippetButton;
+  final void Function()? onSuggestSnippetButtonPressed;
   const CustomAppBar(
       {super.key,
       required this.title,
@@ -36,6 +44,8 @@ class CustomAppBar extends StatelessWidget {
       this.onFriendsButtonPressed,
       this.hasFriendRequests = false,
       this.showHelpButton = false,
+      this.showVotesButton = false,
+      this.onVotesButtonPressed,
       this.showShareButton = false,
       this.onShareButtonPressed,
       this.onHelpButtonPressed,
@@ -44,6 +54,12 @@ class CustomAppBar extends StatelessWidget {
       this.showLogoutButton = false,
       this.onLogoutButtonPressed,
       this.index,
+      this.fixLeft = false,
+      this.isBestFriend = false,
+      this.showBestFriendButton = false,
+      this.onBestFriendButtonPressed,
+      this.showSuggestSnippetButton = false,
+      this.onSuggestSnippetButtonPressed,
       this.fixRight = false});
 
   @override
@@ -102,8 +118,13 @@ class CustomAppBar extends StatelessWidget {
               ),
             ],
           ),
-          leading: showBackButton
-              ? IconButton(
+          leadingWidth: 100,
+
+          leading: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (showBackButton)
+                IconButton(
                   splashColor: Colors.transparent,
                   splashRadius: 25,
                   icon: Icon(Icons.arrow_back_ios_new,
@@ -126,129 +147,174 @@ class CustomAppBar extends StatelessWidget {
                     }
                   },
                   color: Colors.black,
-                )
-              : showShareButton
-                  ? Padding(
+                ),
+              if (showShareButton)
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: IconButton(
+                    splashColor: styling.primary,
+                    splashRadius: 25,
+                    icon: Icon(Icons.ios_share_outlined,
+                        color: styling.theme == "colorful-light"
+                            ? Colors.white
+                            : Colors.black),
+                    onPressed: onShareButtonPressed,
+                    color: const Color.fromARGB(255, 0, 0, 0),
+                  ),
+                ),
+              if (showSuggestSnippetButton)
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: IconButton(
+                    splashColor: styling.primary,
+                    splashRadius: 25,
+                    icon: Icon(Icons.lightbulb_outline,
+                        color: styling.theme == "colorful-light"
+                            ? Colors.white
+                            : Colors.black),
+                    onPressed: onSuggestSnippetButtonPressed,
+                    color: const Color.fromARGB(255, 0, 0, 0),
+                  ),
+                ),
+            ],
+          ),
+          // actions: [],
+          actions: [
+            SizedBox(
+              width: 100,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (showPreviewButton)
+                    Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: IconButton(
                         splashColor: styling.primary,
                         splashRadius: 25,
-                        icon: Icon(Icons.ios_share_outlined,
+                        icon: Icon(Icons.preview,
                             color: styling.theme == "colorful-light"
                                 ? Colors.white
                                 : Colors.black),
-                        onPressed: onShareButtonPressed,
+                        onPressed: onPreviewButtonPressed,
                         color: const Color.fromARGB(255, 0, 0, 0),
                       ),
-                    )
-                  : showFriendsButton
-                      ? const SizedBox(
-                          width: 15,
-                          height: 0,
-                        )
-                      : null,
-          // actions: [],
-          actions: [
-            if (fixRight)
-              const SizedBox(
-                width: 40,
-                height: 0,
-              ),
-            if (title == "Responses" ||
-                title == "Friends" ||
-                title == "Results")
-              const SizedBox(
-                width: 50,
-                height: 0,
-              ),
-            if (showPreviewButton)
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: IconButton(
-                  splashColor: styling.primary,
-                  splashRadius: 25,
-                  icon: Icon(Icons.preview,
-                      color: styling.theme == "colorful-light"
-                          ? Colors.white
-                          : Colors.black),
-                  onPressed: onPreviewButtonPressed,
-                  color: const Color.fromARGB(255, 0, 0, 0),
-                ),
-              ),
-            if (showHelpButton)
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: IconButton(
-                  splashColor: styling.primary,
-                  splashRadius: 25,
-                  icon: Icon(Icons.help_outline,
-                      color: styling.theme == "colorful-light"
-                          ? Colors.white
-                          : Colors.black),
-                  onPressed: onHelpButtonPressed,
-                  color: const Color.fromARGB(255, 0, 0, 0),
-                ),
-              ),
-            if (showSettingsButton)
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: IconButton(
-                  splashColor: styling.primary,
-                  splashRadius: 25,
-                  icon: Icon(Icons.settings,
-                      color: styling.theme == "colorful-light"
-                          ? Colors.white
-                          : Colors.black),
-                  onPressed: onSettingsButtonPressed,
-                  color: const Color.fromARGB(255, 0, 0, 0),
-                ),
-              ),
-            if (showLogoutButton)
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: IconButton(
-                  splashColor: styling.primary,
-                  splashRadius: 25,
-                  icon: Icon(Icons.logout,
-                      color: styling.theme == "colorful-light"
-                          ? Colors.white
-                          : Colors.black),
-                  onPressed: onLogoutButtonPressed,
-                  color: const Color.fromARGB(255, 0, 0, 0),
-                ),
-              ),
-            if (showFriendsButton)
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Stack(
-                  children: [
-                    //Dot
-                    if (hasFriendRequests)
-                      Positioned(
-                        right: 10,
-                        top: 5,
-                        child: Container(
-                          height: 10,
-                          width: 10,
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                        ),
-                      ),
+                    ),
+                  if (showVotesButton)
                     IconButton(
                       splashColor: styling.primary,
                       splashRadius: 25,
-                      icon: Icon(Icons.people,
+                      icon: Icon(Icons.favorite,
                           color: styling.theme == "colorful-light"
                               ? Colors.white
                               : Colors.black),
-                      onPressed: onFriendsButtonPressed,
+                      onPressed: onVotesButtonPressed,
                       color: const Color.fromARGB(255, 0, 0, 0),
                     ),
-                  ],
-                ),
+                  if (showHelpButton)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: IconButton(
+                        splashColor: styling.primary,
+                        splashRadius: 25,
+                        icon: Icon(Icons.help_outline,
+                            color: styling.theme == "colorful-light"
+                                ? Colors.white
+                                : Colors.black),
+                        onPressed: onHelpButtonPressed,
+                        color: const Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    ),
+                  if (showSettingsButton)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: IconButton(
+                        splashColor: styling.primary,
+                        splashRadius: 25,
+                        icon: Icon(Icons.settings,
+                            color: styling.theme == "colorful-light"
+                                ? Colors.white
+                                : Colors.black),
+                        onPressed: onSettingsButtonPressed,
+                        color: const Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    ),
+                  if (showLogoutButton)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: IconButton(
+                        splashColor: styling.primary,
+                        splashRadius: 25,
+                        icon: Icon(Icons.logout,
+                            color: styling.theme == "colorful-light"
+                                ? Colors.white
+                                : Colors.black),
+                        onPressed: onLogoutButtonPressed,
+                        color: const Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    ),
+                  if (showFriendsButton)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Stack(
+                        children: [
+                          //Dot
+                          if (hasFriendRequests)
+                            Positioned(
+                              right: 10,
+                              top: 5,
+                              child: Container(
+                                height: 10,
+                                width: 10,
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(50),
+                                ),
+                              ),
+                            ),
+                          IconButton(
+                            splashColor: styling.primary,
+                            splashRadius: 25,
+                            icon: Icon(Icons.people,
+                                color: styling.theme == "colorful-light"
+                                    ? Colors.white
+                                    : Colors.black),
+                            onPressed: onFriendsButtonPressed,
+                            color: const Color.fromARGB(255, 0, 0, 0),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (showBestFriendButton)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: IconButton(
+                        splashColor: styling.primary,
+                        splashRadius: 25,
+                        icon: Icon(
+                            isBestFriend ? Icons.star : Icons.star_border,
+                            color: styling.theme == "colorful-light"
+                                ? Colors.white
+                                : Colors.black),
+                        onPressed: onBestFriendButtonPressed,
+                        color: const Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    ),
+                ],
               ),
+            )
+            // if (fixRight)
+            //   const SizedBox(
+            //     width: 40,
+            //     height: 0,
+            //   ),
+            // if (title == "Responses" ||
+            //     title == "Friends" ||
+            //     title == "Results")
+            //   const SizedBox(
+            //     width: 50,
+            //     height: 0,
+            //   ),
           ],
         ),
       ],

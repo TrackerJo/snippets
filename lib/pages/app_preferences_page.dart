@@ -247,7 +247,6 @@ class _AppPreferencesPageState extends State<AppPreferencesPage> {
                                 "colorful-light",
                                 "dotted-dark",
                                 "dotted-light",
-                                "christmas",
                               ].map((String value) {
                                 return DropdownMenuItem<String>(
                                   value: value,
@@ -314,15 +313,27 @@ class _AppPreferencesPageState extends State<AppPreferencesPage> {
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: AppIconTile(
-                                    path: "assets/icon/christmas_icon.png",
+                                    path: "assets/icon/new_year_icon.png",
                                     onTap: () {
-                                      AppIconChanger.changeIcon("christmas");
+                                      AppIconChanger.changeIcon("NewYear");
                                       setState(() {
-                                        appIcon = "christmas";
+                                        appIcon = "NewYear";
                                       });
                                     },
-                                    isSelected: appIcon == "christmas"),
+                                    isSelected: appIcon == "NewYear"),
                               ),
+                              // Padding(
+                              //   padding: const EdgeInsets.all(8.0),
+                              //   child: AppIconTile(
+                              //       path: "assets/icon/christmas_icon.png",
+                              //       onTap: () {
+                              //         AppIconChanger.changeIcon("christmas");
+                              //         setState(() {
+                              //           appIcon = "christmas";
+                              //         });
+                              //       },
+                              //       isSelected: appIcon == "christmas"),
+                              // ),
                               // Padding(
                               //   padding: const EdgeInsets.all(8.0),
                               //   child: AppIconTile(

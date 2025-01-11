@@ -9,7 +9,6 @@ class Database {
   Future<Stream<BOTW>> getBOTWStream(StreamController controller) async {
     int? lastUpdated = (await LocalDatabase().getBOTW())?.lastUpdatedMillis;
 
-
     StreamController<BOTW> fbcontroller = StreamController();
 
     await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
@@ -27,7 +26,6 @@ class Database {
   Future<BOTW> getBOTW() async {
     int? lastUpdated = (await LocalDatabase().getBOTW())?.lastUpdatedMillis;
 
-
     BOTW? fbBotw =
         await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
             .getBlankOfTheWeekData(lastUpdated);
@@ -41,7 +39,7 @@ class Database {
   Future<void> updateUsersBOTWAnswer(BOTWAnswer answer) async {
     //Get user data
     User userData =
-        await getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
+        await getCurrentUserData();
     answer.displayName = userData.displayName;
     answer.FCMToken = userData.FCMToken;
     await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
@@ -64,7 +62,6 @@ class Database {
             lastSnippet?.lastUpdatedMillis, lastSnippet?.lastRecievedMillis);
 
     for (var i = 0; i < snippets.length; i++) {
-
       //if snippet is anonymous
 
       await LocalDatabase()
@@ -116,14 +113,12 @@ class Database {
         await LocalDatabase().getMostRecentChat("$snippetId-$answerId");
     int? latestChatDate = latestChat?.lastUpdatedMillis;
 
-
     await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
         .loadDiscussion(snippetId, answerId, latestChatDate);
     latestChat =
         await LocalDatabase().getMostRecentChat("$snippetId-$answerId");
     latestChatDate = latestChat?.lastUpdatedMillis;
     StreamController<List<Message>> fbcontroller = StreamController();
-
 
     await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
         .getDiscussion(snippetId, answerId, latestChatDate, fbcontroller);
@@ -132,8 +127,6 @@ class Database {
       if (controller.isClosed) return;
 
       if (event.isNotEmpty) {
-
-
         //Go through each chat and add to local database
         for (var i = 0; i < event.length; i++) {
           await LocalDatabase().insertChat(event[i]);
@@ -155,7 +148,6 @@ class Database {
         await LocalDatabase().getLatestResponse(snippetId);
     // DateTime? lastUpdated = latestResponse?.date;
 
-
     StreamController<List<SnippetResponse>> fbcontroller = StreamController();
     List<SnippetResponse> responses =
         await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
@@ -163,7 +155,6 @@ class Database {
                 snippetId, latestResponse?.lastUpdatedMillis, isAnonymous);
 
     for (var response in responses) {
-
       response.snippetId = snippetId;
 
       await LocalDatabase().addResponse(response);
@@ -192,7 +183,6 @@ class Database {
     SnippetResponse? response =
         await LocalDatabase().getSnippetResponse(snippetId, userId);
     if (response == null) {
-
       response =
           await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
               .getSnippetResponse(snippetId, userId);
@@ -203,7 +193,6 @@ class Database {
           await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
               .getSnippetResponseLatest(snippetId, userId, lastUpdated);
       if (fbResponse != null) {
-
         await LocalDatabase().addResponse(fbResponse);
         response = fbResponse;
       }
@@ -211,7 +200,86 @@ class Database {
     return response;
   }
 
+  Future<User> getCurrentUserData() async {
+    return (await LocalDatabase().getUserData(auth.FirebaseAuth.instance.currentUser!.uid));
+  }
+
   Future<User> getUserData(String userId) async {
-    return (await LocalDatabase().getUserData(userId));
+    return (await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+        .getUserData(userId))!;
+    ;
+  }
+
+  Future<void> addBestFriend(String bestFriendId) async {
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+        .addBestFriend(bestFriendId);
+  }
+
+  Future<void> removeBestFriend(String bestFriendId) async {
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+        .removeBestFriend(bestFriendId);
+  }
+
+  Future<List<SavedResponse>> getSavedResponses(String userId) async {
+    print("Getting saved responses");
+    int? lastCachedSavedResponse =
+        await LocalDatabase().getLastCachedSavedResponse(userId);
+    print("Last cached saved response: $lastCachedSavedResponse");
+    List<SavedResponse> fbSavedResponses =
+        await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+            .getSavedResponses(userId, lastCachedSavedResponse);
+    for (var res in fbSavedResponses) {
+      print("Adding saved response to local database");
+      await LocalDatabase().addSavedResponse(res);
+      List<SavedMessage> savedMessages =
+          await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+              .getSavedMessages(res);
+      for (var message in savedMessages) {
+        print("Adding message to local database");
+        await LocalDatabase().addSavedMessage(message);
+      }
+    }
+    return await LocalDatabase().getSavedResponses(userId);
+  }
+
+  Future<List<SavedMessage>> getSavedMessages(String responseId) async {
+    return await LocalDatabase().getSavedMessages(responseId);
+  }
+
+  Future<void> changeSavedResponseVisibility(
+      String responseId, bool visibility) async {
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+        .changeSavedResponseVisibility(responseId, visibility);
+    await LocalDatabase().changeSavedResponseVisibility(responseId, visibility);
+  }
+
+  bool isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
+  }
+
+  bool isTwoOrMoreDaysApart(DateTime date1, DateTime date2) {
+    return date1.difference(date2).inDays.abs() >= 2;
+  }
+
+  Future<void> updateUserStreak(String userId) async {
+    print("Updating user streak");
+    User userData = await getUserData(userId);
+    DateTime today = DateTime.now();
+    print(isTwoOrMoreDaysApart(today, userData.streakDate));
+    print(userData.streak);
+    if (isTwoOrMoreDaysApart(today, userData.streakDate) &&
+        userData.streak > 0) {
+      print("Resetting streak");
+      userData.streak = 0;
+      await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+          .updateUserStreak(userId, 0);
+    }
+  }
+
+  Future<void> suggestSnippet(String snippet) async {
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+        .suggestSnippet(snippet);
   }
 }

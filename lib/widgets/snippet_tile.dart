@@ -152,6 +152,15 @@ class _SnippetTileState extends State<SnippetTile> {
                                     : Colors.black),
                     onPressed: () async {
                       // show options
+                      String hapticFeedback =
+                          await HelperFunctions.getHapticFeedbackSF();
+                      if (hapticFeedback == "normal") {
+                        HapticFeedback.mediumImpact();
+                      } else if (hapticFeedback == "light") {
+                        HapticFeedback.lightImpact();
+                      } else if (hapticFeedback == "heavy") {
+                        HapticFeedback.heavyImpact();
+                      }
                       if (!widget.isAnswered) {
                         if (answerController.text.isEmpty) {
                           return;
@@ -169,6 +178,8 @@ class _SnippetTileState extends State<SnippetTile> {
                                   answerController.text.trim(),
                                   widget.question,
                                   widget.theme,
+                                  "anonymous",
+                                  "",
                                   anonymousID);
                         } else {
                           await FBDatabase(
@@ -178,6 +189,8 @@ class _SnippetTileState extends State<SnippetTile> {
                                   answerController.text.trim(),
                                   widget.question,
                                   widget.theme,
+                                  "normal",
+                                  "",
                                   null);
                         }
                         setState(() {
@@ -202,16 +215,6 @@ class _SnippetTileState extends State<SnippetTile> {
                           answerController.clear();
                         });
                       } else {
-                        String hapticFeedback =
-                            await HelperFunctions.getHapticFeedbackSF();
-                        if (hapticFeedback == "normal") {
-                          HapticFeedback.mediumImpact();
-                        } else if (hapticFeedback == "light") {
-                          HapticFeedback.lightImpact();
-                        } else if (hapticFeedback == "heavy") {
-                          HapticFeedback.heavyImpact();
-                        }
-
                         // nextScreen(
                         //     context,
                         //     QuestionPage(
@@ -263,7 +266,14 @@ class _SnippetTileState extends State<SnippetTile> {
                             HapticFeedback.heavyImpact();
                           }
                         },
+                        maxLines: null,
                         controller: answerController,
+                        style: TextStyle(
+                            color: styling.theme == "colorful-light"
+                                ? Colors.white
+                                : styling.theme == "christmas"
+                                    ? Colors.white
+                                    : Colors.black),
                         decoration: styling.textInputDecoration().copyWith(
                               hintText: "Enter answer here",
                               hintStyle: TextStyle(

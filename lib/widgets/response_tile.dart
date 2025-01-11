@@ -17,8 +17,10 @@ class ResponseTile extends StatefulWidget {
   final String snippetId;
   final bool isDisplayOnly;
   final bool isAnonymous;
-
+  final bool isBestFriend;
   final String theme;
+  final bool isTrivia;
+  final bool isCorrect;
 
   const ResponseTile(
       {super.key,
@@ -28,7 +30,10 @@ class ResponseTile extends StatefulWidget {
       required this.snippetId,
       required this.question,
       required this.theme,
+      this.isBestFriend = false,
       this.isDisplayOnly = false,
+      this.isTrivia = false,
+      this.isCorrect = false,
       required this.isAnonymous});
 
   @override
@@ -125,17 +130,28 @@ class _ResponseTileState extends State<ResponseTile> {
                         },
                         child: SizedBox(
                           width: MediaQuery.of(context).size.width - 175,
-                          child: Text(
-                            widget.isDisplayOnly
-                                ? "${widget.displayName}'s Response"
-                                : widget.displayName,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: styling.theme == "colorful-light"
-                                  ? styling.primaryDark
-                                  : Colors.black,
-                            ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              if (widget.isBestFriend)
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(Icons.star,
+                                      size: 20, color: Colors.black),
+                                ),
+                              Text(
+                                widget.isDisplayOnly
+                                    ? "${widget.displayName}'s Response"
+                                    : widget.displayName,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: styling.theme == "colorful-light"
+                                      ? styling.primaryDark
+                                      : Colors.black,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -194,30 +210,40 @@ class _ResponseTileState extends State<ResponseTile> {
                       //   child: const Text("Open Discussion",
                       //       style: TextStyle(color: Colors.white)),
                       // ),
-                      IconButton(
-                          onPressed: () async {
-                            if (widget.isDisplayOnly) return;
-                            String hapticFeedback =
-                                await HelperFunctions.getHapticFeedbackSF();
-                            if (hapticFeedback == "normal") {
-                              HapticFeedback.mediumImpact();
-                            } else if (hapticFeedback == "light") {
-                              HapticFeedback.lightImpact();
-                            } else if (hapticFeedback == "heavy") {
-                              HapticFeedback.heavyImpact();
-                            }
-                            nextScreen(
-                                context,
-                                DiscussionPage(
-                                  responseTile: widget,
-                                  theme: widget.theme,
-                                ));
-                          },
-                          icon: Icon(Icons.chat_rounded,
-                              size: 25,
-                              color: styling.theme == "colorful-light"
-                                  ? styling.primaryDark
-                                  : Colors.black)),
+                      Row(
+                        children: [
+                          if (widget.isTrivia)
+                            CircleAvatar(
+                              backgroundColor:
+                                  widget.isCorrect ? Colors.green : Colors.red,
+                              radius: 10, // Adjust the radius as needed
+                            ),
+                          IconButton(
+                              onPressed: () async {
+                                if (widget.isDisplayOnly) return;
+                                String hapticFeedback =
+                                    await HelperFunctions.getHapticFeedbackSF();
+                                if (hapticFeedback == "normal") {
+                                  HapticFeedback.mediumImpact();
+                                } else if (hapticFeedback == "light") {
+                                  HapticFeedback.lightImpact();
+                                } else if (hapticFeedback == "heavy") {
+                                  HapticFeedback.heavyImpact();
+                                }
+                                nextScreen(
+                                    context,
+                                    DiscussionPage(
+                                      responseTile: widget,
+                                      theme: widget.theme,
+                                    ));
+                              },
+                              icon: Icon(Icons.chat_rounded,
+                                  size: 25,
+                                  color: styling.theme == "colorful-light"
+                                      ? styling.primaryDark
+                                      : Colors.black)),
+                        ],
+                      ),
 
                       // IconButton(
                       //   icon: Icon(Icons.favorite,

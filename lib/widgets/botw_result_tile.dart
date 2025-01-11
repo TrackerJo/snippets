@@ -6,6 +6,7 @@ import 'package:snippets/main.dart';
 import 'package:snippets/pages/profile_page.dart';
 
 import 'package:snippets/templates/styling.dart';
+import 'package:snippets/widgets/helper_functions.dart';
 
 class BOTWResultTile extends StatefulWidget {
   // final bool isAnswered;
@@ -64,8 +65,13 @@ class _BOTWResultTileState extends State<BOTWResultTile> {
               } else if (hapticFeedback == "heavy") {
                 HapticFeedback.heavyImpact();
               }
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => ProfilePage(uid: widget.userId)));
+              nextScreen(
+                  context,
+                  ProfilePage(
+                    uid: widget.userId,
+                    showNavBar: false,
+                    showBackButton: true,
+                  ));
             },
             title: Text(
               widget.displayName,

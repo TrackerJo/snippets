@@ -6,6 +6,8 @@ class Snippet {
   String snippetId;
   int index;
   String type;
+  List<String> options;
+  String correctAnswer;
   int lastUpdatedMillis;
   int lastRecievedMillis;
 
@@ -25,6 +27,8 @@ class Snippet {
       required this.index,
       required this.type,
       required this.lastUpdatedMillis,
+      required this.correctAnswer,
+      required this.options,
       required this.lastRecievedMillis});
 
   factory Snippet.fromMap(Map<String, dynamic> map) {
@@ -34,6 +38,8 @@ class Snippet {
         snippetId: map['snippetId'],
         index: map['index'],
         type: map['type'],
+        correctAnswer: map['correctAnswer'] ?? "",
+        options: map['options'] != null ? toStringList(map['options']) : [],
         lastUpdatedMillis: map['lastUpdatedMillis'],
         lastRecievedMillis: map['lastRecievedMillis']);
   }
@@ -44,11 +50,20 @@ class Snippet {
       'question': question,
       'snippetId': snippetId,
       'index': index,
+      'options': options,
+      'correctAnswer': correctAnswer,
       'type': type,
       'lastUpdatedMillis': lastUpdatedMillis,
       'lastRecievedMillis': lastRecievedMillis
     };
   }
+}
+
+class OptionData {
+  final String option;
+  int occurrence;
+
+  OptionData({required this.option, required this.occurrence});
 }
 
 class DiscussionUser {
@@ -219,6 +234,7 @@ enum BOTWStatusType { voting, answering, done }
 
 class BOTW {
   Map<String, BOTWAnswer> answers;
+  Map<String, BOTWAnswer> previousAnswers;
   String blank;
   int lastUpdatedMillis;
   BOTWStatusType status;
@@ -228,6 +244,7 @@ class BOTW {
       {required this.answers,
       required this.blank,
       required this.lastUpdatedMillis,
+      required this.previousAnswers,
       required this.week,
       required this.status});
 
@@ -235,6 +252,7 @@ class BOTW {
       : answers = {},
         blank = "",
         lastUpdatedMillis = 0,
+        previousAnswers = {},
         week = DateTime.now(),
         status = BOTWStatusType.voting;
 
@@ -243,11 +261,19 @@ class BOTW {
     for (var key in map['answers'].keys) {
       answers[key] = BOTWAnswer.fromMap(map['answers'][key]);
     }
+    Map<String, BOTWAnswer> previousAnswers = {};
+    if (map['previousAnswers'] == null) {
+      map['previousAnswers'] = {};
+    }
+    for (var key in map['previousAnswers'].keys) {
+      previousAnswers[key] = BOTWAnswer.fromMap(map['previousAnswers'][key]);
+    }
     return BOTW(
         answers: answers,
         blank: map['blank'],
         lastUpdatedMillis: map['lastUpdatedMillis'],
         week: DateTime.now(),
+        previousAnswers: previousAnswers,
         status:
             BOTWStatusType.values.firstWhere((e) => e.name == map['status']));
   }
@@ -257,11 +283,16 @@ class BOTW {
     for (var key in this.answers.keys) {
       answers[key] = this.answers[key]?.toMap();
     }
+    Map<String, dynamic> previousAnswers = {};
+    for (var key in this.previousAnswers.keys) {
+      previousAnswers[key] = this.previousAnswers[key]?.toMap();
+    }
     return {
       'answers': answers,
       'blank': blank,
       'lastUpdatedMillis': lastUpdatedMillis,
       'week': week,
+      'previousAnswers': previousAnswers,
       'status': status.name
     };
   }
@@ -363,6 +394,7 @@ class User {
   List<UserMini> friends;
   List<UserMini> friendRequests;
   List<UserMini> outgoingFriendRequests;
+  List<String> bestFriends;
   String username;
   String searchKey;
   String userId;
@@ -371,6 +403,11 @@ class User {
   int snippetsRespondedTo;
   int messagesSent;
   int discussionsStarted;
+  int streak;
+  DateTime streakDate;
+  int longestStreak;
+  int triviaPoints;
+  int topBOTW;
 
   User(
       {required this.FCMToken,
@@ -384,11 +421,17 @@ class User {
       required this.outgoingFriendRequests,
       required this.username,
       required this.searchKey,
+      required this.longestStreak,
       required this.userId,
       required this.snippetsRespondedTo,
       this.lastUpdatedMillis = 0,
       required this.discussionsStarted,
+      required this.bestFriends,
       required this.messagesSent,
+      required this.streak,
+      required this.streakDate,
+      required this.topBOTW,
+      required this.triviaPoints,
       required this.votesLeft});
 
   //Create empty user
@@ -403,12 +446,18 @@ class User {
         friends = [],
         friendRequests = [],
         outgoingFriendRequests = [],
+        longestStreak = 0,
+        bestFriends = [],
+        streak = 0,
+        streakDate = DateTime.now(),
         username = "",
         searchKey = "",
         lastUpdatedMillis = 0,
         snippetsRespondedTo = 0,
         discussionsStarted = 0,
         messagesSent = 0,
+        triviaPoints = 0,
+        topBOTW = 0,
         userId = "",
         votesLeft = 0;
 
@@ -429,23 +478,37 @@ class User {
     for (var item in map['outgoingRequests']) {
       outgoingFriendRequests.add(UserMini.fromMap(item));
     }
+    List<String> bestFriends = [];
+    if (map['bestFriends'] != null) {
+      for (var item in map['bestFriends']) {
+        bestFriends.add(item.toString());
+      }
+    }
     return User(
         FCMToken: map['FCMToken'],
         displayName: map['fullname'],
         botwStatus: BOTWStatus.fromMap(map['botwStatus']),
         description: map['description'],
         discussions: discussions,
+        streak: map['streak'] ?? 0,
+        streakDate: map['streakDate'] != null
+            ? map['streakDate'].toDate()
+            : DateTime(2021, 1, 1),
         email: map['email'],
         friends: friends,
+        bestFriends: bestFriends,
         friendRequests: friendRequests,
         outgoingFriendRequests: outgoingFriendRequests,
         username: map['username'],
         searchKey: map['searchKey'],
         userId: map['uid'],
+        longestStreak: map['longestStreak'] ?? 0,
         snippetsRespondedTo: map['snippetsRespondedTo'] ?? 0,
         lastUpdatedMillis: map['lastUpdatedMillis'] ?? 0,
         discussionsStarted: map['discussionsStarted'] ?? 0,
         messagesSent: map['messagesSent'] ?? 0,
+        topBOTW: map["topBOTW"] ?? 0,
+        triviaPoints: map["triviaPoints"] ?? 0,
         votesLeft: map['votesLeft']);
   }
 
@@ -474,13 +537,19 @@ class User {
       'discussions': discussions,
       'email': email,
       'friends': friends,
+      'streak': streak,
+      'streakDate': streakDate,
       'friendRequests': friendRequests,
       'outgoingRequests': outgoingFriendRequests,
       'username': username,
       'searchKey': searchKey,
       'uid': userId,
+      'bestFriends': bestFriends,
       'votesLeft': votesLeft,
       'snippetsRespondedTo': snippetsRespondedTo,
+      'longestStreak': longestStreak,
+      "triviaPoints": triviaPoints,
+      "topBOTW": topBOTW,
       'lastUpdatedMillis': lastUpdatedMillis
     };
   }
@@ -546,5 +615,86 @@ class NotificationText {
   @override
   String toString() {
     return "$title~~~$body";
+  }
+}
+
+class SavedResponse {
+  String question;
+  String answer;
+  String responseId;
+  bool isPublic;
+  int lastUpdated;
+  String userId;
+
+  SavedResponse(
+      {required this.answer,
+      required this.lastUpdated,
+      required this.isPublic,
+      required this.responseId,
+      required this.userId,
+      required this.question});
+
+  factory SavedResponse.fromMap(Map<String, dynamic> map) {
+    return SavedResponse(
+        question: map["question"],
+        answer: map["answer"],
+        lastUpdated: map["lastUpdated"],
+        responseId: map['responseId'],
+        userId: map['userId'],
+        isPublic: map['isPublic']);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'question': question,
+      'answer': answer,
+      'lastUpdated': lastUpdated,
+      'isPublic': isPublic,
+      'userId': userId,
+      'responseId': responseId
+    };
+  }
+}
+
+class SavedMessage {
+  String message;
+  String senderId;
+  String senderDisplayName;
+  DateTime date;
+  String senderUsername;
+  String messageId;
+  String responseId;
+
+  SavedMessage(
+      {required this.message,
+      required this.senderId,
+      required this.senderDisplayName,
+      required this.date,
+      required this.senderUsername,
+      required this.responseId,
+      required this.messageId});
+
+  factory SavedMessage.fromMap(Map<String, dynamic> map) {
+    return SavedMessage(
+      message: map['message'],
+      senderId: map['senderId'],
+      responseId: map['responseId'],
+      senderDisplayName: map['senderDisplayName'],
+      date: map['date'] is Timestamp ? map['date'].toDate() : map['date'],
+      senderUsername: map['senderUsername'],
+      messageId: map['messageId'],
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'message': message,
+      'senderId': senderId,
+      'senderDisplayName': senderDisplayName,
+      'date': date,
+      'senderUsername': senderUsername,
+      'messageId': messageId,
+      'responseId': responseId
+    };
   }
 }

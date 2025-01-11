@@ -5,7 +5,9 @@ import 'package:snippets/widgets/snowflake.dart';
 
 class BackgroundTile extends StatelessWidget {
   final bool rounded;
-  const BackgroundTile({super.key, this.rounded = false});
+  final bool flatBack;
+  const BackgroundTile(
+      {super.key, this.rounded = false, this.flatBack = false});
 
   // @override
   // Widget build(BuildContext context) {
@@ -134,7 +136,7 @@ class BackgroundTile extends StatelessWidget {
               ? null
               : styling.background,
         ),
-        child: styling.theme == "dotted-dark"
+        child: !flatBack && styling.theme == "dotted-dark"
             ? SizedBox(
                 width: double.infinity,
                 child: Center(
@@ -153,7 +155,7 @@ class BackgroundTile extends StatelessWidget {
                   ),
                 ),
               )
-            : styling.theme == "dotted-light"
+            : !flatBack && styling.theme == "dotted-light"
                 ? SizedBox(
                     width: double.infinity,
                     child: Center(
@@ -171,7 +173,7 @@ class BackgroundTile extends StatelessWidget {
                       ),
                     ),
                   )
-                : styling.theme == "christmas"
+                : !flatBack && styling.theme == "christmas"
                     ? Stack(
                         children: snowflakePositions.map((position) {
                           return Positioned(

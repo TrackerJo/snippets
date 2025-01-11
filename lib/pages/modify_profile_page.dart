@@ -39,7 +39,7 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
 
   void getUserData() async {
     User userData = await Database()
-        .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
+        .getCurrentUserData();
     setState(() {
       oldFullName = userData.displayName;
       oldUsername = userData.username;
@@ -390,9 +390,10 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                                         ),
                                         isLoadingPassword
                                             ? CircularProgressIndicator(
-                                                color: styling.theme == "christmas"
-                ? styling.green
-                :styling.secondary,
+                                                color:
+                                                    styling.theme == "christmas"
+                                                        ? styling.green
+                                                        : styling.secondary,
                                               )
                                             : ElevatedButton(
                                                 onPressed: () async {
@@ -617,9 +618,10 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                                           ),
                                           isLoadingEmail
                                               ? CircularProgressIndicator(
-                                                  color: styling.theme == "christmas"
-                ? styling.green
-                :styling.secondary,
+                                                  color: styling.theme ==
+                                                          "christmas"
+                                                      ? styling.green
+                                                      : styling.secondary,
                                                 )
                                               : ElevatedButton(
                                                   onPressed: () async {
@@ -706,8 +708,8 @@ class _ModifyProfilePageState extends State<ModifyProfilePage> {
                           ? Center(
                               child: CircularProgressIndicator(
                                 color: styling.theme == "christmas"
-                ? styling.green
-                :styling.primary,
+                                    ? styling.green
+                                    : styling.primary,
                               ),
                             )
                           : ElevatedButton(

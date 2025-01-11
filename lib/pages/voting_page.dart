@@ -31,12 +31,7 @@ class _VotingPageState extends State<VotingPage> {
   bool hasSavedVotes = true;
   User profileData = User.empty();
   BOTW blank = BOTW.empty();
-  List<BOTWAnswer> movedAnswers = [];
-  List<BOTWAnswer> skippedAnswers = [];
-  List<BOTWAnswer> answersList = [];
   List<BOTWAnswer> pastAnswers = [];
-
-  int mostLinesInAnswer = 0;
 
   List<BOTWAnswer> getAnswers(
       Map<String, BOTWAnswer> answers, User profileData) {
@@ -44,10 +39,11 @@ class _VotingPageState extends State<VotingPage> {
 
     answers.forEach((key, value) {
       if (key == profileData.userId) return;
-      if (value.voters.contains(profileData.userId)) return;
 
       listAnswers.add(value);
     });
+    //randomize the list
+    listAnswers.shuffle();
     return listAnswers;
   }
 
@@ -82,28 +78,15 @@ class _VotingPageState extends State<VotingPage> {
     }
 
     User data = await Database()
-        .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
-    final provider = Provider.of<CardProvider>(context, listen: false);
-    List<BOTWAnswer> answers = getAnswers(nblank.answers, data);
-
-    provider.setAnswers(answers);
-    provider.setOnLike(voteForAnswer);
-    provider.setOnDislike(skipAnswer);
-    int longestAnswer = 0;
-    for (var answer in answers) {
-      if (answer.answer.split("").length > longestAnswer) {
-        longestAnswer = answer.answer.split("").length;
-      }
-    }
+        .getCurrentUserData();
 
     setState(() {
       profileData = data;
       votesLeft = data.votesLeft;
       votedAnswers = getVotedBOTW(nblank.answers, data);
-      this.answers = [...answers];
-      answersList = [...answers];
+      answers = getAnswers(nblank.answers, data);
+
       pastAnswers = [...votedAnswers];
-      mostLinesInAnswer = (longestAnswer / 18).ceil();
     });
   }
 
@@ -112,53 +95,6 @@ class _VotingPageState extends State<VotingPage> {
     // TODO: implement initState
     super.initState();
     getData();
-  }
-
-  void voteForAnswer(BOTWAnswer answer) async {
-    if (votesLeft == 0) {
-      showOutOfVotes();
-      final provider = Provider.of<CardProvider>(context, listen: false);
-      provider.goBack(answer);
-      return;
-    }
-    String hapticFeedback = await HelperFunctions.getHapticFeedbackSF();
-    if (hapticFeedback == "normal") {
-      HapticFeedback.mediumImpact();
-    } else if (hapticFeedback == "light") {
-      HapticFeedback.lightImpact();
-    } else if (hapticFeedback == "heavy") {
-      HapticFeedback.heavyImpact();
-    }
-    setState(() {
-      hasSavedVotes = false;
-      movedAnswers.add(answer);
-      votedAnswers.add(answer);
-      votesLeft--;
-    });
-    await Future.delayed(const Duration(milliseconds: 400));
-    setState(() {
-      answers.remove(answer);
-      answersList.remove(answer);
-    });
-  }
-
-  void skipAnswer(BOTWAnswer answer) async {
-    String hapticFeedback = await HelperFunctions.getHapticFeedbackSF();
-    if (hapticFeedback == "normal") {
-      HapticFeedback.mediumImpact();
-    } else if (hapticFeedback == "light") {
-      HapticFeedback.lightImpact();
-    } else if (hapticFeedback == "heavy") {
-      HapticFeedback.heavyImpact();
-    }
-    setState(() {
-      movedAnswers.add(answer);
-      skippedAnswers.add(answer);
-    });
-    await Future.delayed(const Duration(milliseconds: 400));
-    setState(() {
-      answersList.remove(answer);
-    });
   }
 
   @override
@@ -173,7 +109,30 @@ class _VotingPageState extends State<VotingPage> {
               child: CustomAppBar(
                 title: "Voting",
                 showHelpButton: true,
-                onHelpButtonPressed: () {
+                showVotesButton: true,
+                fixLeft: true,
+                onVotesButtonPressed: () async {
+                  String hapticFeedback =
+                      await HelperFunctions.getHapticFeedbackSF();
+                  if (hapticFeedback == "normal") {
+                    HapticFeedback.mediumImpact();
+                  } else if (hapticFeedback == "light") {
+                    HapticFeedback.lightImpact();
+                  } else if (hapticFeedback == "heavy") {
+                    HapticFeedback.heavyImpact();
+                  }
+                  viewVotedSheet();
+                },
+                onHelpButtonPressed: () async {
+                  String hapticFeedback =
+                      await HelperFunctions.getHapticFeedbackSF();
+                  if (hapticFeedback == "normal") {
+                    HapticFeedback.mediumImpact();
+                  } else if (hapticFeedback == "light") {
+                    HapticFeedback.lightImpact();
+                  } else if (hapticFeedback == "heavy") {
+                    HapticFeedback.heavyImpact();
+                  }
                   showVotingHelp();
                 },
                 showBackButton: true,
@@ -235,195 +194,9 @@ class _VotingPageState extends State<VotingPage> {
                       style: TextStyle(
                           color: styling.backgroundText, fontSize: 20)),
                   const SizedBox(height: 20),
-                  buildCards(context),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(50),
-                          border: Border.all(color: Colors.white, width: 2),
-                          boxShadow: [
-                            BoxShadow(
-                              color: styling.theme == "christmas"
-                                  ? styling.green
-                                  : styling.primary.withOpacity(0.5),
-                              spreadRadius: 7,
-                              blurRadius: 7,
-                              offset: const Offset(
-                                  0, 3), // changes position of shadow
-                            )
-                          ],
-                        ),
-                        child: IconButton(
-                            onPressed: () async {
-                              if (movedAnswers.isEmpty) return;
-                              String hapticFeedback =
-                                  await HelperFunctions.getHapticFeedbackSF();
-                              if (hapticFeedback == "normal") {
-                                HapticFeedback.mediumImpact();
-                              } else if (hapticFeedback == "light") {
-                                HapticFeedback.lightImpact();
-                              } else if (hapticFeedback == "heavy") {
-                                HapticFeedback.heavyImpact();
-                              }
-                              final provider = Provider.of<CardProvider>(
-                                  context,
-                                  listen: false);
-                              provider.goBack(movedAnswers.last);
-                              setState(() {
-                                if (votedAnswers.contains(movedAnswers.last)) {
-                                  votedAnswers.removeLast();
-                                  votesLeft++;
-                                }
-                                if (skippedAnswers
-                                    .contains(movedAnswers.last)) {
-                                  skippedAnswers.remove(movedAnswers.last);
-                                }
-                                answers.add(movedAnswers.last);
-                                movedAnswers.removeLast();
-                              });
-                            },
-                            splashColor: styling.theme == "christmas"
-                                ? styling.green
-                                : styling.primary,
-                            icon: const Icon(Icons.rotate_left,
-                                color: Colors.white, size: 30)),
-                      ),
-                      const SizedBox(width: 20),
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(50),
-                          border: Border.all(color: Colors.white, width: 2),
-                          boxShadow: [
-                            BoxShadow(
-                              color: styling.theme == "christmas"
-                                  ? styling.green
-                                  : styling.primary.withOpacity(0.5),
-                              spreadRadius: 7,
-                              blurRadius: 7,
-                              offset: const Offset(
-                                  0, 3), // changes position of shadow
-                            )
-                          ],
-                        ),
-                        child: IconButton(
-                            onPressed: () async {
-                              String hapticFeedback =
-                                  await HelperFunctions.getHapticFeedbackSF();
-                              if (hapticFeedback == "normal") {
-                                HapticFeedback.mediumImpact();
-                              } else if (hapticFeedback == "light") {
-                                HapticFeedback.lightImpact();
-                              } else if (hapticFeedback == "heavy") {
-                                HapticFeedback.heavyImpact();
-                              }
-                              if (votesLeft == 0) {
-                                showOutOfVotes();
-                                return;
-                              }
-                              if (answers.isEmpty) return;
-                              final provider = Provider.of<CardProvider>(
-                                  context,
-                                  listen: false);
-                              provider.like();
-                            },
-                            splashColor: styling.theme == "christmas"
-                                ? styling.green
-                                : styling.primary,
-                            icon: const Icon(Icons.check,
-                                color: Colors.white, size: 30)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Text("Answers Voted For",
-                      style: TextStyle(
-                          color: styling.backgroundText, fontSize: 20)),
-                  const SizedBox(height: 10),
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: votedAnswers.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Material(
-                              elevation: 10,
-                              shadowColor:
-                                  styling.getPurpleBlueGradient().colors[1],
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                  width: 300,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 5, vertical: 10),
-                                  decoration: ShapeDecoration(
-                                    gradient: styling.getPurpleBlueGradient(),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  child: ListTile(
-                                    title: Text(votedAnswers[index].answer,
-                                        style: TextStyle(
-                                            color: styling.theme ==
-                                                    "colorful-light"
-                                                ? styling.primaryDark
-                                                : Colors.black,
-                                            fontSize: 16)),
-                                    subtitle: Text(
-                                        votedAnswers[index].displayName,
-                                        style: TextStyle(
-                                            color: styling.theme ==
-                                                    "colorful-light"
-                                                ? styling.primaryDark
-                                                : Colors.black,
-                                            fontSize: 14)),
-                                    trailing: IconButton(
-                                        onPressed: () async {
-                                          String hapticFeedback =
-                                              await HelperFunctions
-                                                  .getHapticFeedbackSF();
-                                          if (hapticFeedback == "normal") {
-                                            HapticFeedback.mediumImpact();
-                                          } else if (hapticFeedback ==
-                                              "light") {
-                                            HapticFeedback.lightImpact();
-                                          } else if (hapticFeedback ==
-                                              "heavy") {
-                                            HapticFeedback.heavyImpact();
-                                          }
-                                          setState(() {
-                                            //Add back to answers
-                                            final provider =
-                                                Provider.of<CardProvider>(
-                                                    context,
-                                                    listen: false);
-                                            provider
-                                                .goBack(votedAnswers[index]);
-                                            answers.add(votedAnswers[index]);
-                                            movedAnswers
-                                                .remove(votedAnswers[index]);
-
-                                            votedAnswers.removeAt(index);
-                                            votesLeft++;
-                                          });
-                                        },
-                                        splashColor:
-                                            styling.theme == "christmas"
-                                                ? styling.green
-                                                : styling.primary,
-                                        icon: Icon(Icons.delete,
-                                            color: styling.theme ==
-                                                    "colorful-light"
-                                                ? styling.primary
-                                                : Colors.white,
-                                            size: 30)),
-                                  ))),
-                        );
-                      },
-                    ),
-                  )
+                    child: buildCards(context),
+                  ),
                 ],
               ),
             )),
@@ -459,6 +232,70 @@ class _VotingPageState extends State<VotingPage> {
         });
   }
 
+  void viewVotedSheet() {
+    showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(23),
+            topRight: Radius.circular(23),
+          ),
+        ),
+        builder: (BuildContext context) {
+          return StatefulBuilder(builder: (context, setState) {
+            return SizedBox(
+                height: MediaQuery.of(context).size.height * 0.8,
+                width: double.infinity,
+                child: Stack(
+                  children: [
+                    BackgroundTile(
+                      rounded: true,
+                    ),
+                    Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Column(children: [
+                          Text(
+                            "Voted for",
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 40),
+                          ),
+                          const SizedBox(height: 20),
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: votedAnswers.length,
+                              itemBuilder: (context, index) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: BOTWVotingCard(
+                                    answer: votedAnswers[index],
+                                    votedFor: true,
+                                    onVote: (didVote) {
+                                      setState(() {
+                                        if (didVote) {
+                                          votesLeft -= 1;
+                                          votedAnswers.add(votedAnswers[index]);
+                                        } else {
+                                          votesLeft += 1;
+                                          votedAnswers
+                                              .remove(votedAnswers[index]);
+                                        }
+                                      });
+                                      this.setState(() {});
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ])),
+                  ],
+                ));
+          });
+        });
+  }
+
   void showVotingHelp() {
     showDialog(
         context: context,
@@ -466,7 +303,7 @@ class _VotingPageState extends State<VotingPage> {
           return AlertDialog(
             title: const Text("Voting help"),
             content: const Text(
-                "Swipe left to see more answers\nSwipe right to vote for answer or click checkmark\nClick the left arrow to undo your last action"),
+                "Vote for the best three answers. You have three votes. To vote click on the heart or just the tile. Answers you have voted for will have a filled heart. You can also view answers voted for by clicking on the icon next to the help button."),
             actions: [
               TextButton(
                 onPressed: () async {
@@ -489,58 +326,57 @@ class _VotingPageState extends State<VotingPage> {
   }
 
   Widget buildCards(BuildContext context) {
-    final provider = Provider.of<CardProvider>(context);
     // List<BOTWAnswer> answers = provider.answers;
 
-    return provider.answers.isEmpty
+    return answers.isEmpty
         ? Column(
             children: [
-              Text("No more answers",
+              Text("No answers",
                   style:
                       TextStyle(color: styling.backgroundText, fontSize: 20)),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                  onPressed: () async {
-                    String hapticFeedback =
-                        await HelperFunctions.getHapticFeedbackSF();
-                    if (hapticFeedback == "normal") {
-                      HapticFeedback.mediumImpact();
-                    } else if (hapticFeedback == "light") {
-                      HapticFeedback.lightImpact();
-                    } else if (hapticFeedback == "heavy") {
-                      HapticFeedback.heavyImpact();
-                    }
-                    setState(() {
-                      print(skippedAnswers);
-                      provider.setAnswers(skippedAnswers);
-                      // for (var answer in skippedAnswers) {
-                      //   provider.goBack(answer);
-                      // }
-                      answers = provider.answers;
-                      print(provider.answers);
-                      skippedAnswers = [];
-                    });
-                  },
-                  style: styling.elevatedButtonDecoration(),
-                  child: const Text("View skipped answers",
-                      style: TextStyle(color: Colors.white)))
             ],
           )
-        : provider.answers.isNotEmpty
-            ? Stack(
-                children: provider.answers.map((answer) {
-                return BOTWVotingCard(
-                    displayName: answer.displayName,
-                    answer: answer.answer,
-                    numberOfLines: mostLinesInAnswer,
-                    isSecond: provider.answers.indexOf(answer) ==
-                        provider.answers.length - 2,
-                    isFront: provider.answers.last == answer);
-              }).toList())
+        : answers.isNotEmpty
+            ? ListView.builder(
+                itemCount: answers.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: BOTWVotingCard(
+                      answer: answers[index],
+                      votedFor: votedAnswers.contains(answers[index]),
+                      onVote: (didVote) async {
+                        String hapticFeedback =
+                            await HelperFunctions.getHapticFeedbackSF();
+                        if (hapticFeedback == "normal") {
+                          HapticFeedback.mediumImpact();
+                        } else if (hapticFeedback == "light") {
+                          HapticFeedback.lightImpact();
+                        } else if (hapticFeedback == "heavy") {
+                          HapticFeedback.heavyImpact();
+                        }
+                        if (votesLeft == 0 && didVote) {
+                          showOutOfVotes();
+                          return;
+                        }
+                        setState(() {
+                          if (didVote) {
+                            votesLeft -= 1;
+                            votedAnswers.add(answers[index]);
+                          } else {
+                            votesLeft += 1;
+                            votedAnswers.remove(answers[index]);
+                          }
+                        });
+                      },
+                    ),
+                  );
+                },
+              )
             : Container(
                 child: Column(
                   children: [
-                    Text("No more answers",
+                    Text("No answers",
                         style: TextStyle(
                             color: styling.backgroundText, fontSize: 20)),
                   ],

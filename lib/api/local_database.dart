@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart' as auth;
 
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:snippets/api/fb_database.dart';
 import 'package:snippets/constants.dart';
 import 'package:snippets/main.dart';
 
@@ -40,11 +41,36 @@ class SnipResponses extends Table {
   TextColumn get discussionUsers => text()();
 }
 
+class SavedResponsesTable extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get answer => text()();
+  TextColumn get question => text()();
+  TextColumn get responseId => text()();
+
+  BoolColumn get isPublic => boolean()();
+  IntColumn get lastUpdated => integer()();
+  TextColumn get userId => text()();
+}
+
+class SavedMessagesTable extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get message => text()();
+  TextColumn get messageId => text()();
+  TextColumn get senderId => text()();
+  TextColumn get responseId => text()();
+
+  TextColumn get senderUsername => text()();
+  DateTimeColumn get date => dateTime()();
+  TextColumn get senderDisplayName => text()();
+}
+
 class SnippetsData extends Table {
   IntColumn get id => integer().autoIncrement()();
 
   TextColumn get snippetId => text()();
   TextColumn get question => text()();
+  TextColumn get options => text()();
+  TextColumn get correctAnswer => text()();
 
   IntColumn get index => integer()();
   BoolColumn get answered => boolean()();
@@ -60,6 +86,7 @@ class BOTWDataTable extends Table {
   TextColumn get blank => text()();
   TextColumn get status => text()();
   TextColumn get answers => text()();
+  TextColumn get previousAnswers => text()();
   DateTimeColumn get week => dateTime()();
   IntColumn get lastUpdatedMillis => integer()();
 }
@@ -75,18 +102,31 @@ class UserDataTable extends Table {
   TextColumn get friends => text()();
   TextColumn get friendRequests => text()();
   TextColumn get outgoingFriendRequests => text()();
+  TextColumn get bestFriends => text()();
   TextColumn get username => text()();
   TextColumn get searchKey => text()();
   TextColumn get userId => text()();
   IntColumn get lastUpdatedMillis => integer()();
   IntColumn get votesLeft => integer()();
+  IntColumn get longestStreak => integer()();
+  IntColumn get topBOTW => integer()();
+  IntColumn get triviaPoints => integer()();
   IntColumn get snippetsRespondedTo => integer()();
   IntColumn get messagesSent => integer()();
   IntColumn get discussionsStarted => integer()();
+  IntColumn get streak => integer()();
+  DateTimeColumn get streakDate => dateTime()();
 }
 
-@DriftDatabase(
-    tables: [Chats, SnipResponses, SnippetsData, BOTWDataTable, UserDataTable])
+@DriftDatabase(tables: [
+  Chats,
+  SnipResponses,
+  SnippetsData,
+  BOTWDataTable,
+  UserDataTable,
+  SavedMessagesTable,
+  SavedResponsesTable
+])
 class AppDb extends _$AppDb {
   AppDb() : super(_openConnection());
 
@@ -128,10 +168,11 @@ class LocalDatabase {
   String answersToString(Map<String, BOTWAnswer> map) {
     String result = "";
     map.forEach((key, value) {
-      result += "$key*${answerToString(value)}~";
+      result += "${key}BOTW*BOTW${answerToString(value)}BOTW~BOTW";
     });
     if (result.isEmpty) return "";
-    result = result.substring(0, result.length - 1);
+    result = result.substring(0, result.length - 9);
+    print("Answers to string: $result");
     return result;
   }
 
@@ -149,30 +190,31 @@ class LocalDatabase {
 
   String answerToString(BOTWAnswer map) {
     String result = "";
+
     map.toMap().forEach((key, value) {
       if (key == "voters") {
-        result += "$key>${value.join(",")}|";
+        result += "${key}BOTW>BOTW${value.join("BOTW,BOTW")}BOTW|BOTW";
         return;
       }
-      result += "$key>$value|";
+      result += "${key}BOTW>BOTW${value}BOTW|BOTW";
     });
     if (result.isEmpty) return "";
-    result = result.substring(0, result.length - 1);
+    result = result.substring(0, result.length - 9);
     return result;
   }
 
   BOTWAnswer stringToAnswer(String string) {
-    List<String> split = string.split("|");
+    List<String> split = string.split("BOTW|BOTW");
     Map<String, dynamic> result = {};
     for (var item in split) {
-      List<String> splitItem = item.split(">");
+      List<String> splitItem = item.split("BOTW>BOTW");
 
       if (splitItem[0] == "voters") {
         if (splitItem.length < 2) {
           result[splitItem[0]] = [];
           continue;
         }
-        result[splitItem[0]] = splitItem[1].split(",");
+        result[splitItem[0]] = splitItem[1].split("BOTW,BOTW");
         continue;
       }
       if (splitItem.length < 2) continue;
@@ -182,14 +224,17 @@ class LocalDatabase {
       }
       result[splitItem[0]] = splitItem[1];
     }
+
     return BOTWAnswer.fromMap(result);
   }
 
   Map<String, BOTWAnswer> stringToAnswers(String string) {
-    List<String> split = string.split("~");
+    List<String> split = string.split("BOTW~BOTW");
+
+    // if (split.isEmpty) return {};
     Map<String, BOTWAnswer> result = {};
     for (var item in split) {
-      List<String> splitItem = item.split("*");
+      List<String> splitItem = item.split("BOTW*BOTW");
       if (splitItem.length < 2) continue;
       result[splitItem[0]] = stringToAnswer(splitItem[1]);
     }
@@ -199,18 +244,18 @@ class LocalDatabase {
   String discussionUsersToString(List<DiscussionUser> list) {
     String result = "";
     for (var item in list) {
-      result += "${item.userId}:${item.FCMToken}|";
+      result += "${item.userId}DISCU:DISCU${item.FCMToken}DISCU|DISCU";
     }
     if (result.isEmpty) return "";
-    result = result.substring(0, result.length - 1);
+    result = result.substring(0, result.length - 9);
     return result;
   }
 
   List<DiscussionUser> stringToDiscussionUsers(String string) {
-    List<String> split = string.split("|");
+    List<String> split = string.split("DISCU|DISCU");
     List<DiscussionUser> result = [];
     for (var item in split) {
-      List<String> splitItem = item.split(":");
+      List<String> splitItem = item.split("DISCU:DISCU");
       if (splitItem.length < 2) continue;
       result.add(DiscussionUser(userId: splitItem[0], FCMToken: splitItem[1]));
     }
@@ -218,11 +263,11 @@ class LocalDatabase {
   }
 
   String discussionToString(Discussion discussion) {
-    return "${discussion.answerId}:${discussion.isAnonymous}:${discussion.snippetId}:${discussion.snippetQuestion}";
+    return "${discussion.answerId}DISC:DISC${discussion.isAnonymous}DISC:DISC${discussion.snippetId}DISC:DISC${discussion.snippetQuestion}";
   }
 
   Discussion stringToDiscussion(String string) {
-    List<String> split = string.split(":");
+    List<String> split = string.split("DISC:DISC");
     if (split.length < 4) {
       return Discussion(
           answerId: "", isAnonymous: false, snippetId: "", snippetQuestion: "");
@@ -238,14 +283,14 @@ class LocalDatabase {
     String result = "";
     if (list.isEmpty) return "";
     for (var item in list) {
-      result += "${discussionToString(item)}|";
+      result += "${discussionToString(item)}DISC|DISC";
     }
-    result = result.substring(0, result.length - 1);
+    result = result.substring(0, result.length - 9);
     return result;
   }
 
   List<Discussion> stringToDiscussionList(String string) {
-    List<String> split = string.split("|");
+    List<String> split = string.split("DISC|DISC");
     List<Discussion> result = [];
     if (string == "") return result;
     for (var item in split) {
@@ -274,19 +319,19 @@ class LocalDatabase {
     String result = "";
     if (list.isEmpty) return "";
     for (var item in list) {
-      result += "${userMiniToString(item)}|";
+      result += "${userMiniToString(item)}UM|UM";
     }
 
-    result = result.substring(0, result.length - 1);
+    result = result.substring(0, result.length - 5);
     return result;
   }
 
   String botwStatusToString(BOTWStatus status) {
-    return "${status.date}|${status.hasAnswered}|${status.hasSeenResults}";
+    return "${status.date}BOTWS|BOTWS${status.hasAnswered}BOTWS|BOTWS${status.hasSeenResults}";
   }
 
   BOTWStatus stringToBOTWStatus(String string) {
-    List<String> split = string.split("|");
+    List<String> split = string.split("BOTWS|BOTWS");
     if (split.length < 3) {
       return BOTWStatus(date: "", hasAnswered: false, hasSeenResults: false);
     }
@@ -297,7 +342,7 @@ class LocalDatabase {
   }
 
   List<UserMini> stringToUserMiniList(String string) {
-    List<String> split = string.split("|");
+    List<String> split = string.split("UM|UM");
     List<UserMini> result = [];
     if (string == "") return result;
     for (var item in split) {
@@ -309,18 +354,33 @@ class LocalDatabase {
     return result;
   }
 
+  String listStringToString(List<String> list) {
+    String string = "";
+    if (list.isEmpty) return "";
+    for (var item in list) {
+      string += item + "STR^STR";
+    }
+    string = string.substring(0, string.length - 7);
+    return string;
+  }
+
+  List<String> stringToListString(String string) {
+    if (string.isEmpty) return [];
+    return string.split("STR^STR");
+  }
+
   Future<void> addBOTW(BOTW botw) async {
     var existingBOTW = await (localDb.select(localDb.bOTWDataTable)).get();
     if (existingBOTW.isNotEmpty) {
       return;
     }
     await localDb.into(localDb.bOTWDataTable).insert(BOTWDataTableCompanion(
-          status: Value(botw.status.name),
-          answers: Value(answersToString(botw.answers)),
-          week: Value(DateTime.now()),
-          blank: Value(botw.blank),
-          lastUpdatedMillis: Value(botw.lastUpdatedMillis),
-        ));
+        status: Value(botw.status.name),
+        answers: Value(answersToString(botw.answers)),
+        week: Value(DateTime.now()),
+        blank: Value(botw.blank),
+        lastUpdatedMillis: Value(botw.lastUpdatedMillis),
+        previousAnswers: Value(answersToString(botw.previousAnswers))));
   }
 
   Future<void> updateBOTW(BOTW botw) async {
@@ -329,6 +389,7 @@ class LocalDatabase {
         .write(BOTWDataTableCompanion(
             status: Value(botw.status.name),
             answers: Value(answersToString(botw.answers)),
+            previousAnswers: Value(answersToString(botw.previousAnswers)),
             week: Value(
               botw.week,
             ),
@@ -350,6 +411,7 @@ class LocalDatabase {
                 answers: stringToAnswers(value.first.answers),
                 week: value.first.week,
                 blank: value.first.blank,
+                previousAnswers: stringToAnswers(value.first.previousAnswers),
                 lastUpdatedMillis: value.first.lastUpdatedMillis)
             : null);
   }
@@ -367,12 +429,14 @@ class LocalDatabase {
             answers: stringToAnswers(data.answers),
             week: data.week,
             blank: data.blank,
+            previousAnswers: stringToAnswers(data.previousAnswers),
             lastUpdatedMillis: data.lastUpdatedMillis);
       }
       return BOTW(
           status: BOTWStatusType.answering,
           answers: {},
           week: DateTime.now(),
+          previousAnswers: {},
           blank: "",
           lastUpdatedMillis: 0);
     });
@@ -447,6 +511,35 @@ class LocalDatabase {
 
         return;
       } else {
+        SnippetResponse? response = await getSnippetResponse(
+            snippetIndex.first.snippetId,
+            auth.FirebaseAuth.instance.currentUser!.uid);
+        if (response != null) {
+          SavedResponse savedResponse = SavedResponse(
+              answer: response.answer,
+              lastUpdated: DateTime.now().millisecondsSinceEpoch,
+              isPublic: false,
+              responseId: snippetIndex.first.snippetId,
+              userId: auth.FirebaseAuth.instance.currentUser!.uid,
+              question: snippetIndex.first.question);
+          await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+              .addSavedResponse(savedResponse);
+          List<Message> messages = await getChatsList(
+              "${snippetIndex.first.snippetId}-${auth.FirebaseAuth.instance.currentUser!.uid}");
+          for (var message in messages) {
+            SavedMessage savedMessage = SavedMessage(
+                message: message.message,
+                senderId: message.senderId,
+                senderDisplayName: message.senderDisplayName,
+                date: message.date,
+                senderUsername: message.senderUsername,
+                responseId: savedResponse.responseId,
+                messageId: message.messageId);
+            await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+                .addSavedMessage(savedMessage);
+          }
+        }
+
         await (localDb.delete(localDb.snipResponses)
               ..where((tbl) => tbl.snippetId.equals(snippet.snippetId)))
             .go();
@@ -466,12 +559,43 @@ class LocalDatabase {
           question: Value(snippet.question),
           answered: Value(snippet.answered),
           index: Value(snippet.index),
+          options: Value(listStringToString(snippet.options)),
+          correctAnswer: Value(snippet.correctAnswer),
           type: Value(snippet.type),
           lastUpdatedMillis: Value(lastUpdatedMillis),
         ));
   }
 
   Future<void> deleteSnippetById(String snippetId) async {
+    Snippet snippet = await getSnippet(snippetId);
+    SnippetResponse? response = await getSnippetResponse(
+        snippetId, auth.FirebaseAuth.instance.currentUser!.uid);
+    if (response != null) {
+      SavedResponse savedResponse = SavedResponse(
+          answer: response.answer,
+          lastUpdated: DateTime.now().millisecondsSinceEpoch,
+          isPublic: false,
+          responseId: snippetId,
+          userId: auth.FirebaseAuth.instance.currentUser!.uid,
+          question: snippet.question);
+      await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+          .addSavedResponse(savedResponse);
+      List<Message> messages = await getChatsList(
+          "$snippetId-${auth.FirebaseAuth.instance.currentUser!.uid}");
+      for (var message in messages) {
+        SavedMessage savedMessage = SavedMessage(
+            message: message.message,
+            senderId: message.senderId,
+            senderDisplayName: message.senderDisplayName,
+            date: message.date,
+            senderUsername: message.senderUsername,
+            responseId: savedResponse.responseId,
+            messageId: message.messageId);
+        await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+            .addSavedMessage(savedMessage);
+      }
+    }
+
     await (localDb.delete(localDb.snipResponses)
           ..where((tbl) => tbl.snippetId.equals(snippetId)))
         .go();
@@ -495,6 +619,8 @@ class LocalDatabase {
                 question: value.first.question,
                 answered: value.first.answered,
                 index: value.first.index,
+                correctAnswer: value.first.correctAnswer,
+                options: stringToListString(value.first.options),
                 type: value.first.type,
                 lastUpdatedMillis: value.first.lastUpdatedMillis)
             : null);
@@ -515,6 +641,8 @@ class LocalDatabase {
             question: item.question,
             answered: item.answered,
             index: item.index,
+            options: stringToListString(item.options),
+            correctAnswer: item.correctAnswer,
             type: item.type,
             lastUpdatedMillis: item.lastUpdatedMillis));
       }
@@ -534,10 +662,29 @@ class LocalDatabase {
           question: item.question,
           answered: item.answered,
           index: item.index,
+          options: stringToListString(item.options),
+          correctAnswer: item.correctAnswer,
           type: item.type,
           lastUpdatedMillis: item.lastUpdatedMillis));
     }
     return result;
+  }
+
+  Future<Snippet> getSnippet(String snippetId) async {
+    var snippet = await (localDb.select(localDb.snippetsData)
+          ..where((tbl) => tbl.snippetId.equals(snippetId)))
+        .get();
+
+    return Snippet(
+        snippetId: snippet.first.snippetId,
+        lastRecievedMillis: snippet.first.lastRecievedMillis,
+        question: snippet.first.question,
+        answered: snippet.first.answered,
+        index: snippet.first.index,
+        options: stringToListString(snippet.first.options),
+        correctAnswer: snippet.first.correctAnswer,
+        type: snippet.first.type,
+        lastUpdatedMillis: snippet.first.lastUpdatedMillis);
   }
 
   Future<void> deleteOldResponse() async {
@@ -699,6 +846,29 @@ class LocalDatabase {
     });
   }
 
+  Future<List<Message>> getChatsList(String chatId) async {
+    final query = await (localDb.select(localDb.chats)
+          ..where((tbl) => tbl.chatId.equals(chatId))
+          ..orderBy([(u) => OrderingTerm.asc(u.lastUpdatedMillis)]))
+        .get();
+
+    List<Message> messages = [];
+    for (var item in query) {
+      messages.add(Message(
+          message: item.message,
+          senderId: item.senderId,
+          senderUsername: item.senderUsername,
+          date: item.date,
+          senderDisplayName: item.senderDisplayName,
+          readBy: item.readBy.split(","),
+          discussionId: item.chatId,
+          messageId: item.messageId,
+          lastUpdatedMillis: item.lastUpdatedMillis,
+          snippetId: item.snippetId));
+    }
+    return messages;
+  }
+
   //Get most recent chat
   Future<Message?> getMostRecentChat(String chatId) async {
     return (localDb.select(localDb.chats)
@@ -774,9 +944,18 @@ class LocalDatabase {
               friendRequests: Value(userMiniListToString(user.friendRequests)),
               outgoingFriendRequests:
                   Value(userMiniListToString(user.outgoingFriendRequests)),
+              bestFriends: Value(listStringToString(user.bestFriends)),
               username: Value(user.username),
               searchKey: Value(user.searchKey),
               lastUpdatedMillis: Value(lastUpdated),
+              streak: Value(user.streak),
+              longestStreak: Value(user.longestStreak),
+              streakDate: Value(user.streakDate),
+              messagesSent: Value(user.messagesSent),
+              topBOTW: Value(user.topBOTW),
+              triviaPoints: Value(user.triviaPoints),
+              discussionsStarted: Value(user.discussionsStarted),
+              snippetsRespondedTo: Value(user.snippetsRespondedTo),
               votesLeft: Value(user.votesLeft)));
     } else {
       await localDb.into(localDb.userDataTable).insert(UserDataTableCompanion(
@@ -790,9 +969,18 @@ class LocalDatabase {
             friendRequests: Value(userMiniListToString(user.friendRequests)),
             outgoingFriendRequests:
                 Value(userMiniListToString(user.outgoingFriendRequests)),
+            bestFriends: Value(listStringToString(user.bestFriends)),
             username: Value(user.username),
+            messagesSent: Value(user.messagesSent),
+            discussionsStarted: Value(user.discussionsStarted),
             searchKey: Value(user.searchKey),
+            streak: Value(user.streak),
+            snippetsRespondedTo: Value(user.snippetsRespondedTo),
+            streakDate: Value(user.streakDate),
+            longestStreak: Value(user.longestStreak),
             userId: Value(user.userId),
+            topBOTW: Value(user.topBOTW),
+            triviaPoints: Value(user.triviaPoints),
             lastUpdatedMillis: Value(lastUpdated),
             votesLeft: Value(user.votesLeft),
           ));
@@ -820,6 +1008,7 @@ class LocalDatabase {
                     Value(userMiniListToString(user.friendRequests)),
                 outgoingFriendRequests:
                     Value(userMiniListToString(user.outgoingFriendRequests)),
+                bestFriends: Value(listStringToString(user.bestFriends)),
                 username: Value(user.username),
                 searchKey: Value(user.searchKey),
                 userId: Value(user.userId),
@@ -827,6 +1016,11 @@ class LocalDatabase {
                 votesLeft: Value(user.votesLeft),
                 snippetsRespondedTo: Value(user.snippetsRespondedTo),
                 discussionsStarted: Value(user.discussionsStarted),
+                longestStreak: Value(user.longestStreak),
+                streak: Value(user.streak),
+                topBOTW: Value(user.topBOTW),
+                triviaPoints: Value(user.triviaPoints),
+                streakDate: Value(user.streakDate),
                 messagesSent: Value(user.messagesSent)),
           );
     }
@@ -844,8 +1038,14 @@ class LocalDatabase {
             friendRequests: Value(userMiniListToString(user.friendRequests)),
             outgoingFriendRequests:
                 Value(userMiniListToString(user.outgoingFriendRequests)),
+            bestFriends: Value(listStringToString(user.bestFriends)),
             username: Value(user.username),
             searchKey: Value(user.searchKey),
+            streak: Value(user.streak),
+            longestStreak: Value(user.longestStreak),
+            streakDate: Value(user.streakDate),
+            topBOTW: Value(user.topBOTW),
+            triviaPoints: Value(user.triviaPoints),
             lastUpdatedMillis: Value(lastUpdated),
             votesLeft: Value(user.votesLeft)));
   }
@@ -874,12 +1074,18 @@ class LocalDatabase {
           friends: [],
           friendRequests: [],
           outgoingFriendRequests: [],
+          bestFriends: [],
           username: "",
           searchKey: "",
           snippetsRespondedTo: 0,
           discussionsStarted: 0,
           messagesSent: 0,
+          triviaPoints: 0,
+          topBOTW: 0,
+          longestStreak: 0,
           userId: "",
+          streak: 0,
+          streakDate: DateTime(2021, 1, 1),
           votesLeft: 0);
     }
 
@@ -894,12 +1100,18 @@ class LocalDatabase {
         friendRequests: stringToUserMiniList(user.first.friendRequests),
         outgoingFriendRequests:
             stringToUserMiniList(user.first.outgoingFriendRequests),
+        bestFriends: stringToListString(user.first.bestFriends),
         username: user.first.username,
         searchKey: user.first.searchKey,
         userId: user.first.userId,
         snippetsRespondedTo: user.first.snippetsRespondedTo,
         discussionsStarted: user.first.discussionsStarted,
         messagesSent: user.first.messagesSent,
+        streak: user.first.streak,
+        topBOTW: user.first.topBOTW,
+        triviaPoints: user.first.triviaPoints,
+        streakDate: user.first.streakDate,
+        longestStreak: user.first.longestStreak,
         votesLeft: user.first.votesLeft);
   }
 
@@ -924,9 +1136,15 @@ class LocalDatabase {
             friendRequests: stringToUserMiniList(user.friendRequests),
             outgoingFriendRequests:
                 stringToUserMiniList(user.outgoingFriendRequests),
+            bestFriends: stringToListString(user.bestFriends),
             username: user.username,
             searchKey: user.searchKey,
+            longestStreak: user.longestStreak,
             userId: user.userId,
+            streak: user.streak,
+            streakDate: user.streakDate,
+            triviaPoints: user.triviaPoints,
+            topBOTW: user.topBOTW,
             snippetsRespondedTo: user.snippetsRespondedTo,
             discussionsStarted: user.discussionsStarted,
             messagesSent: user.messagesSent,
@@ -1075,5 +1293,115 @@ class LocalDatabase {
           ..where((tbl) => tbl.userId.equals(userId)))
         .write(UserDataTableCompanion(
             FCMToken: Value(FCMToken), lastUpdatedMillis: Value(lastUpdated)));
+  }
+
+  Future<List<SavedResponse>> getSavedResponses(String userId) async {
+    var query = await (localDb.select(localDb.savedResponsesTable)
+          ..where((tbl) => tbl.userId.equals(userId)))
+        .get();
+    List<SavedResponse> savedResponses = [];
+    for (var res in query) {
+      savedResponses.add(SavedResponse(
+          answer: res.answer,
+          question: res.question,
+          isPublic: res.isPublic,
+          responseId: res.responseId,
+          userId: res.userId,
+          lastUpdated: res.lastUpdated));
+    }
+    return savedResponses;
+  }
+
+  Future<int?> getLastCachedSavedResponse(String userId) async {
+    return (localDb.select(localDb.savedResponsesTable)
+          ..where((tbl) => tbl.userId.equals(userId))
+          ..orderBy([(u) => OrderingTerm.desc(u.lastUpdated)]))
+        .get()
+        .then((value) => value.isNotEmpty ? value.first.lastUpdated : null);
+  }
+
+  Future<void> addSavedResponse(SavedResponse response) async {
+    var exisitingResponse = await (localDb.select(localDb.savedResponsesTable)
+          ..where((tbl) => tbl.responseId.equals(response.responseId)))
+        .get();
+    if (exisitingResponse.isNotEmpty) {
+      await (localDb.update(localDb.savedResponsesTable)
+            ..where((tbl) => tbl.responseId.equals(response.responseId)))
+          .write(SavedResponsesTableCompanion(
+              answer: Value(response.answer),
+              question: Value(response.question),
+              isPublic: Value(response.isPublic),
+              lastUpdated: Value(response.lastUpdated),
+              responseId: Value(response.responseId),
+              userId: Value(response.userId)));
+    } else {
+      await localDb.into(localDb.savedResponsesTable).insert(
+          SavedResponsesTableCompanion(
+              answer: Value(response.answer),
+              question: Value(response.question),
+              isPublic: Value(response.isPublic),
+              lastUpdated: Value(response.lastUpdated),
+              responseId: Value(response.responseId),
+              userId: Value(response.userId)));
+    }
+  }
+
+  Future<void> addSavedMessage(SavedMessage message) async {
+    var exisitingMessage = await (localDb.select(localDb.savedMessagesTable)
+          ..where((tbl) => tbl.responseId.equals(message.responseId))
+          ..where((tbl) => tbl.messageId.equals(message.messageId)))
+        .get();
+    if (exisitingMessage.isNotEmpty) {
+      await (localDb.update(localDb.savedMessagesTable)
+            ..where((tbl) => tbl.responseId.equals(message.responseId)))
+          .write(SavedMessagesTableCompanion(
+        message: Value(message.message),
+        messageId: Value(message.messageId),
+        senderId: Value(message.senderId),
+        senderDisplayName: Value(message.senderDisplayName),
+        senderUsername: Value(message.senderUsername),
+        date: Value(message.date),
+        responseId: Value(message.responseId),
+      ));
+    } else {
+      await localDb
+          .into(localDb.savedMessagesTable)
+          .insert(SavedMessagesTableCompanion(
+            message: Value(message.message),
+            messageId: Value(message.messageId),
+            senderId: Value(message.senderId),
+            senderDisplayName: Value(message.senderDisplayName),
+            senderUsername: Value(message.senderUsername),
+            date: Value(message.date),
+            responseId: Value(message.responseId),
+          ));
+    }
+  }
+
+  Future<List<SavedMessage>> getSavedMessages(String responseId) async {
+    var query = await (localDb.select(localDb.savedMessagesTable)
+          ..where((tbl) => tbl.responseId.equals(responseId)))
+        .get();
+    List<SavedMessage> savedMessages = [];
+    for (var message in query) {
+      savedMessages.add(SavedMessage(
+        message: message.message,
+        messageId: message.messageId,
+        senderId: message.senderId,
+        senderDisplayName: message.senderDisplayName,
+        senderUsername: message.senderUsername,
+        date: message.date,
+        responseId: message.responseId,
+      ));
+    }
+    return savedMessages;
+  }
+
+  //changeSavedResponseVisibility
+  Future<void> changeSavedResponseVisibility(
+      String responseId, bool isPublic) async {
+    await (localDb.update(localDb.savedResponsesTable)
+          ..where((tbl) => tbl.responseId.equals(responseId)))
+        .write(SavedResponsesTableCompanion(isPublic: Value(isPublic)));
   }
 }

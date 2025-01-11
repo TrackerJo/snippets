@@ -11,7 +11,6 @@ class MessageTile extends StatefulWidget {
   final String sender;
   final bool sentByMe;
   final DateTime time;
-  final String theme;
   final String senderId;
 
   const MessageTile(
@@ -20,7 +19,6 @@ class MessageTile extends StatefulWidget {
       required this.sender,
       required this.sentByMe,
       required this.time,
-      required this.theme,
       required this.senderId});
 
   @override

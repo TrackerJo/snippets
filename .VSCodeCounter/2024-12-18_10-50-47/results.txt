@@ -1,0 +1,94 @@
+Date : 2024-12-18 10:50:47
+Directory : /Volumes/XcodeDev/Downloads/snippets/lib
+Total : 63 files,  18351 codes, 1030 comments, 1321 blanks, all 20702 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| Dart     |         63 |     18,351 |      1,030 |      1,321 |     20,702 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++----------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                       | files      | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                          |         63 |     18,351 |      1,030 |      1,321 |     20,702 |
+| . (Files)                                                                  |          3 |      1,282 |        164 |        145 |      1,591 |
+| api                                                                        |          8 |      6,891 |        233 |        543 |      7,667 |
+| helper                                                                     |          3 |        254 |         26 |         56 |        336 |
+| pages                                                                      |         24 |      7,100 |        454 |        379 |      7,933 |
+| providers                                                                  |          1 |        100 |          2 |         28 |        130 |
+| templates                                                                  |          2 |        302 |          9 |         30 |        341 |
+| widgets                                                                    |         22 |      2,422 |        142 |        140 |      2,704 |
++----------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++----------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                   | language | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| /Volumes/XcodeDev/Downloads/snippets/lib/api/auth.dart                     | Dart     |        158 |          8 |         25 |        191 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/api/database.dart                 | Dart     |        165 |          7 |         46 |        218 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/api/fb_database.dart              | Dart     |      1,629 |         61 |        136 |      1,826 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/api/local_database.dart           | Dart     |        974 |         21 |         95 |      1,090 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/api/local_database.g.dart         | Dart     |      3,539 |          2 |        183 |      3,724 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/api/notifications.dart            | Dart     |        295 |        111 |         41 |        447 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/api/remote_config.dart            | Dart     |         54 |          0 |         10 |         64 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/api/storage.dart                  | Dart     |         77 |         23 |          7 |        107 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/constants.dart                    | Dart     |        508 |          3 |         53 |        564 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/firebase_options.dart             | Dart     |         59 |         12 |          5 |         76 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/helper/app_badge.dart             | Dart     |         29 |          0 |          4 |         33 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/helper/app_icon_changer.dart      | Dart     |         27 |         20 |          7 |         54 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/helper/helper_function.dart       | Dart     |        198 |          6 |         45 |        249 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/main.dart                         | Dart     |        715 |        149 |         87 |        951 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/app_preferences_page.dart   | Dart     |        326 |         14 |         10 |        350 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/botw_results_page.dart      | Dart     |        138 |          1 |          9 |        148 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/comments_page.dart          | Dart     |          0 |        182 |         12 |        194 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/create_account_page.dart    | Dart     |        319 |         20 |         15 |        354 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/customize_widgets_page.dart | Dart     |        378 |          1 |          8 |        387 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/discussion_page.dart        | Dart     |        470 |         12 |         34 |        516 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/discussions_page.dart       | Dart     |        188 |         12 |         20 |        220 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/find_profile_page.dart      | Dart     |        169 |         22 |         13 |        204 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/forgot_password_page.dart   | Dart     |        197 |         19 |          8 |        224 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/friends_page.dart           | Dart     |        479 |         14 |         21 |        514 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/home_page.dart              | Dart     |        145 |         71 |         26 |        242 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/login_page.dart             | Dart     |        259 |         19 |         11 |        289 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/modify_profile_page.dart    | Dart     |        771 |         14 |         15 |        800 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/no_wifi_page.dart           | Dart     |        101 |          2 |          6 |        109 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/notifications_page.dart     | Dart     |        243 |          2 |         10 |        255 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/onboarding_page.dart        | Dart     |        311 |          3 |         16 |        330 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/profile_page.dart           | Dart     |        872 |          9 |         48 |        929 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/question_page.dart          | Dart     |        200 |          4 |         10 |        214 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/responses_page.dart         | Dart     |        254 |          5 |         22 |        281 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/settings_page.dart          | Dart     |        497 |          9 |         12 |        518 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/splash_page.dart            | Dart     |         15 |          0 |          4 |         19 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/swipe_pages.dart            | Dart     |        346 |          8 |         20 |        374 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/update_page.dart            | Dart     |         95 |          1 |          6 |        102 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/pages/voting_page.dart            | Dart     |        327 |         10 |         23 |        360 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/providers/card_provider.dart      | Dart     |        100 |          2 |         28 |        130 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/templates/input_decoration.dart   | Dart     |          0 |          0 |          2 |          2 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/templates/styling.dart            | Dart     |        302 |          9 |         28 |        339 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/app_icon_tile.dart        | Dart     |         42 |          0 |          3 |         45 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/background_tile.dart      | Dart     |        162 |         23 |          9 |        194 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/botw_result_tile.dart     | Dart     |        111 |          2 |         10 |        123 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/botw_tile.dart            | Dart     |        173 |          8 |         10 |        191 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/botw_voting_card.dart     | Dart     |         98 |          2 |         10 |        110 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/bullet_list.dart          | Dart     |         47 |          0 |          4 |         51 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/custom_app_bar.dart       | Dart     |        266 |         14 |          5 |        285 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/custom_nav_bar.dart       | Dart     |        182 |          1 |          4 |        187 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/custom_page_route.dart    | Dart     |         43 |          1 |          5 |         49 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/discussion_tile.dart      | Dart     |        107 |          1 |          5 |        113 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/friend_tile.dart          | Dart     |        140 |          1 |          6 |        147 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/friends_count.dart        | Dart     |         76 |          1 |          4 |         81 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/helper_functions.dart     | Dart     |          9 |          0 |          4 |         13 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/message_tile.dart         | Dart     |        164 |         11 |          9 |        184 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/notification_tile.dart    | Dart     |         63 |          0 |          3 |         66 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/profile_tile.dart         | Dart     |        106 |          1 |          4 |        111 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/quote_tile.dart           | Dart     |         30 |          0 |          4 |         34 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/response_tile.dart        | Dart     |        192 |         42 |         11 |        245 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/setting_tile.dart         | Dart     |         57 |          0 |          3 |         60 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/snippet_tile.dart         | Dart     |        250 |         33 |         16 |        299 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/snowflake.dart            | Dart     |         61 |          1 |          8 |         70 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/widgets/widget_gradient_tile.dart | Dart     |         43 |          0 |          3 |         46 |
+| Total                                                                      |          |     18,351 |      1,030 |      1,321 |     20,702 |
++----------------------------------------------------------------------------+----------+------------+------------+------------+------------+

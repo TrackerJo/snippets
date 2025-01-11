@@ -15,6 +15,7 @@ actor AppAlertBadgeManager {
         self.application = application
     }
     
+    
     @MainActor
     func setAlertBadge(number: Int) {
         application.applicationIconBadgeNumber = number

@@ -22,14 +22,18 @@ class NotificationsPage extends StatefulWidget {
 class _NotificationsPageState extends State<NotificationsPage> {
   List<String> allowedNotifications = [];
   TextEditingController delayController = TextEditingController();
+  bool sendStreakNotifications = false;
 
   void load() async {
     List<String> allowedNotifications =
         await HelperFunctions.getAllowedNotifications();
     int delay = await HelperFunctions.getSnippetResponseDelaySF();
+    bool sendStreakNotifications =
+        await HelperFunctions.getSendStreakNotificationSF();
     setState(() {
       delayController.text = delay.toString();
       this.allowedNotifications = allowedNotifications;
+      this.sendStreakNotifications = sendStreakNotifications;
     });
   }
 
@@ -212,6 +216,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             child: TextFormField(
                               controller: delayController,
                               textAlign: TextAlign.center,
+                              keyboardType: TextInputType.number,
                               decoration: styling
                                   .textInputDecoration()
                                   .copyWith(
@@ -220,10 +225,20 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                           : styling.primary),
                               onChanged: (val) async {
                                 print("val: $val");
-                                if (val == null) {
+                                if (val == null || val.isEmpty) {
                                   return;
                                 }
                                 int delay = int.parse(val);
+                                if (delay > 180) {
+                                  delay = 180;
+                                  delayController.text = delay.toString();
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(SnackBar(
+                                    content: Text(
+                                        "Delay cannot be more than 180 minutes"),
+                                  ));
+                                }
+
                                 await HelperFunctions
                                     .saveSnippetResponseDelaySF(delay);
                                 await Storage()
@@ -233,6 +248,32 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           ),
                         ),
                       ),
+                    NotificationTile(
+                        type: "Snippet Streak",
+                        description:
+                            "Get notified when you're about to lose your snippet streak",
+                        isAllowed: sendStreakNotifications,
+                        setIsAllowed: (bool isAllowed) async {
+                          if (isAllowed) {
+                            setState(() {
+                              sendStreakNotifications = true;
+                            });
+                            await HelperFunctions.saveSendStreakNotificationSF(
+                                true);
+                          } else {
+                            setState(() {
+                              sendStreakNotifications = false;
+                            });
+                            await HelperFunctions.saveSendStreakNotificationSF(
+                                false);
+                            String streakTopic =
+                                await HelperFunctions.getStreakTopicSF();
+                            if (streakTopic != "") {
+                              await PushNotifications()
+                                  .unsubscribeFromTopic(streakTopic);
+                            }
+                          }
+                        }),
                   ],
                 ),
               )),

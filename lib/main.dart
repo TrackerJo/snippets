@@ -40,6 +40,7 @@ import 'package:snippets/pages/question_page.dart';
 import 'package:snippets/pages/responses_page.dart';
 import 'package:snippets/pages/settings_page.dart';
 import 'package:snippets/pages/swipe_pages.dart';
+import 'package:snippets/pages/trivia_responses_page.dart';
 import 'package:snippets/pages/update_page.dart';
 import 'package:snippets/pages/voting_page.dart';
 import 'package:snippets/pages/login_page.dart';
@@ -254,26 +255,6 @@ class MainApp extends StatefulWidget {
   State<MainApp> createState() => _MainAppState();
 }
 
-List<DiscussionUser> createDiscussionUsersList(String discussionUsers) {
-  List<DiscussionUser> users = [];
-  List<String> userStrings = discussionUsers.split("|");
-  for (var user in userStrings) {
-    List<String> userParts = user.split("^");
-    if (userParts.length == 2) {
-      users.add(DiscussionUser(FCMToken: userParts[1], userId: userParts[0]));
-    }
-  }
-  return users;
-}
-
-String createDiscussionUsersString(List<DiscussionUser> discussionUsers) {
-  String users = "";
-  for (var value in discussionUsers) {
-    users += "|${value.userId}^${value.FCMToken}";
-  }
-  return users;
-}
-
 final router = GoRouter(
   routes: [
     GoRoute(
@@ -350,7 +331,7 @@ final router = GoRouter(
                 userId: state.uri.queryParameters['userId']!,
                 snippetId: state.uri.queryParameters['snippetId']!,
                 question: state.uri.queryParameters['snippetQuestion']!
-                    .replaceAll("~", "?"),
+                    .replaceAll("Q~Q", "?"),
                 theme: state.uri.queryParameters['theme']!,
                 isDisplayOnly:
                     state.uri.queryParameters['isDisplayOnly'] == 'true',
@@ -404,7 +385,7 @@ final router = GoRouter(
                     userId: state.uri.queryParameters['userId']!,
                     snippetId: state.uri.queryParameters['snippetId']!,
                     question: state.uri.queryParameters['snippetQuestion']!
-                        .replaceAll("~", "?"),
+                        .replaceAll("Q~Q", "?"),
                     theme: "blue",
                     isDisplayOnly: true,
                     isAnonymous:
@@ -435,6 +416,8 @@ final router = GoRouter(
             question:
                 state.uri.queryParameters['question']!.replaceAll("~", "?"),
             type: state.uri.queryParameters['type']!,
+            options: state.uri.queryParameters['options']!.split("OPT^OPT"),
+            correctAnswer: state.uri.queryParameters['correctAnswer']!,
           ),
         ),
         GoRoute(
@@ -447,12 +430,14 @@ final router = GoRouter(
           ),
         ),
         GoRoute(
-          path: 'question/:id/:theme/:question/:type',
+          path: 'question/:id/:theme/:question/:type/:options/:correctAnswer',
           builder: (context, state) => QuestionPage(
             snippetId: state.pathParameters['id']!,
             theme: state.pathParameters['theme']!,
             question: state.pathParameters['question']!.replaceAll("~", "?"),
             type: state.pathParameters['type']!,
+            options: state.pathParameters['options']!.split("OPT^OPT"),
+            correctAnswer: state.pathParameters['correctAnswer']!,
           ),
         ),
         GoRoute(
@@ -466,6 +451,13 @@ final router = GoRouter(
             theme: state.pathParameters['theme']!,
             question: state.pathParameters['question']!,
             isAnonymous: state.pathParameters['type']! == "anonymous",
+          ),
+        ),
+        GoRoute(
+          path: 'triviaResponses/:id/:theme/:question/:type',
+          builder: (context, state) => TriviaResponsesPage(
+            snippetId: state.pathParameters['id']!,
+            question: state.pathParameters['question']!,
           ),
         ),
         GoRoute(
@@ -493,31 +485,28 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
   bool isSignedIn = false;
   getUserLoggedInState() async {
-    bool setChristmasTheme = await HelperFunctions.getSetChristmasThemeSF();
-    if (!setChristmasTheme) {
-      await HelperFunctions.saveThemeSF("christmas");
-      await HelperFunctions.saveSetChristmasThemeSF(true);
+    int updateLocalDB = await HelperFunctions.getLocalDatabaseUpdateSF();
+    if (updateLocalDB < 27) {
+      await LocalDatabase().deleteDB();
+      await HelperFunctions.saveLocalDatabaseUpdateSF(27);
     }
+    // bool setNewYearIcon = await HelperFunctions.getSetNewYearIconSF();
+    // if (!setNewYearIcon && Platform.isIOS) {
+    //   await AppIconChanger.changeIcon("NewYear");
 
-    bool setChristmasIcon = await HelperFunctions.getSetChristmasAppIconSF();
-    if (!setChristmasIcon && Platform.isIOS) {
-      await AppIconChanger.changeIcon("christmas");
-
-      await HelperFunctions.saveSetChristmasAppIconSF(true);
-    }
+    //   await HelperFunctions.saveSetNewYearIconSF(true);
+    // }
     String appIcon = await HelperFunctions.getAppIconSF();
-    if(Platform.isAndroid && appIcon != "default"){
+    if (Platform.isAndroid && appIcon != "default") {
       await AppIconChanger.changeIcon("default");
-      
     }
 
     String theme = await HelperFunctions.getThemeSF();
-    styling.setTheme(theme);
-    int updateLocalDB = await HelperFunctions.getLocalDatabaseUpdateSF();
-    if (updateLocalDB < 19) {
-      await LocalDatabase().deleteDB();
-      await HelperFunctions.saveLocalDatabaseUpdateSF(19);
+    if (theme == "christmas") {
+      theme = "dark";
+      await HelperFunctions.saveThemeSF(theme);
     }
+    styling.setTheme(theme);
 
     bool status = await Auth().isUserLoggedIn();
     if (status) {
@@ -526,6 +515,8 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       //   status = false;
       //   return;
       // }
+      await Database()
+          .updateUserStreak(auth.FirebaseAuth.instance.currentUser!.uid);
       await PushNotifications().initNotifications();
       List<String> topics = await HelperFunctions.getTopicNotifications();
       if (topics.isEmpty) {
@@ -698,6 +689,12 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         } else {
           router.pushReplacement("/nowifi");
           return;
+        }
+        bool setNewYearIcon = await HelperFunctions.getSetNewYearIconSF();
+        if (!setNewYearIcon && Platform.isIOS) {
+          await AppIconChanger.changeIcon("NewYear");
+
+          await HelperFunctions.saveSetNewYearIconSF(true);
         }
         String theme = await HelperFunctions.getThemeSF();
         styling.setTheme(theme);
@@ -912,8 +909,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         //Check if FCM token changed
         String deviceToken = await PushNotifications().getDeviceToken();
 
-        User userData = await Database()
-            .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
+        User userData = await Database().getCurrentUserData();
         // await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
         //     .removeOldDiscussions(userData, snippets);
         fixUserData(userData);
@@ -931,6 +927,8 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
               await HelperFunctions.getSnippetResponseDelaySF();
           await Storage().setUserSnippetResponseDelay(snippetResponseDelay);
         }
+        await Database()
+            .updateUserStreak(auth.FirebaseAuth.instance.currentUser!.uid);
 
         break;
       case AppLifecycleState.inactive:

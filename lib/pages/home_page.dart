@@ -13,6 +13,7 @@ import 'package:snippets/pages/splash_page.dart';
 import 'package:snippets/widgets/helper_functions.dart';
 
 import 'package:snippets/widgets/snippet_tile.dart';
+import 'package:snippets/widgets/trivia_tile.dart';
 
 import '../api/fb_database.dart';
 
@@ -34,8 +35,7 @@ class _HomePageState extends State<HomePage> {
   String userId = "";
 
   void getCurrentSnippets() async {
-    User userData = await Database()
-        .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
+    User userData = await Database().getCurrentUserData();
     await HelperFunctions.saveOpenedPageSF("snippets");
     String aID = await HelperFunctions.getAnonymousIDFromSF() ?? "";
     if (!mounted) return;
@@ -213,6 +213,16 @@ class _HomePageState extends State<HomePage> {
                     //   });
                     // });
                     Snippet snippet = snapshot.data[index];
+                    if (snippet.type == "trivia")
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: TriviaTile(
+                            question: snippet.question,
+                            snippetId: snippet.snippetId,
+                            isAnswered: snippet.answered,
+                            options: snippet.options,
+                            correctAnswer: snippet.correctAnswer),
+                      );
                     return Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: SnippetTile(

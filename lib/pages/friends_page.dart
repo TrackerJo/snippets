@@ -24,6 +24,7 @@ class _FriendsPageState extends State<FriendsPage> {
   List<UserMini> friends = [];
   List<UserMini> friendRequests = [];
   List<UserMini> outgoingRequests = [];
+  List<String> bestFriends = [];
   StreamController<User> userStreamController = StreamController();
   int numberOfRequests = 0;
 
@@ -43,6 +44,7 @@ class _FriendsPageState extends State<FriendsPage> {
       List<UserMini> outgoingRequests = userData.outgoingFriendRequests;
       setState(() {
         //remove duplicate friend requests
+        bestFriends = userData.bestFriends;
         friends.toSet().toList();
         friendRequests.toSet().toList();
         outgoingRequests.toSet().toList();
@@ -67,6 +69,21 @@ class _FriendsPageState extends State<FriendsPage> {
             loopedOutgoingRequests.add(outgoingRequests[i]);
           }
         }
+        loopedFriends.sort((a, b) {
+          bool ABestFriend =
+              userData.bestFriends.any((friend) => friend == a.userId);
+          bool BBestFriend =
+              userData.bestFriends.any((friend) => friend == b.userId);
+          if (ABestFriend == BBestFriend) {
+            return 0;
+          } else if (ABestFriend && !BBestFriend) {
+            return -1;
+          } else if (!ABestFriend && BBestFriend) {
+            return 1;
+          } else {
+            return 0;
+          }
+        });
 
         this.friends = loopedFriends;
         this.friendRequests = loopedFriendRequests;
@@ -75,12 +92,13 @@ class _FriendsPageState extends State<FriendsPage> {
       });
     });
     User userData = await Database()
-        .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
+        .getCurrentUserData();
     List<UserMini> friends = userData.friends;
     List<UserMini> friendRequests = userData.friendRequests;
     List<UserMini> outgoingRequests = userData.outgoingFriendRequests;
     if (!mounted) return;
     setState(() {
+      bestFriends = userData.bestFriends;
       friends.toSet().toList();
       friendRequests.toSet().toList();
       outgoingRequests.toSet().toList();
@@ -106,13 +124,28 @@ class _FriendsPageState extends State<FriendsPage> {
           loopedOutgoingRequests.add(outgoingRequests[i]);
         }
       }
+      loopedFriends.sort((a, b) {
+        bool ABestFriend =
+            userData.bestFriends.any((friend) => friend == a.userId);
+        bool BBestFriend =
+            userData.bestFriends.any((friend) => friend == b.userId);
+        if (ABestFriend == BBestFriend) {
+          return 0;
+        } else if (ABestFriend && !BBestFriend) {
+          return -1;
+        } else if (!ABestFriend && BBestFriend) {
+          return 1;
+        } else {
+          return 0;
+        }
+      });
 
       this.friends = loopedFriends;
       this.friendRequests = loopedFriendRequests;
       this.outgoingRequests = loopedOutgoingRequests;
-      this.friends = friends;
-      this.friendRequests = friendRequests;
-      this.outgoingRequests = outgoingRequests;
+      // this.friends = friends;
+      // this.friendRequests = friendRequests;
+      // this.outgoingRequests = outgoingRequests;
       numberOfRequests = friendRequests.length;
     });
   }
@@ -400,6 +433,8 @@ class _FriendsPageState extends State<FriendsPage> {
             displayName: friends[index].displayName,
             username: friends[index].username,
             uid: friends[index].userId,
+            isBestFriend:
+                bestFriends.any((friend) => friend == friends[index].userId),
           ),
         );
       },

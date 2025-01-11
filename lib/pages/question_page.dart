@@ -5,11 +5,13 @@ import 'package:snippets/constants.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/pages/responses_page.dart';
+import 'package:snippets/pages/trivia_responses_page.dart';
 import 'package:snippets/templates/styling.dart';
 import 'package:snippets/templates/input_decoration.dart';
 import 'package:snippets/widgets/background_tile.dart';
 import 'package:snippets/widgets/custom_app_bar.dart';
 import 'package:snippets/widgets/helper_functions.dart';
+import 'package:snippets/widgets/trivia_option_tile.dart';
 
 import '../api/fb_database.dart';
 
@@ -18,11 +20,15 @@ class QuestionPage extends StatefulWidget {
   final String snippetId;
   final String theme;
   final String type;
+  final List<String> options;
+  final String correctAnswer;
   const QuestionPage(
       {super.key,
       required this.question,
       required this.snippetId,
       required this.theme,
+      required this.options,
+      required this.correctAnswer,
       required this.type});
 
   @override
@@ -83,7 +89,7 @@ class _QuestionPageState extends State<QuestionPage> {
                 String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
                 await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
                     .submitAnswer(widget.snippetId, answer, widget.question,
-                        widget.theme, anonymousID);
+                        widget.theme, "anonymous", "", anonymousID);
               },
               child: const Text("I understand"),
             ),
@@ -107,12 +113,12 @@ class _QuestionPageState extends State<QuestionPage> {
         String anonymousID = await HelperFunctions.saveAnonymouseIDSF();
         await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
             .submitAnswer(widget.snippetId, answer, widget.question,
-                widget.theme, anonymousID);
+                widget.theme, "anonymous", "", anonymousID);
       }
     } else {
       await FBDatabase(uid: FirebaseAuth.instance.currentUser!.uid)
-          .submitAnswer(
-              widget.snippetId, answer, widget.question, widget.theme, null);
+          .submitAnswer(widget.snippetId, answer, widget.question, widget.theme,
+              "normal", "", null);
     }
     setState(() {
       isLoading = false;
@@ -120,16 +126,26 @@ class _QuestionPageState extends State<QuestionPage> {
     // Navigator.of(context).pop();
     //Go to responses page
     Navigator.of(context).pop();
-    nextScreen(
+    if (widget.type == "trivia") {
+      nextScreen(
         context,
-        ResponsesPage(
+        TriviaResponsesPage(
           snippetId: widget.snippetId,
-          userResponse: answer,
-          userDiscussionUsers: [FirebaseAuth.instance.currentUser!.uid],
           question: widget.question,
-          theme: widget.theme,
-          isAnonymous: widget.type == "anonymous",
-        ));
+        ),
+      );
+    } else {
+      nextScreen(
+          context,
+          ResponsesPage(
+            snippetId: widget.snippetId,
+            userResponse: answer,
+            userDiscussionUsers: [FirebaseAuth.instance.currentUser!.uid],
+            question: widget.question,
+            theme: widget.theme,
+            isAnonymous: widget.type == "anonymous",
+          ));
+    }
   }
 
   @override
@@ -168,41 +184,73 @@ class _QuestionPageState extends State<QuestionPage> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width - 50,
-                  height: 100,
-                  child: TextFormField(
-                    maxLines: 5,
-                    decoration: styling.textInputDecoration().copyWith(
-                        hintText: "Enter Answer",
-                        fillColor: styling.theme == "christmas"
-                            ? styling.green
-                            : styling.secondarySolid),
-                    onChanged: (value) => {
-                      setState(() {
-                        answer = value;
-                      })
-                    },
-                  ),
-                ),
-                const SizedBox(height: 20),
-                isLoading
-                    ? Center(
-                        child: CircularProgressIndicator(
-                          color: styling.theme == "christmas"
+                if (widget.type != "trivia")
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width - 50,
+                    height: 100,
+                    child: TextFormField(
+                      maxLines: 5,
+                      decoration: styling.textInputDecoration().copyWith(
+                          hintText: "Enter Answer",
+                          fillColor: styling.theme == "christmas"
                               ? styling.green
-                              : styling.primary,
+                              : styling.secondarySolid),
+                      onChanged: (value) => {
+                        setState(() {
+                          answer = value;
+                        })
+                      },
+                    ),
+                  )
+                else
+                  Wrap(
+                    spacing: 8.0, // Horizontal spacing between children
+                    runSpacing: 8.0, // Vertical spacing between runs
+                    children: [
+                      for (int i = 0; i < widget.options.length; i++)
+                        TriviaOptionTile(
+                            option: widget.options[i],
+                            onClick: () async {
+                              await FBDatabase(
+                                      uid: FirebaseAuth
+                                          .instance.currentUser!.uid)
+                                  .submitAnswer(
+                                      widget.snippetId,
+                                      widget.options[i],
+                                      widget.question,
+                                      "blue",
+                                      "trivia",
+                                      widget.correctAnswer,
+                                      null);
+                              nextScreen(
+                                context,
+                                TriviaResponsesPage(
+                                  snippetId: widget.snippetId,
+                                  question: widget.question,
+                                ),
+                              );
+                            }),
+                    ],
+                  ),
+                const SizedBox(height: 20),
+                if (widget.type != "trivia")
+                  isLoading
+                      ? Center(
+                          child: CircularProgressIndicator(
+                            color: styling.theme == "christmas"
+                                ? styling.green
+                                : styling.primary,
+                          ),
+                        )
+                      : ElevatedButton(
+                          onPressed: () => {
+                            submitAnswer(),
+                          },
+                          style: styling.elevatedButtonDecoration(),
+                          child: Text('Submit',
+                              style:
+                                  TextStyle(fontSize: 20, color: Colors.white)),
                         ),
-                      )
-                    : ElevatedButton(
-                        onPressed: () => {
-                          submitAnswer(),
-                        },
-                        style: styling.elevatedButtonDecoration(),
-                        child: Text('Submit',
-                            style:
-                                TextStyle(fontSize: 20, color: Colors.white)),
-                      ),
               ],
             ),
           ),

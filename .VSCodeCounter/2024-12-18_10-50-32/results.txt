@@ -1,0 +1,32 @@
+Date : 2024-12-18 10:50:32
+Directory : /Volumes/XcodeDev/Downloads/snippets/lib/api
+Total : 8 files,  6891 codes, 233 comments, 543 blanks, all 7667 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| Dart     |          8 |      6,891 |        233 |        543 |      7,667 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++--------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                               | files      | code       | comment    | blank      | total      |
++--------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                  |          8 |      6,891 |        233 |        543 |      7,667 |
++--------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++--------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                           | language | code       | comment    | blank      | total      |
++--------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| /Volumes/XcodeDev/Downloads/snippets/lib/api/auth.dart             | Dart     |        158 |          8 |         25 |        191 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/api/database.dart         | Dart     |        165 |          7 |         46 |        218 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/api/fb_database.dart      | Dart     |      1,629 |         61 |        136 |      1,826 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/api/local_database.dart   | Dart     |        974 |         21 |         95 |      1,090 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/api/local_database.g.dart | Dart     |      3,539 |          2 |        183 |      3,724 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/api/notifications.dart    | Dart     |        295 |        111 |         41 |        447 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/api/remote_config.dart    | Dart     |         54 |          0 |         10 |         64 |
+| /Volumes/XcodeDev/Downloads/snippets/lib/api/storage.dart          | Dart     |         77 |         23 |          7 |        107 |
+| Total                                                              |          |      6,891 |        233 |        543 |      7,667 |
++--------------------------------------------------------------------+----------+------------+------------+------------+------------+

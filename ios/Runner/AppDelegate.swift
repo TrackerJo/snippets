@@ -54,7 +54,9 @@ import WidgetKit
         UIApplication.shared.setAlternateIconName("christmas_icon")
         } else if arguments == "Premium" {
             UIApplication.shared.setAlternateIconName("premium_icon")
-        }
+        } else if arguments == "NewYear" {
+            UIApplication.shared.setAlternateIconName("new_year_icon")
+        }  
         else {
         UIApplication.shared.setAlternateIconName(nil)
         }

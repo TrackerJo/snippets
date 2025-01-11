@@ -30,22 +30,30 @@ class FBDatabase {
       FirebaseFirestore.instance.collection("snippetQuestions");
   final CollectionReference botwCollection =
       FirebaseFirestore.instance.collection("blankOfTheWeek");
+  final CollectionReference suggestionsCollection =
+      FirebaseFirestore.instance.collection("snippetSuggestions");
 
   Future savingUserData(String fullName, String email, String username) async {
     int timestamp = DateTime.now().millisecondsSinceEpoch;
     User newUser = User(
       FCMToken: await PushNotifications().getDeviceToken(),
       description: "Hey there! I'm using Snippets.",
+      streak: 0,
+      streakDate: DateTime(2021, 1, 1),
       displayName: fullName,
       email: email,
       friends: [],
+      longestStreak: 0,
       friendRequests: [],
       outgoingFriendRequests: [],
+      bestFriends: [],
       discussions: [],
       userId: uid!,
       snippetsRespondedTo: 0,
       messagesSent: 0,
       discussionsStarted: 0,
+      topBOTW: 0,
+      triviaPoints: 0,
       username: username,
       searchKey: fullName.toLowerCase(),
       votesLeft: 3,
@@ -175,9 +183,19 @@ class FBDatabase {
     });
   }
 
+  bool isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
+  }
+
+  bool isTwoOrMoreDaysApart(DateTime date1, DateTime date2) {
+    return date1.difference(date2).inDays.abs() >= 2;
+  }
+
   Future submitAnswer(String snippetId, String answer, String question,
-      String theme, String? id) async {
-    User userData = await Database().getUserData(uid!);
+      String theme, String type, String correctAnswer, String? id) async {
+    User userData = await Database().getCurrentUserData();
     DateTime now = DateTime.now();
     await currentSnippetsCollection
         .doc(snippetId)
@@ -199,6 +217,45 @@ class FBDatabase {
       "lastUpdated": now,
       "lastUpdatedMillis": now.millisecondsSinceEpoch,
     });
+    //Compare streakDate to today and see if same day
+    int newStreak = userData.streak;
+    int newLongestStreak = userData.longestStreak;
+    int triviaPoints = userData.triviaPoints;
+    if (type == "trivia") {
+      if (correctAnswer == answer) {
+        triviaPoints += 1;
+      }
+    }
+    DateTime streakDateStandard = DateTime(userData.streakDate.year,
+        userData.streakDate.month, userData.streakDate.day);
+    DateTime today = DateTime.now();
+    DateTime todayStandard = DateTime(today.year, today.month, today.day);
+    DateTime newStreakDate = todayStandard;
+
+    DateTime tomorrow = today.add(Duration(days: 1)); // Get tomorrow's date
+    if (!isSameDay(todayStandard, userData.streakDate)) {
+      if (isTwoOrMoreDaysApart(today, streakDateStandard)) {
+        newStreak = 1;
+      } else {
+        newStreak += 1;
+      }
+      if (newStreak > newLongestStreak) {
+        newLongestStreak = newStreak;
+      }
+      bool sendStreakNotification =
+          await HelperFunctions.getSendStreakNotificationSF();
+      if (sendStreakNotification) {
+        String streakTopic = await HelperFunctions.getStreakTopicSF();
+        if (streakTopic != "") {
+          await PushNotifications().unsubscribeFromTopic(streakTopic);
+        }
+        await PushNotifications().subscribeToTopic(
+            "streak-${tomorrow.month}-${tomorrow.day}-${tomorrow.year}");
+        await HelperFunctions.saveStreakTopicSF(
+            "streak-${tomorrow.month}-${tomorrow.day}-${tomorrow.year}");
+      }
+    }
+
     LocalDatabase().answerSnippet(snippetId, now);
 
     //Update user's discussion list
@@ -215,6 +272,10 @@ class FBDatabase {
         ]),
         "snippetsRespondedTo": FieldValue.increment(1),
         "lastUpdatedMillis": now.millisecondsSinceEpoch,
+        "streak": newStreak,
+        "streakDate": newStreakDate,
+        "longestStreak": newLongestStreak,
+        "triviaPoints": triviaPoints
       });
       // await LocalDatabase().addDiscussionToUser(
       //     uid!,
@@ -274,11 +335,11 @@ class FBDatabase {
             "snippetId": snippetId,
             "question": question.replaceAll("?", "~"),
             "theme": "blue",
-            "snippetType": id != null ? "anonymous" : "normal",
+            "snippetType": type,
             "displayName": userData.displayName,
             "uid": userData.userId,
             "response": answer,
-            "answered": "false",
+            "answered": "false"
           });
     }
     if (Platform.isIOS) {
@@ -320,14 +381,14 @@ class FBDatabase {
   }
 
   Future<List<String>> getFriendsList() async {
-    User userData = await Database().getUserData(uid!);
+    User userData = await Database().getCurrentUserData();
     List<UserMini> friendsList = userData.friends;
     //Map each element to a string
     return friendsList.map((e) => e.userId).toList();
   }
 
   Future<List<UserMini>> getFriendsListMap() async {
-    User userData = await Database().getUserData(uid!);
+    User userData = await Database().getCurrentUserData();
 
     return userData.friends;
   }
@@ -508,7 +569,7 @@ class FBDatabase {
 
   Future sendFriendRequest(String friendUid, String friendDisplayName,
       String friendUsername, String friendFCMToken) async {
-    User userData = await Database().getUserData(uid!);
+    User userData = await Database().getCurrentUserData();
     int lastUpdated = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(friendUid).update({
       "friendRequests": FieldValue.arrayUnion(
@@ -564,7 +625,7 @@ class FBDatabase {
 
   Future acceptFriendRequest(String friendUid, String friendDisplayName,
       String friendUsername, String friendFCMToken) async {
-    User userData = await Database().getUserData(uid!);
+    User userData = await Database().getCurrentUserData();
     int lastUpdated = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(uid).update({
       "friends": FieldValue.arrayUnion([
@@ -635,7 +696,7 @@ class FBDatabase {
 
   Future declineFriendRequest(String friendUid, String friendFCMToken,
       String friendDisplayName, String friendUsername) async {
-    User userData = await Database().getUserData(uid!);
+    User userData = await Database().getCurrentUserData();
     int lastUpdated = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(uid).update({
       "friendRequests": FieldValue.arrayRemove([
@@ -667,7 +728,7 @@ class FBDatabase {
 
   Future removeFriend(String friendUid, String friendDisplayName,
       String friendUsername, String friendFCMToken) async {
-    User userData = await Database().getUserData(uid!);
+    User userData = await Database().getCurrentUserData();
     int lastUpdated = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(uid).update({
       "friends": FieldValue.arrayRemove([
@@ -678,6 +739,7 @@ class FBDatabase {
           "FCMToken": friendFCMToken,
         }
       ]),
+      "bestFriends": FieldValue.arrayRemove([friendUid]),
       "lastUpdatedMillis": lastUpdated,
     });
 
@@ -692,12 +754,13 @@ class FBDatabase {
           "FCMToken": userData.FCMToken,
         }
       ]),
+      "bestFriends": FieldValue.arrayRemove([uid]),
       "lastUpdatedMillis": lastUpdated,
     });
   }
 
   Future<bool> checkFriendRequest(String friendUid) async {
-    User userData = await Database().getUserData(uid!);
+    User userData = await Database().getCurrentUserData();
     List<UserMini> friendRequests = userData.friendRequests;
     for (var element in friendRequests) {
       if (element.userId == friendUid) {
@@ -709,7 +772,7 @@ class FBDatabase {
 
   Future cancelFriendRequest(String friendUid, String friendDisplayName,
       String friendUsername, String friendFCMToken) async {
-    User userData = await Database().getUserData(uid!);
+    User userData = await Database().getCurrentUserData();
     int lastUpdated = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(friendUid).update({
       "friendRequests": FieldValue.arrayRemove([
@@ -964,7 +1027,7 @@ class FBDatabase {
 
   Future getDiscussions(
       String userId, StreamController<DiscussionFull> discStream) async {
-    User userData = await Database().getUserData(uid!);
+    User userData = await Database().getCurrentUserData();
     List<Discussion> discussions = userData.discussions;
 
     for (var element in discussions) {
@@ -1155,7 +1218,7 @@ class FBDatabase {
   }
 
   Future updateUsersBOTWAnswer(BOTWAnswer answer) async {
-    User userData = await Database().getUserData(uid!);
+    User userData = await Database().getCurrentUserData();
     DateTime now = DateTime.now();
     DateTime monday = now.subtract(Duration(days: now.weekday - 1));
     String mondayString = "${monday.month}-${monday.day}-${monday.year}";
@@ -1211,7 +1274,7 @@ class FBDatabase {
   }
 
   Future<List<Map<String, dynamic>>> getSuggestedFriends() async {
-    User userData = await Database().getUserData(uid!);
+    User userData = await Database().getCurrentUserData();
     List<UserMini> friendsList = userData.friends;
 
     List<String> friendsIds = friendsList.map((e) => e.userId).toList();
@@ -1267,7 +1330,7 @@ class FBDatabase {
   }
 
   Future updateUserFCMToken(String FCMToken) async {
-    User userData = await Database().getUserData(uid!);
+    User userData = await Database().getCurrentUserData();
     int lastUpdated = DateTime.now().millisecondsSinceEpoch;
     await userCollection.doc(uid).update({
       "FCMToken": FCMToken,
@@ -1507,7 +1570,7 @@ class FBDatabase {
       "lastUpdatedMillis": lastUpdatedMillis,
     });
     //Update local user data
-    User userData = await Database().getUserData(uid!);
+    User userData = await Database().getCurrentUserData();
     userData.email = newEmail;
     await LocalDatabase().updateUserData(userData, lastUpdatedMillis);
 
@@ -1523,7 +1586,7 @@ class FBDatabase {
       }
     }
 
-    User userData = await Database().getUserData(uid!);
+    User userData = await Database().getCurrentUserData();
     int lastUpdatedMillis = DateTime.now().millisecondsSinceEpoch;
 
     await userCollection.doc(uid).update({
@@ -1653,7 +1716,7 @@ class FBDatabase {
       return res;
     }
 
-    User userData = await Database().getUserData(uid!);
+    User userData = await Database().getCurrentUserData();
 
     List<UserMini> friends = userData.friends;
     List<String> friendsIds = friends.map((e) => e.userId).toList();
@@ -1667,6 +1730,7 @@ class FBDatabase {
             "FCMToken": userData.FCMToken,
           }
         ]),
+        "bestFriends": FieldValue.arrayRemove([uid]),
       });
     }
     List<UserMini> friendRequests = userData.friendRequests;
@@ -1768,6 +1832,7 @@ class FBDatabase {
   Future<void> removeFriendFix(UserMini friend, User userData) async {
     await userCollection.doc(userData.userId).update({
       "friends": FieldValue.arrayRemove([friend.toMap()]),
+      "bestFriends": FieldValue.arrayRemove([friend.userId]),
       "lastUpdatedMillis": DateTime.now().millisecondsSinceEpoch,
     });
   }
@@ -1821,5 +1886,105 @@ class FBDatabase {
       await LocalDatabase()
           .deleteChats("${element.snippetId}-${element.answerId}");
     }
+  }
+
+  Future<void> addBestFriend(String bestFriendId) async {
+    print("Adding best friend");
+    print(uid);
+    await userCollection.doc(uid).update({
+      "bestFriends": FieldValue.arrayUnion([bestFriendId]),
+      "lastUpdatedMillis": DateTime.now().millisecondsSinceEpoch,
+    });
+  }
+
+  Future<void> removeBestFriend(String bestFriendId) async {
+    await userCollection.doc(uid).update({
+      "bestFriends": FieldValue.arrayRemove([bestFriendId]),
+      "lastUpdatedMillis": DateTime.now().millisecondsSinceEpoch,
+    });
+  }
+
+  Future<void> addSavedResponse(SavedResponse savedResponse) async {
+    await userCollection
+        .doc(uid)
+        .collection("savedResponses")
+        .doc(savedResponse.responseId)
+        .set(savedResponse.toMap());
+  }
+
+  Future<void> addSavedMessage(SavedMessage savedMessage) async {
+    await userCollection
+        .doc(uid)
+        .collection("savedResponses")
+        .doc(savedMessage.responseId)
+        .collection("messages")
+        .doc(savedMessage.messageId)
+        .set(savedMessage.toMap());
+  }
+
+  Future<List<SavedResponse>> getSavedResponses(
+      String userId, int? lastUpdated) async {
+    QuerySnapshot snapshot;
+    if (lastUpdated == null) {
+      snapshot =
+          await userCollection.doc(userId).collection("savedResponses").get();
+    } else {
+      snapshot = await userCollection
+          .doc(userId)
+          .collection("savedResponses")
+          .where("lastUpdated", isGreaterThan: lastUpdated + 1)
+          .get();
+    }
+    List<SavedResponse> savedResponses = [];
+    for (var doc in snapshot.docs) {
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      print("Data: $data");
+      savedResponses.add(SavedResponse.fromMap(data));
+    }
+    return savedResponses;
+  }
+
+  Future<List<SavedMessage>> getSavedMessages(SavedResponse res) async {
+    print("getting messages for ${res.responseId}");
+    QuerySnapshot snapshot = await userCollection
+        .doc(res.userId)
+        .collection("savedResponses")
+        .doc(res.responseId)
+        .collection("messages")
+        .get();
+
+    List<SavedMessage> savedMessage = [];
+    for (var doc in snapshot.docs) {
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      print("Message Data: $data");
+      savedMessage.add(SavedMessage.fromMap(data));
+    }
+    return savedMessage;
+  }
+
+  Future<void> changeSavedResponseVisibility(
+      String responseId, bool visibility) async {
+    await userCollection
+        .doc(uid)
+        .collection("savedResponses")
+        .doc(responseId)
+        .update({
+      "isPublic": visibility,
+      "lastUpdated": DateTime.now().millisecondsSinceEpoch
+    });
+  }
+
+  Future<void> updateUserStreak(String userId, int streak) async {
+    await userCollection.doc(userId).update({
+      "streak": streak,
+      "lastUpdated": DateTime.now().millisecondsSinceEpoch
+    });
+  }
+
+  Future<void> suggestSnippet(String snippet) async {
+    await suggestionsCollection.add({
+      "snippet": snippet,
+      "date": DateTime.now(),
+    });
   }
 }

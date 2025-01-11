@@ -74,7 +74,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
     await HelperFunctions.saveOpenedPageSF(
         "discussion-${widget.responseTile.snippetId}-${widget.responseTile.userId}");
     User userData = await Database()
-        .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
+        .getCurrentUserData();
 
     if (mounted) {
       setState(() {
@@ -109,7 +109,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
         response: widget.responseTile.response,
         userId: widget.responseTile.userId,
         isDisplayOnly: true,
-        question: widget.responseTile.question.replaceAll("~", "?"),
+        question: widget.responseTile.question.replaceAll("Q~Q", "?"),
         theme: widget.responseTile.theme,
         isAnonymous: widget.responseTile.isAnonymous,
       );
@@ -347,7 +347,6 @@ class _DiscussionPageState extends State<DiscussionPage> {
                             ? anonymousId == message.senderId
                             : auth.FirebaseAuth.instance.currentUser!.uid ==
                                 message.senderId,
-                        theme: widget.theme,
                         senderId: message.senderId,
                         time: date);
                   })
@@ -391,7 +390,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
       );
 
       User userData = await Database()
-          .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
+          .getCurrentUserData();
       DiscussionUser userMap = DiscussionUser(
           FCMToken: userData.FCMToken,
           userId: displayTile.isAnonymous
@@ -472,6 +471,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
           ],
           data: {
             "snippetId": snippetId,
+            "snippetType": displayTile.isAnonymous ? "anonymous" : "normal",
             "responseId": responseId,
             "snippetQuestion": snippetQuestion,
             "responseName": responseName,

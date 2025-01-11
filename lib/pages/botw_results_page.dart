@@ -10,7 +10,9 @@ import 'package:snippets/widgets/custom_app_bar.dart';
 
 class BotwResultsPage extends StatefulWidget {
   final Map<String, BOTWAnswer> answers;
-  const BotwResultsPage({super.key, this.answers = const {}});
+  final bool isLastWeek;
+  const BotwResultsPage(
+      {super.key, this.answers = const {}, this.isLastWeek = false});
 
   @override
   State<BotwResultsPage> createState() => _BotwResultsPageState();
@@ -73,8 +75,9 @@ class _BotwResultsPageState extends State<BotwResultsPage> {
             appBar: PreferredSize(
               preferredSize: const Size.fromHeight(kToolbarHeight),
               child: CustomAppBar(
-                title: "Results",
+                title: (widget.isLastWeek ? "Last Week's " : "") + "Results",
                 showBackButton: true,
+                fixLeft: true,
                 onBackButtonPressed: () async {
                   Navigator.pop(context, true);
                 },

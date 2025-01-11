@@ -95,8 +95,20 @@ class _BOTWTileState extends State<BOTWTile> {
                           },
                           controller: answerController,
                           maxLines: 2,
+                          style: TextStyle(
+                              color: styling.theme == "colorful-light"
+                                  ? Colors.white
+                                  : styling.theme == "christmas"
+                                      ? Colors.white
+                                      : Colors.black),
                           decoration: styling.textInputDecoration().copyWith(
                               hintText: "Enter submission here",
+                              hintStyle: TextStyle(
+                                  color: styling.theme == "colorful-light"
+                                      ? Colors.white
+                                      : styling.theme == "christmas"
+                                          ? Colors.white
+                                          : Colors.black),
                               fillColor: styling.theme == "christmas"
                                   ? styling.red
                                   : styling.primaryInput
@@ -124,6 +136,7 @@ class _BOTWTileState extends State<BOTWTile> {
                           isEditting = false;
                         });
                         widget.answer.answer = answerController.text.trim();
+                        if (widget.answer.answer == "") return;
                         await Database().updateUsersBOTWAnswer(widget.answer);
                       },
                       style: styling.elevatedButtonDecorationPurple(),

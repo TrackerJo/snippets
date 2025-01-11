@@ -21,6 +21,8 @@ class AppIconChanger {
         iconNameIOS = "Christmas";
       } else if (iconName == "premium") {
         iconNameIOS = "Premium";
+      } else if (iconName == "NewYear") {
+        iconNameIOS = "NewYear";
       }
       print("Changing app icon to $iconNameIOS");
       return await iosPlatform.invokeMethod('changeIcon', iconNameIOS);

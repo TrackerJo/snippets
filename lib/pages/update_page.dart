@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/widgets/background_tile.dart';
@@ -37,63 +38,85 @@ class _UpdatePageState extends State<UpdatePage> {
               ),
             ),
             backgroundColor: Colors.transparent,
-            body: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "An update is available! Please update the app to continue.",
-                  style: TextStyle(
-                    fontSize: 30,
-                    color: styling.theme == "colorful" ||
-                            styling.theme == "colorful-light" || styling.theme == "christmas"
-                        ? Colors.white
-                        : styling.primary,
+            body: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "An update is available! Please update the app to continue.",
+                    style: TextStyle(
+                      fontSize: 30,
+                      color: styling.theme == "colorful" ||
+                              styling.theme == "colorful-light" ||
+                              styling.theme == "christmas"
+                          ? Colors.white
+                          : styling.primary,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (widget.isLoggedIn) {
-                      router.pushReplacement("/");
-                    } else {
-                      router.pushReplacement("/login");
-                    }
-                    Uri sms = Uri.parse(
-                        'https://apps.apple.com/app/snippets-only-reality-no-bs/id6642639704');
-                    if (Platform.isAndroid) {
-                      sms = Uri.parse(
-                          'https://us-central1-snippets2024.cloudfunctions.net/updateLink');
-                    }
-                    if (await launchUrl(sms)) {
-                    } else {
-                      showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: const Text("Unable to open app store"),
-                              content: const Text("Please try again later."),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: const Text("Okay"),
-                                ),
-                              ],
-                            );
-                          });
-                    }
-                  },
-                  style: styling.elevatedButtonDecoration(),
-                  child: Text("Update",
-                      style: TextStyle(
-                        color: styling.theme == "colorful-light"
-                            ? styling.primaryDark
-                            : Colors.white,
-                      )),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () async {
+                      String hapticFeedback =
+                          await HelperFunctions.getHapticFeedbackSF();
+                      if (hapticFeedback == "normal") {
+                        HapticFeedback.mediumImpact();
+                      } else if (hapticFeedback == "light") {
+                        HapticFeedback.lightImpact();
+                      } else if (hapticFeedback == "heavy") {
+                        HapticFeedback.heavyImpact();
+                      }
+                      if (widget.isLoggedIn) {
+                        router.pushReplacement("/");
+                      } else {
+                        router.pushReplacement("/login");
+                      }
+                      Uri sms = Uri.parse(
+                          'https://apps.apple.com/app/snippets-only-reality-no-bs/id6642639704');
+                      if (Platform.isAndroid) {
+                        sms = Uri.parse(
+                            'https://play.google.com/store/apps/details?id=com.kazoom.snippets&hl=en_US');
+                      }
+                      if (await launchUrl(sms)) {
+                      } else {
+                        showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text("Unable to open app store"),
+                                content: const Text("Please try again later."),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () async {
+                                      String hapticFeedback =
+                                          await HelperFunctions
+                                              .getHapticFeedbackSF();
+                                      if (hapticFeedback == "normal") {
+                                        HapticFeedback.mediumImpact();
+                                      } else if (hapticFeedback == "light") {
+                                        HapticFeedback.lightImpact();
+                                      } else if (hapticFeedback == "heavy") {
+                                        HapticFeedback.heavyImpact();
+                                      }
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text("Okay"),
+                                  ),
+                                ],
+                              );
+                            });
+                      }
+                    },
+                    style: styling.elevatedButtonDecoration(),
+                    child: Text("Update",
+                        style: TextStyle(
+                          color: styling.theme == "colorful-light"
+                              ? styling.primaryDark
+                              : Colors.white,
+                        )),
+                  ),
+                ],
+              ),
             )),
       ],
     );

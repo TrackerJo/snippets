@@ -38,6 +38,7 @@ class _ResponsesPageState extends State<ResponsesPage> {
   String userResponse = "";
   List<dynamic> discussionUsers = [];
   StreamController responsesStream = StreamController();
+  List<String> bestFriends = [];
 
   List<String> toStringList(List<UserMini> oldList) {
     List<String> newList = [];
@@ -70,9 +71,12 @@ class _ResponsesPageState extends State<ResponsesPage> {
     List<String> newFriends = [];
     List<String> removedFriends = [];
     List<String> friends = [];
+    User userData = await Database()
+        .getCurrentUserData();
+    setState(() {
+      bestFriends = userData.bestFriends;
+    });
     if (!widget.isAnonymous) {
-      User userData = await Database()
-          .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
       friends = toStringList(userData.friends);
       friends.add(auth.FirebaseAuth.instance.currentUser!.uid);
       List<String> responsesIDs =
@@ -113,13 +117,30 @@ class _ResponsesPageState extends State<ResponsesPage> {
           LocalDatabase().removeResponse(widget.snippetId, response.userId);
         }
       }
+      if (!widget.isAnonymous) {
+        newResponses.sort((a, b) {
+          bool ABestFriend =
+              userData.bestFriends.any((friend) => friend == a.userId);
+          bool BBestFriend =
+              userData.bestFriends.any((friend) => friend == b.userId);
+          if (ABestFriend == BBestFriend) {
+            return 0;
+          } else if (ABestFriend && !BBestFriend) {
+            return -1;
+          } else if (!ABestFriend && BBestFriend) {
+            return 1;
+          } else {
+            return 0;
+          }
+        });
+      }
       responsesStream.add(newResponses);
     });
   }
 
   void getUserDisplayName() async {
     User userData = await Database()
-        .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
+        .getCurrentUserData();
     if (mounted) {
       setState(() {
         userDisplayName = userData.displayName;
@@ -254,6 +275,9 @@ class _ResponsesPageState extends State<ResponsesPage> {
                             theme: widget.theme,
                             userId: response.userId,
                             isAnonymous: widget.isAnonymous,
+                            isBestFriend:
+                                bestFriends.contains(response.userId) &&
+                                    !widget.isAnonymous,
                           ),
                         );
                       }));
