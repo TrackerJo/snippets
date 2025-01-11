@@ -77,8 +77,7 @@ class _VotingPageState extends State<VotingPage> {
       });
     }
 
-    User data = await Database()
-        .getCurrentUserData();
+    User data = await Database().getCurrentUserData();
 
     setState(() {
       profileData = data;
