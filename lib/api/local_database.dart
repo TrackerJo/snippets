@@ -1043,6 +1043,7 @@ class LocalDatabase {
             searchKey: Value(user.searchKey),
             streak: Value(user.streak),
             longestStreak: Value(user.longestStreak),
+            snippetsRespondedTo: Value(user.snippetsRespondedTo),
             streakDate: Value(user.streakDate),
             topBOTW: Value(user.topBOTW),
             triviaPoints: Value(user.triviaPoints),
