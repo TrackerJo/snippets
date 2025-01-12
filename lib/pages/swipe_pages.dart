@@ -55,7 +55,7 @@ class _SwipePagesState extends State<SwipePages> {
   bool loggedIn = false;
   bool isSigningOut = false;
   bool seenUpdateDialog = false;
-
+  bool seenSuggestsSnippetsInfo = false;
   StreamController<User> userStreamController = StreamController();
 
   void getData() async {
@@ -400,9 +400,12 @@ class _SwipePagesState extends State<SwipePages> {
         viewUpdateSheet();
         await HelperFunctions.saveSeenUpdateDialogSF(22);
       }
-      bool seenSuggestsSnippetsInfo =
+      bool seenSuggestsSnippets =
           await HelperFunctions.getSeenSuggestSnippetSF();
-      if (!seenSuggestsSnippetsInfo) {
+      if (!seenSuggestsSnippets && !seenSuggestsSnippetsInfo) {
+        setState(() {
+          seenSuggestsSnippetsInfo = true;
+        });
         showSuggestsSnippetsInfoDialog(context);
       }
     });
