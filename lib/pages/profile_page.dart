@@ -481,6 +481,11 @@ class _ProfilePageState extends State<ProfilePage> {
       await Future.delayed(const Duration(milliseconds: 100));
       showStreaksDialog(context);
     }
+    bool seenReportProfile = await HelperFunctions.getSeenProfileReportSF();
+    if (!seenReportProfile && !isCurrentUser) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      showReportDialog(context);
+    }
   }
 
   @override
@@ -743,6 +748,399 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  void reportProfile() {
+    ProfileReportType? type;
+    bool selectingType = true;
+    bool selectingReason = false;
+    bool selectedOther = false;
+    String reason = "";
+    String additionalInfo = "";
+    String otherType = "";
+    bool isSubmitting = false;
+
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return StatefulBuilder(builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: styling.primary,
+              title: const Text("Report Profile",
+                  style: TextStyle(color: Colors.white)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (selectingType)
+                    const Text(
+                        "Please select what part of the profile to report",
+                        style: TextStyle(color: Colors.white))
+                  else
+                    const Text(
+                        "Please select a reason for reporting this profile",
+                        style: TextStyle(color: Colors.white)),
+                  const SizedBox(height: 10),
+                  if (selectingType)
+                    Column(
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              type = ProfileReportType.name;
+                            });
+                          },
+                          child: ListTile(
+                            title: const Text("Display Name",
+                                style: TextStyle(color: Colors.white)),
+                            leading: Radio(
+                              value: "name",
+                              groupValue: type.toString(),
+                              fillColor: WidgetStateProperty.all(Colors.white),
+                              onChanged: (String? value) {
+                                setState(() {
+                                  type = ProfileReportType.name;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              type = ProfileReportType.username;
+                            });
+                          },
+                          child: ListTile(
+                            title: const Text("Username",
+                                style: TextStyle(color: Colors.white)),
+                            leading: Radio(
+                              value: "username",
+                              groupValue: type.toString(),
+                              fillColor: WidgetStateProperty.all(Colors.white),
+                              onChanged: (String? value) {
+                                setState(() {
+                                  type = ProfileReportType.username;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              type = ProfileReportType.description;
+                            });
+                          },
+                          child: ListTile(
+                            title: const Text("Description",
+                                style: TextStyle(color: Colors.white)),
+                            leading: Radio(
+                              value: "description",
+                              groupValue: type.toString(),
+                              fillColor: WidgetStateProperty.all(Colors.white),
+                              onChanged: (String? value) {
+                                setState(() {
+                                  type = ProfileReportType.description;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              type = ProfileReportType.botw;
+                            });
+                          },
+                          child: ListTile(
+                            title: const Text("Snippet of the Week",
+                                style: TextStyle(color: Colors.white)),
+                            leading: Radio(
+                              value: "botw",
+                              groupValue: type.toString(),
+                              fillColor: WidgetStateProperty.all(Colors.white),
+                              onChanged: (String? value) {
+                                setState(() {
+                                  type = ProfileReportType.botw;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              type = ProfileReportType.other;
+                            });
+                          },
+                          child: ListTile(
+                            title: const Text("Other",
+                                style: TextStyle(color: Colors.white)),
+                            leading: Radio(
+                              value: "Other",
+                              groupValue: type.toString(),
+                              fillColor: WidgetStateProperty.all(Colors.white),
+                              onChanged: (String? value) {
+                                setState(() {
+                                  type = ProfileReportType.other;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        if (type == ProfileReportType.other)
+                          Column(
+                            children: [
+                              const SizedBox(height: 10),
+                              TextField(
+                                onChanged: (String value) {
+                                  otherType = value;
+                                },
+                                decoration: InputDecoration(
+                                  hintText:
+                                      "Please explain what part of the profile you are reporting",
+                                  hintStyle:
+                                      const TextStyle(color: Colors.white),
+                                  enabledBorder: const UnderlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.white),
+                                  ),
+                                  focusedBorder: const UnderlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    )
+                  else
+                    Column(
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              reason = "Inappropriate Content";
+                            });
+                          },
+                          child: ListTile(
+                            title: const Text("Inappropriate Content",
+                                style: TextStyle(color: Colors.white)),
+                            leading: Radio(
+                              value: "Inappropriate Content",
+                              groupValue: reason,
+                              fillColor: WidgetStateProperty.all(Colors.white),
+                              onChanged: (String? value) {
+                                setState(() {
+                                  reason = value!;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              reason = "Bullying";
+                            });
+                          },
+                          child: ListTile(
+                            title: const Text("Bullying",
+                                style: TextStyle(color: Colors.white)),
+                            leading: Radio(
+                              value: "Bullying",
+                              groupValue: reason,
+                              fillColor: WidgetStateProperty.all(Colors.white),
+                              onChanged: (String? value) {
+                                setState(() {
+                                  reason = value!;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              reason = "Violence, hate or exploitation";
+                            });
+                          },
+                          child: ListTile(
+                            title: const Text("Violence, hate or exploitation",
+                                style: TextStyle(color: Colors.white)),
+                            leading: Radio(
+                              value: "Violence, hate or exploitation",
+                              groupValue: reason,
+                              fillColor: WidgetStateProperty.all(Colors.white),
+                              onChanged: (String? value) {
+                                setState(() {
+                                  reason = value!;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              reason = "Other";
+                            });
+                          },
+                          child: ListTile(
+                            title: const Text("Other",
+                                style: TextStyle(color: Colors.white)),
+                            leading: Radio(
+                              value: "Other",
+                              groupValue: reason,
+                              fillColor: WidgetStateProperty.all(Colors.white),
+                              onChanged: (String? value) {
+                                setState(() {
+                                  reason = value!;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        if (reason == "Other")
+                          Column(
+                            children: [
+                              const SizedBox(height: 10),
+                              TextField(
+                                onChanged: (String value) {
+                                  additionalInfo = value;
+                                },
+                                decoration: InputDecoration(
+                                  hintText:
+                                      "Please provide additional information",
+                                  hintStyle:
+                                      const TextStyle(color: Colors.white),
+                                  enabledBorder: const UnderlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.white),
+                                  ),
+                                  focusedBorder: const UnderlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("Cancel",
+                      style: TextStyle(color: Colors.white)),
+                ),
+                if (isSubmitting)
+                  CircularProgressIndicator(
+                    color: styling.secondary,
+                  )
+                else if (selectingReason)
+                  ElevatedButton(
+                      onPressed: () async {
+                        if (reason == "") {
+                          //show error message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Please select a reason",
+                                  style: TextStyle(color: Colors.white)),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+                        if (reason == "Other" && additionalInfo == "") {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  "Please provide additional information",
+                                  style: TextStyle(color: Colors.white)),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+                        setState(() {
+                          isSubmitting = true;
+                        });
+                        String reportedInfo = "";
+                        switch (type!) {
+                          case ProfileReportType.name:
+                            reportedInfo = profileData.displayName;
+
+                            break;
+                          case ProfileReportType.username:
+                            reportedInfo = profileData.username;
+                            break;
+                          case ProfileReportType.description:
+                            reportedInfo = profileData.description;
+                            break;
+                          case ProfileReportType.botw:
+                            reportedInfo = blankOfTheWeek
+                                .answers[profileData.userId]!.answer;
+                            break;
+                          case ProfileReportType.other:
+                            reportedInfo = otherType;
+                            break;
+                          default:
+                            reportedInfo = otherType;
+                            break;
+                        }
+                        ProfileReport report = ProfileReport(
+                            profileReportType: type!,
+                            other: otherType,
+                            reportedUserId: profileData.userId,
+                            reportedInfo: reportedInfo,
+                            reportId: "",
+                            date: DateTime.now(),
+                            reason: reason,
+                            additionalInfo: additionalInfo);
+                        await Database().reportUserProfile(report);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text("Profile Reported",
+                                style: TextStyle(color: Colors.white)),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                        setState(() {
+                          isSubmitting = false;
+                        });
+                        Navigator.of(context).pop();
+                      },
+                      style: styling.elevatedButtonDecorationBlue(),
+                      child: const Text("Report",
+                          style: TextStyle(color: Colors.white)))
+                else if (selectingType)
+                  ElevatedButton(
+                      onPressed: () {
+                        if (type == null) {
+                          //show error message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Please select a type",
+                                  style: TextStyle(color: Colors.white)),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+                        setState(() {
+                          selectingType = false;
+                          selectingReason = true;
+                        });
+                      },
+                      style: styling.elevatedButtonDecorationBlue(),
+                      child: const Text("Next",
+                          style: TextStyle(color: Colors.white)))
+              ],
+            );
+          });
+        });
+  }
+
   void showFavortiesDialog(BuildContext context) {
     showDialog(
         context: context,
@@ -772,6 +1170,42 @@ class _ProfilePageState extends State<ProfilePage> {
               TextButton(
                   onPressed: () async {
                     await HelperFunctions.saveSeenFavoritesSF(true);
+                    Navigator.pop(context);
+                  },
+                  child: Text("OK"))
+            ],
+          );
+        });
+  }
+
+  void showReportDialog(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text("Report Profile"),
+            content: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text:
+                        "You can report profiles by tapping on the flag icon (",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                  WidgetSpan(
+                    child: Icon(Icons.flag_outlined, size: 16),
+                  ),
+                  TextSpan(
+                    text: ") on their profile.",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () async {
+                    await HelperFunctions.saveSeenProfileReportSF(true);
                     Navigator.pop(context);
                   },
                   child: Text("OK"))
@@ -830,6 +1264,8 @@ class _ProfilePageState extends State<ProfilePage> {
                               : "$displayName${profileData.streak > 2 ? " • ${profileData.streak}🔥" : ""}",
                       showBackButton:
                           widget.showBackButton || widget.isFriendLink,
+                      showReportButton: !isCurrentUser && userExists,
+                      onReportButtonPressed: reportProfile,
                       showBestFriendButton: !isCurrentUser && isFriends,
                       isBestFriend: isBestFriend,
                       onBestFriendButtonPressed: () async {

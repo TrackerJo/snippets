@@ -30,6 +30,73 @@ class HelperFunctions {
   static String seenTriviaSnippetKey = "SEENTRIVIASNIPPETKEY";
   static String setNewYearIconKey = "SETNEWYEARICONKEY";
   static String seenSuggestSnippetKey = "SEENSUGGESTSNIPPETKEY";
+  static String profileStrikesKey = "PROFILESTRIKESKEY";
+  static String seenProfileReportKey = "SEENPROFILEREPORTKEY";
+  static String seenResponseReportKey = "SEENRESPONSEREPORTKEY";
+  static String seenMessageReportKey = "SEENMESSAGEREPORTKEY";
+  static String seenCensoredMessageKey = "SEENCENSOREDMESSAGEKEY";
+  static String acceptedCommunityGuidelinesKey =
+      "ACCEPTEDCOMMUNITYGUIDELINESKEY";
+
+  static Future<bool> saveAcceptedCommunityGuidelinesSF(bool status) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setBool(acceptedCommunityGuidelinesKey, status);
+  }
+
+  static Future<bool> getAcceptedCommunityGuidelinesSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getBool(acceptedCommunityGuidelinesKey) ?? false;
+  }
+
+  static Future<bool> saveSeenCensoredMessageSF(bool status) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setBool(seenCensoredMessageKey, status);
+  }
+
+  static Future<bool> getSeenCensoredMessageSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getBool(seenCensoredMessageKey) ?? false;
+  }
+
+  static Future<bool> saveSeenMessageReportSF(bool status) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setBool(seenMessageReportKey, status);
+  }
+
+  static Future<bool> getSeenMessageReportSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getBool(seenMessageReportKey) ?? false;
+  }
+
+  static Future<bool> saveSeenResponseReportSF(bool status) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setBool(seenResponseReportKey, status);
+  }
+
+  static Future<bool> getSeenResponseReportSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getBool(seenResponseReportKey) ?? false;
+  }
+
+  static Future<bool> saveSeenProfileReportSF(bool status) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setBool(seenProfileReportKey, status);
+  }
+
+  static Future<bool> getSeenProfileReportSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getBool(seenProfileReportKey) ?? false;
+  }
+
+  static Future<bool> saveProfileStrikesSF(List<String> strikes) async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return await sf.setStringList(profileStrikesKey, strikes);
+  }
+
+  static Future<List<String>> getProfileStrikesSF() async {
+    SharedPreferences sf = await SharedPreferences.getInstance();
+    return sf.getStringList(profileStrikesKey) ?? [];
+  }
 
   static Future<bool> saveSeenSuggestSnippetSF(bool status) async {
     SharedPreferences sf = await SharedPreferences.getInstance();

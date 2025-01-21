@@ -29,7 +29,9 @@ import 'package:snippets/helper/app_icon_changer.dart';
 
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/pages/app_preferences_page.dart';
+import 'package:snippets/pages/banned_page.dart';
 import 'package:snippets/pages/botw_results_page.dart';
+import 'package:snippets/pages/community_guidelines_page.dart';
 import 'package:snippets/pages/create_account_page.dart';
 import 'package:snippets/pages/discussion_page.dart';
 import 'package:snippets/pages/forgot_password_page.dart';
@@ -39,6 +41,7 @@ import 'package:snippets/pages/profile_page.dart';
 import 'package:snippets/pages/question_page.dart';
 import 'package:snippets/pages/responses_page.dart';
 import 'package:snippets/pages/settings_page.dart';
+import 'package:snippets/pages/strikes_page.dart';
 import 'package:snippets/pages/swipe_pages.dart';
 import 'package:snippets/pages/trivia_responses_page.dart';
 import 'package:snippets/pages/update_page.dart';
@@ -46,6 +49,7 @@ import 'package:snippets/pages/voting_page.dart';
 import 'package:snippets/pages/login_page.dart';
 import 'package:snippets/providers/card_provider.dart';
 import 'package:snippets/templates/styling.dart';
+import 'package:snippets/widgets/helper_functions.dart';
 import 'package:snippets/widgets/response_tile.dart';
 
 import 'firebase_options.dart';
@@ -272,6 +276,12 @@ final router = GoRouter(
       },
     ),
     GoRoute(
+      path: "/banned",
+      builder: (_, __) {
+        return const BannedPage();
+      },
+    ),
+    GoRoute(
       path: '/nowifi',
       builder: (_, __) {
         return const NoWifiPage();
@@ -291,6 +301,18 @@ final router = GoRouter(
           );
         }),
     GoRoute(
+      path: '/strikes/:strikesReceived/:totalStrikes',
+      builder: (_, __) {
+        List<String> strikesReceived =
+            __.pathParameters['strikesReceived']!.split(",");
+        int totalStrikes = int.parse(__.pathParameters['totalStrikes']!);
+        return StrikesPage(
+          strikesReceived: strikesReceived,
+          totalStrikes: totalStrikes,
+        );
+      },
+    ),
+    GoRoute(
         path: '/forgotPassword/:uid/:toProfile',
         builder: (_, __) {
           return ForgotPasswordPage(
@@ -306,6 +328,12 @@ final router = GoRouter(
             toProfile: __.pathParameters['toProfile'] == 'true',
           );
         }),
+    GoRoute(
+      path: '/guidelines',
+      builder: (_, __) {
+        return const CommunityGuidelinesPage();
+      },
+    ),
     GoRoute(
         path: '/onBoarding/:uid/:toProfile',
         builder: (_, __) {
@@ -330,9 +358,11 @@ final router = GoRouter(
                 response: state.uri.queryParameters['response']!,
                 userId: state.uri.queryParameters['userId']!,
                 snippetId: state.uri.queryParameters['snippetId']!,
+                reports: 0,
                 question: state.uri.queryParameters['snippetQuestion']!
                     .replaceAll("Q~Q", "?"),
                 theme: state.uri.queryParameters['theme']!,
+                reportIds: [],
                 isDisplayOnly:
                     state.uri.queryParameters['isDisplayOnly'] == 'true',
                 isAnonymous:
@@ -383,9 +413,11 @@ final router = GoRouter(
                     displayName: state.uri.queryParameters['displayName']!,
                     response: state.uri.queryParameters['response']!,
                     userId: state.uri.queryParameters['userId']!,
+                    reports: 0,
                     snippetId: state.uri.queryParameters['snippetId']!,
                     question: state.uri.queryParameters['snippetQuestion']!
                         .replaceAll("Q~Q", "?"),
+                    reportIds: [],
                     theme: "blue",
                     isDisplayOnly: true,
                     isAnonymous:
@@ -486,9 +518,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   bool isSignedIn = false;
   getUserLoggedInState() async {
     int updateLocalDB = await HelperFunctions.getLocalDatabaseUpdateSF();
-    if (updateLocalDB < 27) {
+    if (updateLocalDB < 30) {
       await LocalDatabase().deleteDB();
-      await HelperFunctions.saveLocalDatabaseUpdateSF(27);
+      await HelperFunctions.saveLocalDatabaseUpdateSF(30);
     }
     // bool setNewYearIcon = await HelperFunctions.getSetNewYearIconSF();
     // if (!setNewYearIcon && Platform.isIOS) {
@@ -552,6 +584,33 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       router.go('/update/$status');
     } else if (await HelperFunctions.getOpenedPageFromSF() == "update") {
       router.go('/');
+    }
+    if (status) {
+      User userData = await Database().getCurrentUserData();
+      List<String> profileStrikesSaved =
+          await HelperFunctions.getProfileStrikesSF();
+      if (profileStrikesSaved != userData.profileStrikes) {
+        await HelperFunctions.saveProfileStrikesSF(userData.profileStrikes);
+        if (userData.profileStrikes.length > profileStrikesSaved.length) {
+          List<String> strikesReceived = [];
+          for (var i = 0; i < userData.profileStrikes.length; i++) {
+            if (i >= profileStrikesSaved.length) {
+              strikesReceived.add(userData.profileStrikes[i]);
+            }
+          }
+          router.push(
+              "/strikes/${strikesReceived.join(",")}/${userData.profileStrikes.length}");
+          return;
+        }
+      }
+      if (userData.profileStrikes.length >= 5) {
+        router.push("/banned");
+      }
+      bool acceptedGuidelines =
+          await HelperFunctions.getAcceptedCommunityGuidelinesSF();
+      if (!acceptedGuidelines) {
+        router.push("/guidelines");
+      }
     }
   }
 
@@ -690,12 +749,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           router.pushReplacement("/nowifi");
           return;
         }
-        bool setNewYearIcon = await HelperFunctions.getSetNewYearIconSF();
-        if (!setNewYearIcon && Platform.isIOS) {
-          await AppIconChanger.changeIcon("NewYear");
 
-          await HelperFunctions.saveSetNewYearIconSF(true);
-        }
         String theme = await HelperFunctions.getThemeSF();
         styling.setTheme(theme);
         //Check if user is logged in
@@ -913,6 +967,30 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         // await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
         //     .removeOldDiscussions(userData, snippets);
         fixUserData(userData);
+        List<String> profileStrikesSaved =
+            await HelperFunctions.getProfileStrikesSF();
+        if (profileStrikesSaved != userData.profileStrikes) {
+          await HelperFunctions.saveProfileStrikesSF(userData.profileStrikes);
+          if (userData.profileStrikes.length > profileStrikesSaved.length) {
+            List<String> strikesReceived = [];
+            for (var i = 0; i < userData.profileStrikes.length; i++) {
+              if (i >= profileStrikesSaved.length) {
+                strikesReceived.add(userData.profileStrikes[i]);
+              }
+            }
+            router.push(
+                "/strikes/${strikesReceived.join(",")}/${userData.profileStrikes.length}");
+          } else if (userData.profileStrikes.length >= 5) {
+            router.push("/banned");
+          }
+        } else if (userData.profileStrikes.length >= 5) {
+          router.push("/banned");
+        }
+        bool acceptedGuidelines =
+            await HelperFunctions.getAcceptedCommunityGuidelinesSF();
+        if (!acceptedGuidelines) {
+          router.push("/guidelines");
+        }
 
         if (userData.FCMToken != deviceToken) {
           //Update FCM token

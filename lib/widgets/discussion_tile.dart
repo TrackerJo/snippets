@@ -85,6 +85,8 @@ class DiscussionTile extends StatelessWidget {
                             userId: discussionId,
                             snippetId: snippetId,
                             question: question,
+                            reports: 0,
+                            reportIds: [],
                             theme: theme,
                             isAnonymous: isAnonymous,
                             isDisplayOnly: true,

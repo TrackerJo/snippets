@@ -1,8 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:snippets/api/auth.dart';
+import 'package:snippets/api/database.dart';
+import 'package:snippets/constants.dart';
 import 'package:snippets/helper/helper_function.dart';
 import 'package:snippets/main.dart';
 import 'package:snippets/widgets/background_tile.dart';
@@ -36,8 +39,15 @@ class _WelcomePageState extends State<WelcomePage> {
       } else if (hapticFeedback == "heavy") {
         HapticFeedback.heavyImpact();
       }
-      authService.loginWithEmailandPassword(email, password).then((val) {
+      authService.loginWithEmailandPassword(email, password).then((val) async {
         if (val == true) {
+          User user = await Database()
+              .getUserData(auth.FirebaseAuth.instance.currentUser!.uid);
+          if (user.profileStrikes.length >= 5) {
+            router.pushReplacement("/banned");
+            return;
+          }
+
           if (widget.toProfile == true) {
             router.pushReplacement("/home");
             router.push("/home/profile/${widget.uid}");

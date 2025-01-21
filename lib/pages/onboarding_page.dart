@@ -275,6 +275,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                               } else {
                                 router.pushReplacement("/home");
                               }
+                              router.push("/guidelines");
                             },
                             child: const Text("Skip",
                                 style: TextStyle(color: Colors.white)),
@@ -310,6 +311,8 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                               } else {
                                 router.pushReplacement("/home");
                               }
+
+                              router.push("/guidelines");
                             },
                             child: const Text("Save",
                                 style: TextStyle(color: Colors.white)),

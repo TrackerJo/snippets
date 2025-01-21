@@ -62,6 +62,10 @@ class _ResponsesPageState extends State<ResponsesPage> {
 
   void getResponsesList() async {
     await HelperFunctions.saveOpenedPageSF("responses-${widget.snippetId}");
+    bool seenResponseReport = await HelperFunctions.getSeenResponseReportSF();
+    if (!seenResponseReport) {
+      showReportDialog(context);
+    }
     List<Snippet> snippets = await Database().getSnippetsList();
     bool snippetExists = snippets.any((e) => e.snippetId == widget.snippetId);
     if (!snippetExists) {
@@ -71,8 +75,7 @@ class _ResponsesPageState extends State<ResponsesPage> {
     List<String> newFriends = [];
     List<String> removedFriends = [];
     List<String> friends = [];
-    User userData = await Database()
-        .getCurrentUserData();
+    User userData = await Database().getCurrentUserData();
     setState(() {
       bestFriends = userData.bestFriends;
     });
@@ -107,18 +110,9 @@ class _ResponsesPageState extends State<ResponsesPage> {
       if (responsesStream.isClosed) return;
 
       //Check for duplicates
-      List<SnippetResponse> newResponses = [];
-      List<String> responseIDs = [];
-      for (var response in event) {
-        if (!responseIDs.contains(response.userId)) {
-          responseIDs.add(response.userId);
-          newResponses.add(response);
-        } else {
-          LocalDatabase().removeResponse(widget.snippetId, response.userId);
-        }
-      }
+
       if (!widget.isAnonymous) {
-        newResponses.sort((a, b) {
+        event.sort((a, b) {
           bool ABestFriend =
               userData.bestFriends.any((friend) => friend == a.userId);
           bool BBestFriend =
@@ -134,13 +128,12 @@ class _ResponsesPageState extends State<ResponsesPage> {
           }
         });
       }
-      responsesStream.add(newResponses);
+      responsesStream.add(event);
     });
   }
 
   void getUserDisplayName() async {
-    User userData = await Database()
-        .getCurrentUserData();
+    User userData = await Database().getCurrentUserData();
     if (mounted) {
       setState(() {
         userDisplayName = userData.displayName;
@@ -173,6 +166,42 @@ class _ResponsesPageState extends State<ResponsesPage> {
       newList.add(item.toString());
     }
     return newList;
+  }
+
+  void showReportDialog(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text("Report Response"),
+            content: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text:
+                        "You can report responses by tapping on the flag icon (",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                  WidgetSpan(
+                    child: Icon(Icons.flag_outlined, size: 16),
+                  ),
+                  TextSpan(
+                    text: ") on the response.",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () async {
+                    await HelperFunctions.saveSeenResponseReportSF(true);
+                    Navigator.pop(context);
+                  },
+                  child: Text("OK"))
+            ],
+          );
+        });
   }
 
   @override
@@ -258,6 +287,8 @@ class _ResponsesPageState extends State<ResponsesPage> {
                                   auth.FirebaseAuth.instance.currentUser!.uid,
                               isDisplayOnly: false,
                               theme: widget.theme,
+                              reports: 0,
+                              reportIds: [],
                               isAnonymous: widget.isAnonymous,
                             ),
                           );
@@ -275,6 +306,8 @@ class _ResponsesPageState extends State<ResponsesPage> {
                             theme: widget.theme,
                             userId: response.userId,
                             isAnonymous: widget.isAnonymous,
+                            reports: response.reports,
+                            reportIds: response.reportIds,
                             isBestFriend:
                                 bestFriends.contains(response.userId) &&
                                     !widget.isAnonymous,

@@ -26,6 +26,8 @@ class Chats extends Table {
   TextColumn get chatId => text()();
   TextColumn get snippetId => text()();
   IntColumn get lastUpdatedMillis => integer()();
+  IntColumn get reports => integer()();
+  TextColumn get reportIds => text()();
 }
 
 class SnipResponses extends Table {
@@ -36,7 +38,8 @@ class SnipResponses extends Table {
   TextColumn get displayName => text()();
   DateTimeColumn get date => dateTime()();
   TextColumn get uid => text()();
-
+  IntColumn get reports => integer()();
+  TextColumn get reportIds => text()();
   IntColumn get lastUpdatedMillis => integer()();
   TextColumn get discussionUsers => text()();
 }
@@ -62,6 +65,8 @@ class SavedMessagesTable extends Table {
   TextColumn get senderUsername => text()();
   DateTimeColumn get date => dateTime()();
   TextColumn get senderDisplayName => text()();
+  IntColumn get reports => integer()();
+  TextColumn get reportIds => text()();
 }
 
 class SnippetsData extends Table {
@@ -115,6 +120,7 @@ class UserDataTable extends Table {
   IntColumn get messagesSent => integer()();
   IntColumn get discussionsStarted => integer()();
   IntColumn get streak => integer()();
+  TextColumn get profileStrikes => text()();
   DateTimeColumn get streakDate => dateTime()();
 }
 
@@ -155,6 +161,16 @@ class LocalDatabase {
     if (file.existsSync()) {
       await file.delete();
     }
+    //recreate db
+    // await recreateDB();
+  }
+
+  Future<void> recreateDB() async {
+    localDb.close();
+    final dbFolder = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dbFolder.path, 'db.sqlite'));
+    localDb = AppDb();
+    await localDb.customStatement('VACUUM');
   }
 
   Future<void> clearDB() async {
@@ -534,6 +550,8 @@ class LocalDatabase {
                 date: message.date,
                 senderUsername: message.senderUsername,
                 responseId: savedResponse.responseId,
+                reportIds: message.reportIds,
+                reports: message.reports,
                 messageId: message.messageId);
             await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
                 .addSavedMessage(savedMessage);
@@ -588,6 +606,8 @@ class LocalDatabase {
             senderId: message.senderId,
             senderDisplayName: message.senderDisplayName,
             date: message.date,
+            reportIds: message.reportIds,
+            reports: message.reports,
             senderUsername: message.senderUsername,
             responseId: savedResponse.responseId,
             messageId: message.messageId);
@@ -723,6 +743,8 @@ class LocalDatabase {
         uid: Value(response.userId),
         displayName: Value(response.displayName),
         date: Value(response.date),
+        reports: Value(response.reports),
+        reportIds: Value(listStringToString(response.reportIds)),
         discussionUsers:
             Value(discussionUsersToString(response.discussionUsers)),
         lastUpdatedMillis: Value(response.lastUpdatedMillis)));
@@ -743,12 +765,23 @@ class LocalDatabase {
               answer: item.answer,
               snippetId: item.snippetId,
               userId: item.uid,
+              reportIds: stringToListString(item.reportIds),
               displayName: item.displayName,
+              reports: item.reports,
               date: item.date,
               discussionUsers: stringToDiscussionUsers(item.discussionUsers),
               lastUpdatedMillis: item.lastUpdatedMillis));
         }
-        controller.add(responses);
+        //remove duplicates
+        List<String> userIds = [];
+        List<SnippetResponse> newResponses = [];
+        for (var item in responses) {
+          if (!userIds.contains(item.userId)) {
+            userIds.add(item.userId);
+            newResponses.add(item);
+          }
+        }
+        controller.add(newResponses);
       });
     } else {
       (localDb.select(localDb.snipResponses)
@@ -764,12 +797,22 @@ class LocalDatabase {
               answer: item.answer,
               snippetId: item.snippetId,
               userId: item.uid,
+              reports: item.reports,
+              reportIds: stringToListString(item.reportIds),
               displayName: item.displayName,
               date: item.date,
               discussionUsers: stringToDiscussionUsers(item.discussionUsers),
               lastUpdatedMillis: item.lastUpdatedMillis));
         }
-        controller.add(responses);
+        List<String> userIds = [];
+        List<SnippetResponse> newResponses = [];
+        for (var item in responses) {
+          if (!userIds.contains(item.userId)) {
+            userIds.add(item.userId);
+            newResponses.add(item);
+          }
+        }
+        controller.add(newResponses);
       });
     }
   }
@@ -785,7 +828,9 @@ class LocalDatabase {
                 snippetId: value.first.snippetId,
                 userId: value.first.uid,
                 displayName: value.first.displayName,
+                reportIds: stringToListString(value.first.reportIds),
                 date: value.first.date,
+                reports: value.first.reports,
                 discussionUsers:
                     stringToDiscussionUsers(value.first.discussionUsers),
                 lastUpdatedMillis: value.first.lastUpdatedMillis)
@@ -805,7 +850,12 @@ class LocalDatabase {
           ..where((tbl) => tbl.messageId.equals(chat.messageId)))
         .get();
     if (existingChat.isNotEmpty) {
-      return;
+      print("Chat already exists");
+      print(chat.reportIds);
+      //delete existing chat
+      await (localDb.delete(localDb.chats)
+            ..where((tbl) => tbl.messageId.equals(chat.messageId)))
+          .go();
     }
 
     await localDb.into(localDb.chats).insert(ChatsCompanion(
@@ -818,13 +868,15 @@ class LocalDatabase {
         chatId: Value(chat.discussionId),
         messageId: Value(chat.messageId),
         lastUpdatedMillis: Value(chat.lastUpdatedMillis),
+        reportIds: Value(listStringToString(chat.reportIds)),
+        reports: Value(chat.reports),
         snippetId: Value(chat.snippetId)));
   }
 
   Future<void> getChats(String chatId, StreamController controller) async {
     (localDb.select(localDb.chats)
           ..where((tbl) => tbl.chatId.equals(chatId))
-          ..orderBy([(u) => OrderingTerm.asc(u.lastUpdatedMillis)]))
+          ..orderBy([(u) => OrderingTerm.asc(u.date)]))
         .watch()
         .listen((event) {
       if (controller.isClosed) return;
@@ -836,6 +888,8 @@ class LocalDatabase {
             senderUsername: item.senderUsername,
             date: item.date,
             senderDisplayName: item.senderDisplayName,
+            reportIds: stringToListString(item.reportIds),
+            reports: item.reports,
             readBy: item.readBy.split(","),
             discussionId: item.chatId,
             messageId: item.messageId,
@@ -862,6 +916,8 @@ class LocalDatabase {
           senderDisplayName: item.senderDisplayName,
           readBy: item.readBy.split(","),
           discussionId: item.chatId,
+          reportIds: stringToListString(item.reportIds),
+          reports: item.reports,
           messageId: item.messageId,
           lastUpdatedMillis: item.lastUpdatedMillis,
           snippetId: item.snippetId));
@@ -885,6 +941,8 @@ class LocalDatabase {
                 readBy: value.first.readBy.split(","),
                 discussionId: value.first.chatId,
                 messageId: value.first.messageId,
+                reportIds: stringToListString(value.first.reportIds),
+                reports: value.first.reports,
                 lastUpdatedMillis: value.first.lastUpdatedMillis,
                 snippetId: value.first.snippetId)
             : null);
@@ -901,7 +959,9 @@ class LocalDatabase {
           answer: item.answer,
           snippetId: item.snippetId,
           userId: item.uid,
+          reports: item.reports,
           displayName: item.displayName,
+          reportIds: stringToListString(item.reportIds),
           date: item.date,
           discussionUsers: [],
           lastUpdatedMillis: item.lastUpdatedMillis));
@@ -920,6 +980,8 @@ class LocalDatabase {
                 snippetId: value.first.snippetId,
                 userId: value.first.uid,
                 displayName: value.first.displayName,
+                reports: value.first.reports,
+                reportIds: stringToListString(value.first.reportIds),
                 date: value.first.date,
                 discussionUsers: [],
                 lastUpdatedMillis: value.first.lastUpdatedMillis)
@@ -952,6 +1014,7 @@ class LocalDatabase {
               longestStreak: Value(user.longestStreak),
               streakDate: Value(user.streakDate),
               messagesSent: Value(user.messagesSent),
+              profileStrikes: Value(listStringToString(user.profileStrikes)),
               topBOTW: Value(user.topBOTW),
               triviaPoints: Value(user.triviaPoints),
               discussionsStarted: Value(user.discussionsStarted),
@@ -972,6 +1035,7 @@ class LocalDatabase {
             bestFriends: Value(listStringToString(user.bestFriends)),
             username: Value(user.username),
             messagesSent: Value(user.messagesSent),
+            profileStrikes: Value(listStringToString(user.profileStrikes)),
             discussionsStarted: Value(user.discussionsStarted),
             searchKey: Value(user.searchKey),
             streak: Value(user.streak),
@@ -1021,6 +1085,7 @@ class LocalDatabase {
                 topBOTW: Value(user.topBOTW),
                 triviaPoints: Value(user.triviaPoints),
                 streakDate: Value(user.streakDate),
+                profileStrikes: Value(listStringToString(user.profileStrikes)),
                 messagesSent: Value(user.messagesSent)),
           );
     }
@@ -1046,6 +1111,7 @@ class LocalDatabase {
             snippetsRespondedTo: Value(user.snippetsRespondedTo),
             streakDate: Value(user.streakDate),
             topBOTW: Value(user.topBOTW),
+            profileStrikes: Value(listStringToString(user.profileStrikes)),
             triviaPoints: Value(user.triviaPoints),
             lastUpdatedMillis: Value(lastUpdated),
             votesLeft: Value(user.votesLeft)));
@@ -1082,6 +1148,7 @@ class LocalDatabase {
           discussionsStarted: 0,
           messagesSent: 0,
           triviaPoints: 0,
+          profileStrikes: [],
           topBOTW: 0,
           longestStreak: 0,
           userId: "",
@@ -1105,6 +1172,7 @@ class LocalDatabase {
         username: user.first.username,
         searchKey: user.first.searchKey,
         userId: user.first.userId,
+        profileStrikes: stringToListString(user.first.profileStrikes),
         snippetsRespondedTo: user.first.snippetsRespondedTo,
         discussionsStarted: user.first.discussionsStarted,
         messagesSent: user.first.messagesSent,
@@ -1144,6 +1212,7 @@ class LocalDatabase {
             userId: user.userId,
             streak: user.streak,
             streakDate: user.streakDate,
+            profileStrikes: stringToListString(user.profileStrikes),
             triviaPoints: user.triviaPoints,
             topBOTW: user.topBOTW,
             snippetsRespondedTo: user.snippetsRespondedTo,
@@ -1363,6 +1432,8 @@ class LocalDatabase {
         senderUsername: Value(message.senderUsername),
         date: Value(message.date),
         responseId: Value(message.responseId),
+        reportIds: Value(listStringToString(message.reportIds)),
+        reports: Value(message.reports),
       ));
     } else {
       await localDb
@@ -1375,6 +1446,8 @@ class LocalDatabase {
             senderUsername: Value(message.senderUsername),
             date: Value(message.date),
             responseId: Value(message.responseId),
+            reportIds: Value(listStringToString(message.reportIds)),
+            reports: Value(message.reports),
           ));
     }
   }
@@ -1393,6 +1466,8 @@ class LocalDatabase {
         senderUsername: message.senderUsername,
         date: message.date,
         responseId: message.responseId,
+        reportIds: stringToListString(message.reportIds),
+        reports: message.reports,
       ));
     }
     return savedMessages;

@@ -38,8 +38,7 @@ class Database {
 
   Future<void> updateUsersBOTWAnswer(BOTWAnswer answer) async {
     //Get user data
-    User userData =
-        await getCurrentUserData();
+    User userData = await getCurrentUserData();
     answer.displayName = userData.displayName;
     answer.FCMToken = userData.FCMToken;
     await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
@@ -170,6 +169,7 @@ class Database {
       if (controller.isClosed) return;
 
       for (var element in event) {
+        print("Adding response to local database");
         LocalDatabase().addResponse(element);
       }
     });
@@ -201,7 +201,8 @@ class Database {
   }
 
   Future<User> getCurrentUserData() async {
-    return (await LocalDatabase().getUserData(auth.FirebaseAuth.instance.currentUser!.uid));
+    return (await LocalDatabase()
+        .getUserData(auth.FirebaseAuth.instance.currentUser!.uid));
   }
 
   Future<User> getUserData(String userId) async {
@@ -281,5 +282,20 @@ class Database {
   Future<void> suggestSnippet(String snippet) async {
     await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
         .suggestSnippet(snippet);
+  }
+
+  Future<void> reportSnippetResonse(ResponseReport report) async {
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+        .reportSnippetResponse(report);
+  }
+
+  Future<void> reportUserProfile(ProfileReport report) async {
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+        .reportUserProfile(report);
+  }
+
+  Future<void> reportMessage(MessageReport report) async {
+    await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)
+        .reportMessage(report);
   }
 }

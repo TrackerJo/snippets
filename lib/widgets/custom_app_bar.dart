@@ -32,6 +32,8 @@ class CustomAppBar extends StatelessWidget {
   final bool isBestFriend;
   final bool showSuggestSnippetButton;
   final void Function()? onSuggestSnippetButtonPressed;
+  final bool showReportButton;
+  final void Function()? onReportButtonPressed;
   const CustomAppBar(
       {super.key,
       required this.title,
@@ -60,6 +62,8 @@ class CustomAppBar extends StatelessWidget {
       this.onBestFriendButtonPressed,
       this.showSuggestSnippetButton = false,
       this.onSuggestSnippetButtonPressed,
+      this.showReportButton = false,
+      this.onReportButtonPressed,
       this.fixRight = false});
 
   @override
@@ -181,11 +185,28 @@ class CustomAppBar extends StatelessWidget {
           // actions: [],
           actions: [
             SizedBox(
-              width: 100,
+              width: (showReportButton && showBestFriendButton) ||
+                      (showVotesButton && showHelpButton)
+                  ? 110
+                  : 100,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  if (showReportButton)
+                    Padding(
+                      padding: EdgeInsets.all(showBestFriendButton ? 0 : 8.0),
+                      child: IconButton(
+                        splashColor: styling.primary,
+                        splashRadius: 25,
+                        icon: Icon(Icons.flag_outlined,
+                            color: styling.theme == "colorful-light"
+                                ? Colors.white
+                                : Colors.black),
+                        onPressed: onReportButtonPressed,
+                        color: const Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    ),
                   if (showPreviewButton)
                     Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -287,7 +308,7 @@ class CustomAppBar extends StatelessWidget {
                     ),
                   if (showBestFriendButton)
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.only(right: 8.0),
                       child: IconButton(
                         splashColor: styling.primary,
                         splashRadius: 25,

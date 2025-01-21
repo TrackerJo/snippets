@@ -32,6 +32,8 @@ class FBDatabase {
       FirebaseFirestore.instance.collection("blankOfTheWeek");
   final CollectionReference suggestionsCollection =
       FirebaseFirestore.instance.collection("snippetSuggestions");
+  final CollectionReference reportsCollection =
+      FirebaseFirestore.instance.collection("reports");
 
   Future savingUserData(String fullName, String email, String username) async {
     int timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -45,6 +47,7 @@ class FBDatabase {
       friends: [],
       longestStreak: 0,
       friendRequests: [],
+      profileStrikes: [],
       outgoingFriendRequests: [],
       bestFriends: [],
       discussions: [],
@@ -214,6 +217,7 @@ class FBDatabase {
             ]
           : [],
       "date": now,
+      "reports": userData.profileStrikes.length >= 3 ? 3 : 0,
       "lastUpdated": now,
       "lastUpdatedMillis": now.millisecondsSinceEpoch,
     });
@@ -841,6 +845,8 @@ class FBDatabase {
           "senderDisplayName": data['senderDisplayName'],
           "date": data['date'].toDate(),
           "readBy": data['readBy'],
+          "reports": data['reports'],
+          "reportIds": data['reportIds'],
           "discussionId": "$snippetId-$userId",
           "snippetId": snippetId,
           "lastUpdatedMillis": data['lastUpdatedMillis']
@@ -868,6 +874,8 @@ class FBDatabase {
           "senderDisplayName": data['senderDisplayName'],
           "date": data['date'].toDate(),
           "readBy": data['readBy'],
+          "reports": data['reports'],
+          "reportIds": data['reportIds'],
           "discussionId": "$snippetId-$userId",
           "snippetId": snippetId,
           "lastUpdatedMillis": data['lastUpdatedMillis']
@@ -902,11 +910,16 @@ class FBDatabase {
             "senderDisplayName": data['senderDisplayName'],
             "date": data['date'].toDate(),
             "readBy": data['readBy'],
+            "reports": data['reports'],
+            "reportIds": data['reportIds'],
             "discussionId": "$snippetId-$userId",
             "snippetId": snippetId,
             "lastUpdatedMillis": data['lastUpdatedMillis']
           };
-          messages.add(Message.fromMap(chatMessageMap));
+          Message message = Message.fromMap(chatMessageMap);
+          print("Message: ${message.message}");
+          print("reports Ids: ${message.reportIds}");
+          messages.add(message);
         }
         controller.add(messages);
       });
@@ -936,11 +949,16 @@ class FBDatabase {
             "senderDisplayName": data['senderDisplayName'],
             "date": data['date'].toDate(),
             "readBy": data['readBy'],
+            "reports": data['reports'],
+            "reportIds": data['reportIds'],
             "discussionId": "$snippetId-$userId",
             "snippetId": snippetId,
             "lastUpdatedMillis": data['lastUpdatedMillis']
           };
-          messages.add(Message.fromMap(chatMessageMap));
+          Message message = Message.fromMap(chatMessageMap);
+          print("Message: ${message.message}");
+          print("reports Ids: ${message.reportIds}");
+          messages.add(message);
         }
         controller.add(messages);
       });
@@ -1096,6 +1114,8 @@ class FBDatabase {
             messageId: "",
             snippetId: "",
             lastUpdatedMillis: 0,
+            reportIds: [],
+            reports: 0,
             discussionId: "",
           );
         } else {
@@ -1985,6 +2005,38 @@ class FBDatabase {
     await suggestionsCollection.add({
       "snippet": snippet,
       "date": DateTime.now(),
+    });
+  }
+
+  Future<void> reportSnippetResponse(ResponseReport report) async {
+    await reportsCollection.add(report.toMap());
+    await currentSnippetsCollection
+        .doc(report.snippetId)
+        .collection("answers")
+        .doc(report.responseId)
+        .update({
+      "reports": FieldValue.increment(1),
+      "reportIds": FieldValue.arrayUnion([uid]),
+      "lastUpdatedMillis": DateTime.now().millisecondsSinceEpoch,
+    });
+  }
+
+  Future<void> reportUserProfile(ProfileReport report) async {
+    await reportsCollection.add(report.toMap());
+  }
+
+  Future<void> reportMessage(MessageReport report) async {
+    await reportsCollection.add(report.toMap());
+    await currentSnippetsCollection
+        .doc(report.snippetId)
+        .collection("answers")
+        .doc(report.responseId)
+        .collection("discussion")
+        .doc(report.messageId)
+        .update({
+      "reports": FieldValue.increment(1),
+      "reportIds": FieldValue.arrayUnion([uid]),
+      "lastUpdatedMillis": DateTime.now().millisecondsSinceEpoch,
     });
   }
 }

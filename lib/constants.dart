@@ -1,5 +1,208 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum ReportType { profile, response, message }
+
+class Report {
+  DateTime date;
+  ReportType type;
+  String reportId;
+  String reportedUserId;
+  String reason = "";
+  String additionalInfo = "";
+
+  Report(
+      {required this.date,
+      required this.type,
+      required this.reportId,
+      required this.reportedUserId,
+      required this.reason,
+      required this.additionalInfo});
+
+  factory Report.fromMap(Map<String, dynamic> map) {
+    return Report(
+        date: map['date'].toDate(),
+        type: ReportType.values.firstWhere((e) => e.name == map['type']),
+        reportId: map['reportId'],
+        reportedUserId: map['reportedUserId'],
+        reason: map['reason'],
+        additionalInfo: map['additionalInfo']);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'date': date,
+      'type': type.name,
+      'reportId': reportId,
+      'reportedUserId': reportedUserId,
+      'reason': reason,
+      'additionalInfo': additionalInfo
+    };
+  }
+}
+
+class ResponseReport extends Report {
+  String responseId;
+  String snippetId;
+  String response;
+
+  ResponseReport(
+      {required this.responseId,
+      required this.snippetId,
+      required this.response,
+      required super.date,
+      super.type = ReportType.response,
+      required super.reportId,
+      required super.reportedUserId,
+      required super.reason,
+      required super.additionalInfo});
+
+  factory ResponseReport.fromMap(Map<String, dynamic> map) {
+    return ResponseReport(
+        responseId: map['responseId'],
+        snippetId: map['snippetId'],
+        response: map['response'],
+        date: map['date'].toDate(),
+        type: ReportType.values.firstWhere((e) => e.name == map['type']),
+        reportId: map['reportId'],
+        reportedUserId: map['reportedUserId'],
+        reason: map['reason'],
+        additionalInfo: map['additionalInfo']);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'responseId': responseId,
+      'snippetId': snippetId,
+      'response': response,
+      'date': date,
+      'type': type.name,
+      'reportId': reportId,
+      'reportedUserId': reportedUserId,
+      'reason': reason,
+      'additionalInfo': additionalInfo
+    };
+  }
+}
+
+enum ProfileReportType {
+  name,
+  username,
+  description,
+  botw,
+  other;
+
+  @override
+  String toString() {
+    switch (this) {
+      case ProfileReportType.name:
+        return 'name';
+      case ProfileReportType.description:
+        return 'description';
+      case ProfileReportType.botw:
+        return 'botw';
+      case ProfileReportType.other:
+        return 'other';
+      case ProfileReportType.username:
+        return 'username';
+      default:
+        return '';
+    }
+  }
+}
+
+class ProfileReport extends Report {
+  ProfileReportType profileReportType;
+  String other;
+  String reportedInfo;
+
+  ProfileReport(
+      {required this.profileReportType,
+      required this.reportedInfo,
+      required this.other,
+      required super.date,
+      super.type = ReportType.profile,
+      required super.reportId,
+      required super.reportedUserId,
+      required super.reason,
+      required super.additionalInfo});
+
+  factory ProfileReport.fromMap(Map<String, dynamic> map) {
+    return ProfileReport(
+        profileReportType: ProfileReportType.values
+            .firstWhere((e) => e.name == map['profileReportType']),
+        reportedInfo: map['reportedInfo'],
+        date: map['date'].toDate(),
+        type: ReportType.values.firstWhere((e) => e.name == map['type']),
+        reportId: map['reportId'],
+        other: map['other'],
+        reportedUserId: map['reportedUserId'],
+        reason: map['reason'],
+        additionalInfo: map['additionalInfo']);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'profileReportType': profileReportType.name,
+      'reportedInfo': reportedInfo,
+      'date': date,
+      'other': other,
+      'type': type.name,
+      'reportId': reportId,
+      'reportedUserId': reportedUserId,
+      'reason': reason,
+      'additionalInfo': additionalInfo
+    };
+  }
+}
+
+class MessageReport extends Report {
+  String messageId;
+  String message;
+  String snippetId;
+  String responseId;
+
+  MessageReport(
+      {required this.messageId,
+      required this.message,
+      required this.snippetId,
+      required this.responseId,
+      required super.date,
+      super.type = ReportType.message,
+      required super.reportId,
+      required super.reportedUserId,
+      required super.reason,
+      required super.additionalInfo});
+
+  factory MessageReport.fromMap(Map<String, dynamic> map) {
+    return MessageReport(
+        messageId: map['messageId'],
+        message: map['message'],
+        snippetId: map['snippetId'],
+        responseId: map['responseId'],
+        date: map['date'].toDate(),
+        type: ReportType.values.firstWhere((e) => e.name == map['type']),
+        reportId: map['reportId'],
+        reportedUserId: map['reportedUserId'],
+        reason: map['reason'],
+        additionalInfo: map['additionalInfo']);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'messageId': messageId,
+      'message': message,
+      'snippetId': snippetId,
+      'responseId': responseId,
+      'date': date,
+      'type': type.name,
+      'reportId': reportId,
+      'reportedUserId': reportedUserId,
+      'reason': reason,
+      'additionalInfo': additionalInfo
+    };
+  }
+}
+
 class Snippet {
   bool answered;
   String question;
@@ -89,6 +292,8 @@ class SnippetResponse {
   int lastUpdatedMillis;
   List<DiscussionUser> discussionUsers;
   String displayName;
+  int reports;
+  List<String> reportIds = [];
 
   SnippetResponse(
       {required this.snippetId,
@@ -97,6 +302,8 @@ class SnippetResponse {
       required this.date,
       required this.lastUpdatedMillis,
       required this.discussionUsers,
+      required this.reports,
+      required this.reportIds,
       required this.displayName});
 
   factory SnippetResponse.fromMap(Map<String, dynamic> map) {
@@ -111,6 +318,9 @@ class SnippetResponse {
         date: map['date'] is Timestamp ? map['date'].toDate() : map['date'],
         lastUpdatedMillis: map['lastUpdatedMillis'],
         displayName: map['displayName'],
+        reports: map['reports'] ?? 0,
+        reportIds:
+            map['reportIds'] != null ? List<String>.from(map['reportIds']) : [],
         discussionUsers: discussionUsers);
   }
 
@@ -126,6 +336,7 @@ class SnippetResponse {
       'date': date,
       'lastUpdatedMillis': lastUpdatedMillis,
       'displayName': displayName,
+      'reports': reports,
       'discussionUsers': discussionUsers
     };
   }
@@ -142,6 +353,8 @@ class Message {
   String snippetId;
   String messageId;
   String discussionId;
+  List<String> reportIds = [];
+  int reports;
 
   Message(
       {required this.message,
@@ -153,6 +366,8 @@ class Message {
       required this.senderUsername,
       required this.snippetId,
       required this.discussionId,
+      required this.reports,
+      required this.reportIds,
       required this.messageId});
 
   factory Message.fromMap(Map<String, dynamic> map) {
@@ -166,7 +381,11 @@ class Message {
         senderUsername: map['senderUsername'],
         messageId: map['messageId'],
         discussionId: map['discussionId'],
-        snippetId: map['snippetId']);
+        snippetId: map['snippetId'],
+        reports: map['reports'] ?? 0,
+        reportIds: map['reportIds'] != null
+            ? List<String>.from(map['reportIds'])
+            : []);
   }
 
   Map<String, dynamic> toMap() {
@@ -180,7 +399,9 @@ class Message {
       'senderUsername': senderUsername,
       'messageId': messageId,
       'discussionId': discussionId,
-      'snippetId': snippetId
+      'snippetId': snippetId,
+      'reports': reports,
+      'reportIds': reportIds
     };
   }
 }
@@ -408,6 +629,7 @@ class User {
   int longestStreak;
   int triviaPoints;
   int topBOTW;
+  List<String> profileStrikes;
 
   User(
       {required this.FCMToken,
@@ -432,6 +654,7 @@ class User {
       required this.streakDate,
       required this.topBOTW,
       required this.triviaPoints,
+      required this.profileStrikes,
       required this.votesLeft});
 
   //Create empty user
@@ -450,6 +673,7 @@ class User {
         bestFriends = [],
         streak = 0,
         streakDate = DateTime.now(),
+        profileStrikes = [],
         username = "",
         searchKey = "",
         lastUpdatedMillis = 0,
@@ -484,6 +708,12 @@ class User {
         bestFriends.add(item.toString());
       }
     }
+    List<String> profileStrikes = [];
+    if (map['profileStrikes'] != null) {
+      for (var item in map['profileStrikes']) {
+        profileStrikes.add(item.toString());
+      }
+    }
     return User(
         FCMToken: map['FCMToken'],
         displayName: map['fullname'],
@@ -509,6 +739,7 @@ class User {
         messagesSent: map['messagesSent'] ?? 0,
         topBOTW: map["topBOTW"] ?? 0,
         triviaPoints: map["triviaPoints"] ?? 0,
+        profileStrikes: profileStrikes,
         votesLeft: map['votesLeft']);
   }
 
@@ -550,6 +781,7 @@ class User {
       'longestStreak': longestStreak,
       "triviaPoints": triviaPoints,
       "topBOTW": topBOTW,
+      "profileStrikes": profileStrikes,
       'lastUpdatedMillis': lastUpdatedMillis
     };
   }
@@ -664,6 +896,8 @@ class SavedMessage {
   String senderUsername;
   String messageId;
   String responseId;
+  List<String> reportIds = [];
+  int reports;
 
   SavedMessage(
       {required this.message,
@@ -672,6 +906,8 @@ class SavedMessage {
       required this.date,
       required this.senderUsername,
       required this.responseId,
+      required this.reports,
+      required this.reportIds,
       required this.messageId});
 
   factory SavedMessage.fromMap(Map<String, dynamic> map) {
@@ -683,6 +919,9 @@ class SavedMessage {
       date: map['date'] is Timestamp ? map['date'].toDate() : map['date'],
       senderUsername: map['senderUsername'],
       messageId: map['messageId'],
+      reports: map['reports'] ?? 0,
+      reportIds:
+          map['reportIds'] != null ? List<String>.from(map['reportIds']) : [],
     );
   }
 
@@ -694,7 +933,9 @@ class SavedMessage {
       'date': date,
       'senderUsername': senderUsername,
       'messageId': messageId,
-      'responseId': responseId
+      'responseId': responseId,
+      'reports': reports,
+      'reportIds': reportIds
     };
   }
 }

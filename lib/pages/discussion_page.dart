@@ -31,10 +31,12 @@ class _DiscussionPageState extends State<DiscussionPage> {
   ResponseTile displayTile = const ResponseTile(
     displayName: "",
     snippetId: "",
+    reports: 0,
     response: "",
     userId: "",
     question: "",
     theme: "",
+    reportIds: [],
     isAnonymous: false,
   );
 
@@ -73,8 +75,11 @@ class _DiscussionPageState extends State<DiscussionPage> {
     }
     await HelperFunctions.saveOpenedPageSF(
         "discussion-${widget.responseTile.snippetId}-${widget.responseTile.userId}");
-    User userData = await Database()
-        .getCurrentUserData();
+    bool seenMessageReport = await HelperFunctions.getSeenMessageReportSF();
+    if (!seenMessageReport) {
+      showReportDialog(context);
+    }
+    User userData = await Database().getCurrentUserData();
 
     if (mounted) {
       setState(() {
@@ -97,6 +102,42 @@ class _DiscussionPageState extends State<DiscussionPage> {
         widget.responseTile.snippetId, widget.responseTile.userId);
   }
 
+  void showReportDialog(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text("Report Message"),
+            content: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text:
+                        "You can report messages by tapping on the flag icon (",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                  WidgetSpan(
+                    child: Icon(Icons.flag_outlined, size: 16),
+                  ),
+                  TextSpan(
+                    text: ") on the message.",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () async {
+                    await HelperFunctions.saveSeenMessageReportSF(true);
+                    Navigator.pop(context);
+                  },
+                  child: Text("OK"))
+            ],
+          );
+        });
+  }
+
   @override
   void initState() {
     // TODO: implement initState
@@ -108,6 +149,8 @@ class _DiscussionPageState extends State<DiscussionPage> {
         snippetId: widget.responseTile.snippetId,
         response: widget.responseTile.response,
         userId: widget.responseTile.userId,
+        reportIds: widget.responseTile.reportIds,
+        reports: widget.responseTile.reports,
         isDisplayOnly: true,
         question: widget.responseTile.question.replaceAll("Q~Q", "?"),
         theme: widget.responseTile.theme,
@@ -341,14 +384,26 @@ class _DiscussionPageState extends State<DiscussionPage> {
                     }
 
                     return MessageTile(
-                        message: message.message,
-                        sender: message.senderDisplayName,
-                        sentByMe: displayTile.isAnonymous
-                            ? anonymousId == message.senderId
-                            : auth.FirebaseAuth.instance.currentUser!.uid ==
-                                message.senderId,
-                        senderId: message.senderId,
-                        time: date);
+                      message: message.message,
+                      sender: message.senderDisplayName,
+                      messageId: message.messageId,
+                      reportIds: message.reportIds,
+                      reports: (displayTile.isAnonymous
+                              ? anonymousId == message.senderId
+                              : auth.FirebaseAuth.instance.currentUser!.uid ==
+                                  message.senderId)
+                          ? 0
+                          : message.reports,
+                      canReport: true,
+                      discussionId: displayTile.userId,
+                      snippetId: displayTile.snippetId,
+                      sentByMe: displayTile.isAnonymous
+                          ? anonymousId == message.senderId
+                          : auth.FirebaseAuth.instance.currentUser!.uid ==
+                              message.senderId,
+                      senderId: message.senderId,
+                      time: message.date,
+                    );
                   })
               : Container();
         });
@@ -372,6 +427,8 @@ class _DiscussionPageState extends State<DiscussionPage> {
       }
       Message message = Message(
         message: messageController.text.trim(),
+        reportIds: [],
+        reports: 0,
         senderUsername: displayTile.isAnonymous ? "anonymous" : username,
         senderId: displayTile.isAnonymous
             ? anonymousId
@@ -389,8 +446,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
         messageId: "",
       );
 
-      User userData = await Database()
-          .getCurrentUserData();
+      User userData = await Database().getCurrentUserData();
       DiscussionUser userMap = DiscussionUser(
           FCMToken: userData.FCMToken,
           userId: displayTile.isAnonymous
@@ -437,6 +493,7 @@ class _DiscussionPageState extends State<DiscussionPage> {
                   false);
         }
       }
+      message.reports = userData.profileStrikes.length >= 3 ? 3 : 0;
 
       String id =
           await FBDatabase(uid: auth.FirebaseAuth.instance.currentUser!.uid)

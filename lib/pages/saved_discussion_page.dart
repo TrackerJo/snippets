@@ -191,6 +191,12 @@ class _SavedDiscussionPageState extends State<SavedDiscussionPage> {
               sender: message.senderDisplayName,
               sentByMe: auth.FirebaseAuth.instance.currentUser!.uid ==
                   message.senderId,
+              reportIds: message.reportIds,
+              reports: message.reports,
+              snippetId: widget.savedResponse.responseId,
+              messageId: message.messageId,
+              discussionId: "",
+              canReport: false,
               senderId: message.senderId,
               time: date);
         });

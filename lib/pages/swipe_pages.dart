@@ -233,7 +233,7 @@ class _SwipePagesState extends State<SwipePages> {
                               color: Colors.white, fontSize: 40),
                         ),
                         Text(
-                          "Version 1.1.1",
+                          "Version 1.1.2",
                           style: const TextStyle(
                               color: Colors.white, fontSize: 20),
                         ),
@@ -243,8 +243,7 @@ class _SwipePagesState extends State<SwipePages> {
                             children: [
                               BulletList(
                                 [
-                                  "Suggesting Snippets - You can now suggest snippets by going to the snippets page and tapping the lightbulb icon!",
-                                  "Saved Responses now show date saved",
+                                  "Reporting - You can now report users' profiles, answers to snippets, and messages for violating our community guidelines. After a user recieves 3 strikes all their snippet answers and messages are censored, and after 5 strikes they are banned.",
                                 ],
                               )
                             ],
@@ -393,12 +392,12 @@ class _SwipePagesState extends State<SwipePages> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       print("Post frame callback");
       int lastSeenUpdate = await HelperFunctions.getSeenUpdateDialogSF();
-      if (lastSeenUpdate < 22 && !seenUpdateDialog) {
+      if (lastSeenUpdate < 23 && !seenUpdateDialog) {
         setState(() {
           seenUpdateDialog = true;
         });
         viewUpdateSheet();
-        await HelperFunctions.saveSeenUpdateDialogSF(22);
+        await HelperFunctions.saveSeenUpdateDialogSF(23);
       }
       bool seenSuggestsSnippets =
           await HelperFunctions.getSeenSuggestSnippetSF();

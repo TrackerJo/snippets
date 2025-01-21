@@ -74,6 +74,18 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
   late final GeneratedColumn<int> lastUpdatedMillis = GeneratedColumn<int>(
       'last_updated_millis', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _reportsMeta =
+      const VerificationMeta('reports');
+  @override
+  late final GeneratedColumn<int> reports = GeneratedColumn<int>(
+      'reports', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _reportIdsMeta =
+      const VerificationMeta('reportIds');
+  @override
+  late final GeneratedColumn<String> reportIds = GeneratedColumn<String>(
+      'report_ids', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -86,7 +98,9 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
         readBy,
         chatId,
         snippetId,
-        lastUpdatedMillis
+        lastUpdatedMillis,
+        reports,
+        reportIds
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -167,6 +181,18 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
     } else if (isInserting) {
       context.missing(_lastUpdatedMillisMeta);
     }
+    if (data.containsKey('reports')) {
+      context.handle(_reportsMeta,
+          reports.isAcceptableOrUnknown(data['reports']!, _reportsMeta));
+    } else if (isInserting) {
+      context.missing(_reportsMeta);
+    }
+    if (data.containsKey('report_ids')) {
+      context.handle(_reportIdsMeta,
+          reportIds.isAcceptableOrUnknown(data['report_ids']!, _reportIdsMeta));
+    } else if (isInserting) {
+      context.missing(_reportIdsMeta);
+    }
     return context;
   }
 
@@ -198,6 +224,10 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
           .read(DriftSqlType.string, data['${effectivePrefix}snippet_id'])!,
       lastUpdatedMillis: attachedDatabase.typeMapping.read(
           DriftSqlType.int, data['${effectivePrefix}last_updated_millis'])!,
+      reports: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}reports'])!,
+      reportIds: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}report_ids'])!,
     );
   }
 
@@ -219,6 +249,8 @@ class Chat extends DataClass implements Insertable<Chat> {
   final String chatId;
   final String snippetId;
   final int lastUpdatedMillis;
+  final int reports;
+  final String reportIds;
   const Chat(
       {required this.id,
       required this.message,
@@ -230,7 +262,9 @@ class Chat extends DataClass implements Insertable<Chat> {
       required this.readBy,
       required this.chatId,
       required this.snippetId,
-      required this.lastUpdatedMillis});
+      required this.lastUpdatedMillis,
+      required this.reports,
+      required this.reportIds});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -245,6 +279,8 @@ class Chat extends DataClass implements Insertable<Chat> {
     map['chat_id'] = Variable<String>(chatId);
     map['snippet_id'] = Variable<String>(snippetId);
     map['last_updated_millis'] = Variable<int>(lastUpdatedMillis);
+    map['reports'] = Variable<int>(reports);
+    map['report_ids'] = Variable<String>(reportIds);
     return map;
   }
 
@@ -261,6 +297,8 @@ class Chat extends DataClass implements Insertable<Chat> {
       chatId: Value(chatId),
       snippetId: Value(snippetId),
       lastUpdatedMillis: Value(lastUpdatedMillis),
+      reports: Value(reports),
+      reportIds: Value(reportIds),
     );
   }
 
@@ -279,6 +317,8 @@ class Chat extends DataClass implements Insertable<Chat> {
       chatId: serializer.fromJson<String>(json['chatId']),
       snippetId: serializer.fromJson<String>(json['snippetId']),
       lastUpdatedMillis: serializer.fromJson<int>(json['lastUpdatedMillis']),
+      reports: serializer.fromJson<int>(json['reports']),
+      reportIds: serializer.fromJson<String>(json['reportIds']),
     );
   }
   @override
@@ -296,6 +336,8 @@ class Chat extends DataClass implements Insertable<Chat> {
       'chatId': serializer.toJson<String>(chatId),
       'snippetId': serializer.toJson<String>(snippetId),
       'lastUpdatedMillis': serializer.toJson<int>(lastUpdatedMillis),
+      'reports': serializer.toJson<int>(reports),
+      'reportIds': serializer.toJson<String>(reportIds),
     };
   }
 
@@ -310,7 +352,9 @@ class Chat extends DataClass implements Insertable<Chat> {
           String? readBy,
           String? chatId,
           String? snippetId,
-          int? lastUpdatedMillis}) =>
+          int? lastUpdatedMillis,
+          int? reports,
+          String? reportIds}) =>
       Chat(
         id: id ?? this.id,
         message: message ?? this.message,
@@ -323,6 +367,8 @@ class Chat extends DataClass implements Insertable<Chat> {
         chatId: chatId ?? this.chatId,
         snippetId: snippetId ?? this.snippetId,
         lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
+        reports: reports ?? this.reports,
+        reportIds: reportIds ?? this.reportIds,
       );
   Chat copyWithCompanion(ChatsCompanion data) {
     return Chat(
@@ -343,6 +389,8 @@ class Chat extends DataClass implements Insertable<Chat> {
       lastUpdatedMillis: data.lastUpdatedMillis.present
           ? data.lastUpdatedMillis.value
           : this.lastUpdatedMillis,
+      reports: data.reports.present ? data.reports.value : this.reports,
+      reportIds: data.reportIds.present ? data.reportIds.value : this.reportIds,
     );
   }
 
@@ -359,7 +407,9 @@ class Chat extends DataClass implements Insertable<Chat> {
           ..write('readBy: $readBy, ')
           ..write('chatId: $chatId, ')
           ..write('snippetId: $snippetId, ')
-          ..write('lastUpdatedMillis: $lastUpdatedMillis')
+          ..write('lastUpdatedMillis: $lastUpdatedMillis, ')
+          ..write('reports: $reports, ')
+          ..write('reportIds: $reportIds')
           ..write(')'))
         .toString();
   }
@@ -376,7 +426,9 @@ class Chat extends DataClass implements Insertable<Chat> {
       readBy,
       chatId,
       snippetId,
-      lastUpdatedMillis);
+      lastUpdatedMillis,
+      reports,
+      reportIds);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -391,7 +443,9 @@ class Chat extends DataClass implements Insertable<Chat> {
           other.readBy == this.readBy &&
           other.chatId == this.chatId &&
           other.snippetId == this.snippetId &&
-          other.lastUpdatedMillis == this.lastUpdatedMillis);
+          other.lastUpdatedMillis == this.lastUpdatedMillis &&
+          other.reports == this.reports &&
+          other.reportIds == this.reportIds);
 }
 
 class ChatsCompanion extends UpdateCompanion<Chat> {
@@ -406,6 +460,8 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
   final Value<String> chatId;
   final Value<String> snippetId;
   final Value<int> lastUpdatedMillis;
+  final Value<int> reports;
+  final Value<String> reportIds;
   const ChatsCompanion({
     this.id = const Value.absent(),
     this.message = const Value.absent(),
@@ -418,6 +474,8 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
     this.chatId = const Value.absent(),
     this.snippetId = const Value.absent(),
     this.lastUpdatedMillis = const Value.absent(),
+    this.reports = const Value.absent(),
+    this.reportIds = const Value.absent(),
   });
   ChatsCompanion.insert({
     this.id = const Value.absent(),
@@ -431,6 +489,8 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
     required String chatId,
     required String snippetId,
     required int lastUpdatedMillis,
+    required int reports,
+    required String reportIds,
   })  : message = Value(message),
         messageId = Value(messageId),
         senderId = Value(senderId),
@@ -440,7 +500,9 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
         readBy = Value(readBy),
         chatId = Value(chatId),
         snippetId = Value(snippetId),
-        lastUpdatedMillis = Value(lastUpdatedMillis);
+        lastUpdatedMillis = Value(lastUpdatedMillis),
+        reports = Value(reports),
+        reportIds = Value(reportIds);
   static Insertable<Chat> custom({
     Expression<int>? id,
     Expression<String>? message,
@@ -453,6 +515,8 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
     Expression<String>? chatId,
     Expression<String>? snippetId,
     Expression<int>? lastUpdatedMillis,
+    Expression<int>? reports,
+    Expression<String>? reportIds,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -466,6 +530,8 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
       if (chatId != null) 'chat_id': chatId,
       if (snippetId != null) 'snippet_id': snippetId,
       if (lastUpdatedMillis != null) 'last_updated_millis': lastUpdatedMillis,
+      if (reports != null) 'reports': reports,
+      if (reportIds != null) 'report_ids': reportIds,
     });
   }
 
@@ -480,7 +546,9 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
       Value<String>? readBy,
       Value<String>? chatId,
       Value<String>? snippetId,
-      Value<int>? lastUpdatedMillis}) {
+      Value<int>? lastUpdatedMillis,
+      Value<int>? reports,
+      Value<String>? reportIds}) {
     return ChatsCompanion(
       id: id ?? this.id,
       message: message ?? this.message,
@@ -493,6 +561,8 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
       chatId: chatId ?? this.chatId,
       snippetId: snippetId ?? this.snippetId,
       lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
+      reports: reports ?? this.reports,
+      reportIds: reportIds ?? this.reportIds,
     );
   }
 
@@ -532,6 +602,12 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
     if (lastUpdatedMillis.present) {
       map['last_updated_millis'] = Variable<int>(lastUpdatedMillis.value);
     }
+    if (reports.present) {
+      map['reports'] = Variable<int>(reports.value);
+    }
+    if (reportIds.present) {
+      map['report_ids'] = Variable<String>(reportIds.value);
+    }
     return map;
   }
 
@@ -548,7 +624,9 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
           ..write('readBy: $readBy, ')
           ..write('chatId: $chatId, ')
           ..write('snippetId: $snippetId, ')
-          ..write('lastUpdatedMillis: $lastUpdatedMillis')
+          ..write('lastUpdatedMillis: $lastUpdatedMillis, ')
+          ..write('reports: $reports, ')
+          ..write('reportIds: $reportIds')
           ..write(')'))
         .toString();
   }
@@ -596,6 +674,18 @@ class $SnipResponsesTable extends SnipResponses
   late final GeneratedColumn<String> uid = GeneratedColumn<String>(
       'uid', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _reportsMeta =
+      const VerificationMeta('reports');
+  @override
+  late final GeneratedColumn<int> reports = GeneratedColumn<int>(
+      'reports', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _reportIdsMeta =
+      const VerificationMeta('reportIds');
+  @override
+  late final GeneratedColumn<String> reportIds = GeneratedColumn<String>(
+      'report_ids', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _lastUpdatedMillisMeta =
       const VerificationMeta('lastUpdatedMillis');
   @override
@@ -616,6 +706,8 @@ class $SnipResponsesTable extends SnipResponses
         displayName,
         date,
         uid,
+        reports,
+        reportIds,
         lastUpdatedMillis,
         discussionUsers
       ];
@@ -664,6 +756,18 @@ class $SnipResponsesTable extends SnipResponses
     } else if (isInserting) {
       context.missing(_uidMeta);
     }
+    if (data.containsKey('reports')) {
+      context.handle(_reportsMeta,
+          reports.isAcceptableOrUnknown(data['reports']!, _reportsMeta));
+    } else if (isInserting) {
+      context.missing(_reportsMeta);
+    }
+    if (data.containsKey('report_ids')) {
+      context.handle(_reportIdsMeta,
+          reportIds.isAcceptableOrUnknown(data['report_ids']!, _reportIdsMeta));
+    } else if (isInserting) {
+      context.missing(_reportIdsMeta);
+    }
     if (data.containsKey('last_updated_millis')) {
       context.handle(
           _lastUpdatedMillisMeta,
@@ -701,6 +805,10 @@ class $SnipResponsesTable extends SnipResponses
           .read(DriftSqlType.dateTime, data['${effectivePrefix}date'])!,
       uid: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}uid'])!,
+      reports: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}reports'])!,
+      reportIds: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}report_ids'])!,
       lastUpdatedMillis: attachedDatabase.typeMapping.read(
           DriftSqlType.int, data['${effectivePrefix}last_updated_millis'])!,
       discussionUsers: attachedDatabase.typeMapping.read(
@@ -721,6 +829,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
   final String displayName;
   final DateTime date;
   final String uid;
+  final int reports;
+  final String reportIds;
   final int lastUpdatedMillis;
   final String discussionUsers;
   const SnipResponse(
@@ -730,6 +840,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
       required this.displayName,
       required this.date,
       required this.uid,
+      required this.reports,
+      required this.reportIds,
       required this.lastUpdatedMillis,
       required this.discussionUsers});
   @override
@@ -741,6 +853,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
     map['display_name'] = Variable<String>(displayName);
     map['date'] = Variable<DateTime>(date);
     map['uid'] = Variable<String>(uid);
+    map['reports'] = Variable<int>(reports);
+    map['report_ids'] = Variable<String>(reportIds);
     map['last_updated_millis'] = Variable<int>(lastUpdatedMillis);
     map['discussion_users'] = Variable<String>(discussionUsers);
     return map;
@@ -754,6 +868,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
       displayName: Value(displayName),
       date: Value(date),
       uid: Value(uid),
+      reports: Value(reports),
+      reportIds: Value(reportIds),
       lastUpdatedMillis: Value(lastUpdatedMillis),
       discussionUsers: Value(discussionUsers),
     );
@@ -769,6 +885,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
       displayName: serializer.fromJson<String>(json['displayName']),
       date: serializer.fromJson<DateTime>(json['date']),
       uid: serializer.fromJson<String>(json['uid']),
+      reports: serializer.fromJson<int>(json['reports']),
+      reportIds: serializer.fromJson<String>(json['reportIds']),
       lastUpdatedMillis: serializer.fromJson<int>(json['lastUpdatedMillis']),
       discussionUsers: serializer.fromJson<String>(json['discussionUsers']),
     );
@@ -783,6 +901,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
       'displayName': serializer.toJson<String>(displayName),
       'date': serializer.toJson<DateTime>(date),
       'uid': serializer.toJson<String>(uid),
+      'reports': serializer.toJson<int>(reports),
+      'reportIds': serializer.toJson<String>(reportIds),
       'lastUpdatedMillis': serializer.toJson<int>(lastUpdatedMillis),
       'discussionUsers': serializer.toJson<String>(discussionUsers),
     };
@@ -795,6 +915,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
           String? displayName,
           DateTime? date,
           String? uid,
+          int? reports,
+          String? reportIds,
           int? lastUpdatedMillis,
           String? discussionUsers}) =>
       SnipResponse(
@@ -804,6 +926,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
         displayName: displayName ?? this.displayName,
         date: date ?? this.date,
         uid: uid ?? this.uid,
+        reports: reports ?? this.reports,
+        reportIds: reportIds ?? this.reportIds,
         lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
         discussionUsers: discussionUsers ?? this.discussionUsers,
       );
@@ -816,6 +940,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
           data.displayName.present ? data.displayName.value : this.displayName,
       date: data.date.present ? data.date.value : this.date,
       uid: data.uid.present ? data.uid.value : this.uid,
+      reports: data.reports.present ? data.reports.value : this.reports,
+      reportIds: data.reportIds.present ? data.reportIds.value : this.reportIds,
       lastUpdatedMillis: data.lastUpdatedMillis.present
           ? data.lastUpdatedMillis.value
           : this.lastUpdatedMillis,
@@ -834,6 +960,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
           ..write('displayName: $displayName, ')
           ..write('date: $date, ')
           ..write('uid: $uid, ')
+          ..write('reports: $reports, ')
+          ..write('reportIds: $reportIds, ')
           ..write('lastUpdatedMillis: $lastUpdatedMillis, ')
           ..write('discussionUsers: $discussionUsers')
           ..write(')'))
@@ -842,7 +970,7 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
 
   @override
   int get hashCode => Object.hash(id, answer, snippetId, displayName, date, uid,
-      lastUpdatedMillis, discussionUsers);
+      reports, reportIds, lastUpdatedMillis, discussionUsers);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -853,6 +981,8 @@ class SnipResponse extends DataClass implements Insertable<SnipResponse> {
           other.displayName == this.displayName &&
           other.date == this.date &&
           other.uid == this.uid &&
+          other.reports == this.reports &&
+          other.reportIds == this.reportIds &&
           other.lastUpdatedMillis == this.lastUpdatedMillis &&
           other.discussionUsers == this.discussionUsers);
 }
@@ -864,6 +994,8 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
   final Value<String> displayName;
   final Value<DateTime> date;
   final Value<String> uid;
+  final Value<int> reports;
+  final Value<String> reportIds;
   final Value<int> lastUpdatedMillis;
   final Value<String> discussionUsers;
   const SnipResponsesCompanion({
@@ -873,6 +1005,8 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
     this.displayName = const Value.absent(),
     this.date = const Value.absent(),
     this.uid = const Value.absent(),
+    this.reports = const Value.absent(),
+    this.reportIds = const Value.absent(),
     this.lastUpdatedMillis = const Value.absent(),
     this.discussionUsers = const Value.absent(),
   });
@@ -883,6 +1017,8 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
     required String displayName,
     required DateTime date,
     required String uid,
+    required int reports,
+    required String reportIds,
     required int lastUpdatedMillis,
     required String discussionUsers,
   })  : answer = Value(answer),
@@ -890,6 +1026,8 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
         displayName = Value(displayName),
         date = Value(date),
         uid = Value(uid),
+        reports = Value(reports),
+        reportIds = Value(reportIds),
         lastUpdatedMillis = Value(lastUpdatedMillis),
         discussionUsers = Value(discussionUsers);
   static Insertable<SnipResponse> custom({
@@ -899,6 +1037,8 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
     Expression<String>? displayName,
     Expression<DateTime>? date,
     Expression<String>? uid,
+    Expression<int>? reports,
+    Expression<String>? reportIds,
     Expression<int>? lastUpdatedMillis,
     Expression<String>? discussionUsers,
   }) {
@@ -909,6 +1049,8 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
       if (displayName != null) 'display_name': displayName,
       if (date != null) 'date': date,
       if (uid != null) 'uid': uid,
+      if (reports != null) 'reports': reports,
+      if (reportIds != null) 'report_ids': reportIds,
       if (lastUpdatedMillis != null) 'last_updated_millis': lastUpdatedMillis,
       if (discussionUsers != null) 'discussion_users': discussionUsers,
     });
@@ -921,6 +1063,8 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
       Value<String>? displayName,
       Value<DateTime>? date,
       Value<String>? uid,
+      Value<int>? reports,
+      Value<String>? reportIds,
       Value<int>? lastUpdatedMillis,
       Value<String>? discussionUsers}) {
     return SnipResponsesCompanion(
@@ -930,6 +1074,8 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
       displayName: displayName ?? this.displayName,
       date: date ?? this.date,
       uid: uid ?? this.uid,
+      reports: reports ?? this.reports,
+      reportIds: reportIds ?? this.reportIds,
       lastUpdatedMillis: lastUpdatedMillis ?? this.lastUpdatedMillis,
       discussionUsers: discussionUsers ?? this.discussionUsers,
     );
@@ -956,6 +1102,12 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
     if (uid.present) {
       map['uid'] = Variable<String>(uid.value);
     }
+    if (reports.present) {
+      map['reports'] = Variable<int>(reports.value);
+    }
+    if (reportIds.present) {
+      map['report_ids'] = Variable<String>(reportIds.value);
+    }
     if (lastUpdatedMillis.present) {
       map['last_updated_millis'] = Variable<int>(lastUpdatedMillis.value);
     }
@@ -974,6 +1126,8 @@ class SnipResponsesCompanion extends UpdateCompanion<SnipResponse> {
           ..write('displayName: $displayName, ')
           ..write('date: $date, ')
           ..write('uid: $uid, ')
+          ..write('reports: $reports, ')
+          ..write('reportIds: $reportIds, ')
           ..write('lastUpdatedMillis: $lastUpdatedMillis, ')
           ..write('discussionUsers: $discussionUsers')
           ..write(')'))
@@ -2024,6 +2178,12 @@ class $UserDataTableTable extends UserDataTable
   late final GeneratedColumn<int> streak = GeneratedColumn<int>(
       'streak', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _profileStrikesMeta =
+      const VerificationMeta('profileStrikes');
+  @override
+  late final GeneratedColumn<String> profileStrikes = GeneratedColumn<String>(
+      'profile_strikes', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _streakDateMeta =
       const VerificationMeta('streakDate');
   @override
@@ -2055,6 +2215,7 @@ class $UserDataTableTable extends UserDataTable
         messagesSent,
         discussionsStarted,
         streak,
+        profileStrikes,
         streakDate
       ];
   @override
@@ -2228,6 +2389,14 @@ class $UserDataTableTable extends UserDataTable
     } else if (isInserting) {
       context.missing(_streakMeta);
     }
+    if (data.containsKey('profile_strikes')) {
+      context.handle(
+          _profileStrikesMeta,
+          profileStrikes.isAcceptableOrUnknown(
+              data['profile_strikes']!, _profileStrikesMeta));
+    } else if (isInserting) {
+      context.missing(_profileStrikesMeta);
+    }
     if (data.containsKey('streak_date')) {
       context.handle(
           _streakDateMeta,
@@ -2292,6 +2461,8 @@ class $UserDataTableTable extends UserDataTable
           DriftSqlType.int, data['${effectivePrefix}discussions_started'])!,
       streak: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}streak'])!,
+      profileStrikes: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}profile_strikes'])!,
       streakDate: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}streak_date'])!,
     );
@@ -2328,6 +2499,7 @@ class UserDataTableData extends DataClass
   final int messagesSent;
   final int discussionsStarted;
   final int streak;
+  final String profileStrikes;
   final DateTime streakDate;
   const UserDataTableData(
       {required this.id,
@@ -2353,6 +2525,7 @@ class UserDataTableData extends DataClass
       required this.messagesSent,
       required this.discussionsStarted,
       required this.streak,
+      required this.profileStrikes,
       required this.streakDate});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2380,6 +2553,7 @@ class UserDataTableData extends DataClass
     map['messages_sent'] = Variable<int>(messagesSent);
     map['discussions_started'] = Variable<int>(discussionsStarted);
     map['streak'] = Variable<int>(streak);
+    map['profile_strikes'] = Variable<String>(profileStrikes);
     map['streak_date'] = Variable<DateTime>(streakDate);
     return map;
   }
@@ -2409,6 +2583,7 @@ class UserDataTableData extends DataClass
       messagesSent: Value(messagesSent),
       discussionsStarted: Value(discussionsStarted),
       streak: Value(streak),
+      profileStrikes: Value(profileStrikes),
       streakDate: Value(streakDate),
     );
   }
@@ -2442,6 +2617,7 @@ class UserDataTableData extends DataClass
       messagesSent: serializer.fromJson<int>(json['messagesSent']),
       discussionsStarted: serializer.fromJson<int>(json['discussionsStarted']),
       streak: serializer.fromJson<int>(json['streak']),
+      profileStrikes: serializer.fromJson<String>(json['profileStrikes']),
       streakDate: serializer.fromJson<DateTime>(json['streakDate']),
     );
   }
@@ -2473,6 +2649,7 @@ class UserDataTableData extends DataClass
       'messagesSent': serializer.toJson<int>(messagesSent),
       'discussionsStarted': serializer.toJson<int>(discussionsStarted),
       'streak': serializer.toJson<int>(streak),
+      'profileStrikes': serializer.toJson<String>(profileStrikes),
       'streakDate': serializer.toJson<DateTime>(streakDate),
     };
   }
@@ -2501,6 +2678,7 @@ class UserDataTableData extends DataClass
           int? messagesSent,
           int? discussionsStarted,
           int? streak,
+          String? profileStrikes,
           DateTime? streakDate}) =>
       UserDataTableData(
         id: id ?? this.id,
@@ -2527,6 +2705,7 @@ class UserDataTableData extends DataClass
         messagesSent: messagesSent ?? this.messagesSent,
         discussionsStarted: discussionsStarted ?? this.discussionsStarted,
         streak: streak ?? this.streak,
+        profileStrikes: profileStrikes ?? this.profileStrikes,
         streakDate: streakDate ?? this.streakDate,
       );
   UserDataTableData copyWithCompanion(UserDataTableCompanion data) {
@@ -2575,6 +2754,9 @@ class UserDataTableData extends DataClass
           ? data.discussionsStarted.value
           : this.discussionsStarted,
       streak: data.streak.present ? data.streak.value : this.streak,
+      profileStrikes: data.profileStrikes.present
+          ? data.profileStrikes.value
+          : this.profileStrikes,
       streakDate:
           data.streakDate.present ? data.streakDate.value : this.streakDate,
     );
@@ -2606,6 +2788,7 @@ class UserDataTableData extends DataClass
           ..write('messagesSent: $messagesSent, ')
           ..write('discussionsStarted: $discussionsStarted, ')
           ..write('streak: $streak, ')
+          ..write('profileStrikes: $profileStrikes, ')
           ..write('streakDate: $streakDate')
           ..write(')'))
         .toString();
@@ -2636,6 +2819,7 @@ class UserDataTableData extends DataClass
         messagesSent,
         discussionsStarted,
         streak,
+        profileStrikes,
         streakDate
       ]);
   @override
@@ -2665,6 +2849,7 @@ class UserDataTableData extends DataClass
           other.messagesSent == this.messagesSent &&
           other.discussionsStarted == this.discussionsStarted &&
           other.streak == this.streak &&
+          other.profileStrikes == this.profileStrikes &&
           other.streakDate == this.streakDate);
 }
 
@@ -2692,6 +2877,7 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
   final Value<int> messagesSent;
   final Value<int> discussionsStarted;
   final Value<int> streak;
+  final Value<String> profileStrikes;
   final Value<DateTime> streakDate;
   const UserDataTableCompanion({
     this.id = const Value.absent(),
@@ -2717,6 +2903,7 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
     this.messagesSent = const Value.absent(),
     this.discussionsStarted = const Value.absent(),
     this.streak = const Value.absent(),
+    this.profileStrikes = const Value.absent(),
     this.streakDate = const Value.absent(),
   });
   UserDataTableCompanion.insert({
@@ -2743,6 +2930,7 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
     required int messagesSent,
     required int discussionsStarted,
     required int streak,
+    required String profileStrikes,
     required DateTime streakDate,
   })  : FCMToken = Value(FCMToken),
         displayName = Value(displayName),
@@ -2766,6 +2954,7 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
         messagesSent = Value(messagesSent),
         discussionsStarted = Value(discussionsStarted),
         streak = Value(streak),
+        profileStrikes = Value(profileStrikes),
         streakDate = Value(streakDate);
   static Insertable<UserDataTableData> custom({
     Expression<int>? id,
@@ -2791,6 +2980,7 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
     Expression<int>? messagesSent,
     Expression<int>? discussionsStarted,
     Expression<int>? streak,
+    Expression<String>? profileStrikes,
     Expression<DateTime>? streakDate,
   }) {
     return RawValuesInsertable({
@@ -2819,6 +3009,7 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
       if (messagesSent != null) 'messages_sent': messagesSent,
       if (discussionsStarted != null) 'discussions_started': discussionsStarted,
       if (streak != null) 'streak': streak,
+      if (profileStrikes != null) 'profile_strikes': profileStrikes,
       if (streakDate != null) 'streak_date': streakDate,
     });
   }
@@ -2847,6 +3038,7 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
       Value<int>? messagesSent,
       Value<int>? discussionsStarted,
       Value<int>? streak,
+      Value<String>? profileStrikes,
       Value<DateTime>? streakDate}) {
     return UserDataTableCompanion(
       id: id ?? this.id,
@@ -2873,6 +3065,7 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
       messagesSent: messagesSent ?? this.messagesSent,
       discussionsStarted: discussionsStarted ?? this.discussionsStarted,
       streak: streak ?? this.streak,
+      profileStrikes: profileStrikes ?? this.profileStrikes,
       streakDate: streakDate ?? this.streakDate,
     );
   }
@@ -2950,6 +3143,9 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
     if (streak.present) {
       map['streak'] = Variable<int>(streak.value);
     }
+    if (profileStrikes.present) {
+      map['profile_strikes'] = Variable<String>(profileStrikes.value);
+    }
     if (streakDate.present) {
       map['streak_date'] = Variable<DateTime>(streakDate.value);
     }
@@ -2982,6 +3178,7 @@ class UserDataTableCompanion extends UpdateCompanion<UserDataTableData> {
           ..write('messagesSent: $messagesSent, ')
           ..write('discussionsStarted: $discussionsStarted, ')
           ..write('streak: $streak, ')
+          ..write('profileStrikes: $profileStrikes, ')
           ..write('streakDate: $streakDate')
           ..write(')'))
         .toString();
@@ -3044,6 +3241,18 @@ class $SavedMessagesTableTable extends SavedMessagesTable
   late final GeneratedColumn<String> senderDisplayName =
       GeneratedColumn<String>('sender_display_name', aliasedName, false,
           type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _reportsMeta =
+      const VerificationMeta('reports');
+  @override
+  late final GeneratedColumn<int> reports = GeneratedColumn<int>(
+      'reports', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _reportIdsMeta =
+      const VerificationMeta('reportIds');
+  @override
+  late final GeneratedColumn<String> reportIds = GeneratedColumn<String>(
+      'report_ids', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -3053,7 +3262,9 @@ class $SavedMessagesTableTable extends SavedMessagesTable
         responseId,
         senderUsername,
         date,
-        senderDisplayName
+        senderDisplayName,
+        reports,
+        reportIds
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3117,6 +3328,18 @@ class $SavedMessagesTableTable extends SavedMessagesTable
     } else if (isInserting) {
       context.missing(_senderDisplayNameMeta);
     }
+    if (data.containsKey('reports')) {
+      context.handle(_reportsMeta,
+          reports.isAcceptableOrUnknown(data['reports']!, _reportsMeta));
+    } else if (isInserting) {
+      context.missing(_reportsMeta);
+    }
+    if (data.containsKey('report_ids')) {
+      context.handle(_reportIdsMeta,
+          reportIds.isAcceptableOrUnknown(data['report_ids']!, _reportIdsMeta));
+    } else if (isInserting) {
+      context.missing(_reportIdsMeta);
+    }
     return context;
   }
 
@@ -3142,6 +3365,10 @@ class $SavedMessagesTableTable extends SavedMessagesTable
           .read(DriftSqlType.dateTime, data['${effectivePrefix}date'])!,
       senderDisplayName: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}sender_display_name'])!,
+      reports: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}reports'])!,
+      reportIds: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}report_ids'])!,
     );
   }
 
@@ -3161,6 +3388,8 @@ class SavedMessagesTableData extends DataClass
   final String senderUsername;
   final DateTime date;
   final String senderDisplayName;
+  final int reports;
+  final String reportIds;
   const SavedMessagesTableData(
       {required this.id,
       required this.message,
@@ -3169,7 +3398,9 @@ class SavedMessagesTableData extends DataClass
       required this.responseId,
       required this.senderUsername,
       required this.date,
-      required this.senderDisplayName});
+      required this.senderDisplayName,
+      required this.reports,
+      required this.reportIds});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -3181,6 +3412,8 @@ class SavedMessagesTableData extends DataClass
     map['sender_username'] = Variable<String>(senderUsername);
     map['date'] = Variable<DateTime>(date);
     map['sender_display_name'] = Variable<String>(senderDisplayName);
+    map['reports'] = Variable<int>(reports);
+    map['report_ids'] = Variable<String>(reportIds);
     return map;
   }
 
@@ -3194,6 +3427,8 @@ class SavedMessagesTableData extends DataClass
       senderUsername: Value(senderUsername),
       date: Value(date),
       senderDisplayName: Value(senderDisplayName),
+      reports: Value(reports),
+      reportIds: Value(reportIds),
     );
   }
 
@@ -3209,6 +3444,8 @@ class SavedMessagesTableData extends DataClass
       senderUsername: serializer.fromJson<String>(json['senderUsername']),
       date: serializer.fromJson<DateTime>(json['date']),
       senderDisplayName: serializer.fromJson<String>(json['senderDisplayName']),
+      reports: serializer.fromJson<int>(json['reports']),
+      reportIds: serializer.fromJson<String>(json['reportIds']),
     );
   }
   @override
@@ -3223,6 +3460,8 @@ class SavedMessagesTableData extends DataClass
       'senderUsername': serializer.toJson<String>(senderUsername),
       'date': serializer.toJson<DateTime>(date),
       'senderDisplayName': serializer.toJson<String>(senderDisplayName),
+      'reports': serializer.toJson<int>(reports),
+      'reportIds': serializer.toJson<String>(reportIds),
     };
   }
 
@@ -3234,7 +3473,9 @@ class SavedMessagesTableData extends DataClass
           String? responseId,
           String? senderUsername,
           DateTime? date,
-          String? senderDisplayName}) =>
+          String? senderDisplayName,
+          int? reports,
+          String? reportIds}) =>
       SavedMessagesTableData(
         id: id ?? this.id,
         message: message ?? this.message,
@@ -3244,6 +3485,8 @@ class SavedMessagesTableData extends DataClass
         senderUsername: senderUsername ?? this.senderUsername,
         date: date ?? this.date,
         senderDisplayName: senderDisplayName ?? this.senderDisplayName,
+        reports: reports ?? this.reports,
+        reportIds: reportIds ?? this.reportIds,
       );
   SavedMessagesTableData copyWithCompanion(SavedMessagesTableCompanion data) {
     return SavedMessagesTableData(
@@ -3260,6 +3503,8 @@ class SavedMessagesTableData extends DataClass
       senderDisplayName: data.senderDisplayName.present
           ? data.senderDisplayName.value
           : this.senderDisplayName,
+      reports: data.reports.present ? data.reports.value : this.reports,
+      reportIds: data.reportIds.present ? data.reportIds.value : this.reportIds,
     );
   }
 
@@ -3273,14 +3518,16 @@ class SavedMessagesTableData extends DataClass
           ..write('responseId: $responseId, ')
           ..write('senderUsername: $senderUsername, ')
           ..write('date: $date, ')
-          ..write('senderDisplayName: $senderDisplayName')
+          ..write('senderDisplayName: $senderDisplayName, ')
+          ..write('reports: $reports, ')
+          ..write('reportIds: $reportIds')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(id, message, messageId, senderId, responseId,
-      senderUsername, date, senderDisplayName);
+      senderUsername, date, senderDisplayName, reports, reportIds);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3292,7 +3539,9 @@ class SavedMessagesTableData extends DataClass
           other.responseId == this.responseId &&
           other.senderUsername == this.senderUsername &&
           other.date == this.date &&
-          other.senderDisplayName == this.senderDisplayName);
+          other.senderDisplayName == this.senderDisplayName &&
+          other.reports == this.reports &&
+          other.reportIds == this.reportIds);
 }
 
 class SavedMessagesTableCompanion
@@ -3305,6 +3554,8 @@ class SavedMessagesTableCompanion
   final Value<String> senderUsername;
   final Value<DateTime> date;
   final Value<String> senderDisplayName;
+  final Value<int> reports;
+  final Value<String> reportIds;
   const SavedMessagesTableCompanion({
     this.id = const Value.absent(),
     this.message = const Value.absent(),
@@ -3314,6 +3565,8 @@ class SavedMessagesTableCompanion
     this.senderUsername = const Value.absent(),
     this.date = const Value.absent(),
     this.senderDisplayName = const Value.absent(),
+    this.reports = const Value.absent(),
+    this.reportIds = const Value.absent(),
   });
   SavedMessagesTableCompanion.insert({
     this.id = const Value.absent(),
@@ -3324,13 +3577,17 @@ class SavedMessagesTableCompanion
     required String senderUsername,
     required DateTime date,
     required String senderDisplayName,
+    required int reports,
+    required String reportIds,
   })  : message = Value(message),
         messageId = Value(messageId),
         senderId = Value(senderId),
         responseId = Value(responseId),
         senderUsername = Value(senderUsername),
         date = Value(date),
-        senderDisplayName = Value(senderDisplayName);
+        senderDisplayName = Value(senderDisplayName),
+        reports = Value(reports),
+        reportIds = Value(reportIds);
   static Insertable<SavedMessagesTableData> custom({
     Expression<int>? id,
     Expression<String>? message,
@@ -3340,6 +3597,8 @@ class SavedMessagesTableCompanion
     Expression<String>? senderUsername,
     Expression<DateTime>? date,
     Expression<String>? senderDisplayName,
+    Expression<int>? reports,
+    Expression<String>? reportIds,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3350,6 +3609,8 @@ class SavedMessagesTableCompanion
       if (senderUsername != null) 'sender_username': senderUsername,
       if (date != null) 'date': date,
       if (senderDisplayName != null) 'sender_display_name': senderDisplayName,
+      if (reports != null) 'reports': reports,
+      if (reportIds != null) 'report_ids': reportIds,
     });
   }
 
@@ -3361,7 +3622,9 @@ class SavedMessagesTableCompanion
       Value<String>? responseId,
       Value<String>? senderUsername,
       Value<DateTime>? date,
-      Value<String>? senderDisplayName}) {
+      Value<String>? senderDisplayName,
+      Value<int>? reports,
+      Value<String>? reportIds}) {
     return SavedMessagesTableCompanion(
       id: id ?? this.id,
       message: message ?? this.message,
@@ -3371,6 +3634,8 @@ class SavedMessagesTableCompanion
       senderUsername: senderUsername ?? this.senderUsername,
       date: date ?? this.date,
       senderDisplayName: senderDisplayName ?? this.senderDisplayName,
+      reports: reports ?? this.reports,
+      reportIds: reportIds ?? this.reportIds,
     );
   }
 
@@ -3401,6 +3666,12 @@ class SavedMessagesTableCompanion
     if (senderDisplayName.present) {
       map['sender_display_name'] = Variable<String>(senderDisplayName.value);
     }
+    if (reports.present) {
+      map['reports'] = Variable<int>(reports.value);
+    }
+    if (reportIds.present) {
+      map['report_ids'] = Variable<String>(reportIds.value);
+    }
     return map;
   }
 
@@ -3414,7 +3685,9 @@ class SavedMessagesTableCompanion
           ..write('responseId: $responseId, ')
           ..write('senderUsername: $senderUsername, ')
           ..write('date: $date, ')
-          ..write('senderDisplayName: $senderDisplayName')
+          ..write('senderDisplayName: $senderDisplayName, ')
+          ..write('reports: $reports, ')
+          ..write('reportIds: $reportIds')
           ..write(')'))
         .toString();
   }
@@ -3844,6 +4117,8 @@ typedef $$ChatsTableCreateCompanionBuilder = ChatsCompanion Function({
   required String chatId,
   required String snippetId,
   required int lastUpdatedMillis,
+  required int reports,
+  required String reportIds,
 });
 typedef $$ChatsTableUpdateCompanionBuilder = ChatsCompanion Function({
   Value<int> id,
@@ -3857,6 +4132,8 @@ typedef $$ChatsTableUpdateCompanionBuilder = ChatsCompanion Function({
   Value<String> chatId,
   Value<String> snippetId,
   Value<int> lastUpdatedMillis,
+  Value<int> reports,
+  Value<String> reportIds,
 });
 
 class $$ChatsTableTableManager extends RootTableManager<
@@ -3887,6 +4164,8 @@ class $$ChatsTableTableManager extends RootTableManager<
             Value<String> chatId = const Value.absent(),
             Value<String> snippetId = const Value.absent(),
             Value<int> lastUpdatedMillis = const Value.absent(),
+            Value<int> reports = const Value.absent(),
+            Value<String> reportIds = const Value.absent(),
           }) =>
               ChatsCompanion(
             id: id,
@@ -3900,6 +4179,8 @@ class $$ChatsTableTableManager extends RootTableManager<
             chatId: chatId,
             snippetId: snippetId,
             lastUpdatedMillis: lastUpdatedMillis,
+            reports: reports,
+            reportIds: reportIds,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -3913,6 +4194,8 @@ class $$ChatsTableTableManager extends RootTableManager<
             required String chatId,
             required String snippetId,
             required int lastUpdatedMillis,
+            required int reports,
+            required String reportIds,
           }) =>
               ChatsCompanion.insert(
             id: id,
@@ -3926,6 +4209,8 @@ class $$ChatsTableTableManager extends RootTableManager<
             chatId: chatId,
             snippetId: snippetId,
             lastUpdatedMillis: lastUpdatedMillis,
+            reports: reports,
+            reportIds: reportIds,
           ),
         ));
 }
@@ -3984,6 +4269,16 @@ class $$ChatsTableFilterComposer extends FilterComposer<_$AppDb, $ChatsTable> {
 
   ColumnFilters<int> get lastUpdatedMillis => $state.composableBuilder(
       column: $state.table.lastUpdatedMillis,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get reports => $state.composableBuilder(
+      column: $state.table.reports,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get reportIds => $state.composableBuilder(
+      column: $state.table.reportIds,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 }
@@ -4045,6 +4340,16 @@ class $$ChatsTableOrderingComposer
       column: $state.table.lastUpdatedMillis,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get reports => $state.composableBuilder(
+      column: $state.table.reports,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get reportIds => $state.composableBuilder(
+      column: $state.table.reportIds,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
 }
 
 typedef $$SnipResponsesTableCreateCompanionBuilder = SnipResponsesCompanion
@@ -4055,6 +4360,8 @@ typedef $$SnipResponsesTableCreateCompanionBuilder = SnipResponsesCompanion
   required String displayName,
   required DateTime date,
   required String uid,
+  required int reports,
+  required String reportIds,
   required int lastUpdatedMillis,
   required String discussionUsers,
 });
@@ -4066,6 +4373,8 @@ typedef $$SnipResponsesTableUpdateCompanionBuilder = SnipResponsesCompanion
   Value<String> displayName,
   Value<DateTime> date,
   Value<String> uid,
+  Value<int> reports,
+  Value<String> reportIds,
   Value<int> lastUpdatedMillis,
   Value<String> discussionUsers,
 });
@@ -4093,6 +4402,8 @@ class $$SnipResponsesTableTableManager extends RootTableManager<
             Value<String> displayName = const Value.absent(),
             Value<DateTime> date = const Value.absent(),
             Value<String> uid = const Value.absent(),
+            Value<int> reports = const Value.absent(),
+            Value<String> reportIds = const Value.absent(),
             Value<int> lastUpdatedMillis = const Value.absent(),
             Value<String> discussionUsers = const Value.absent(),
           }) =>
@@ -4103,6 +4414,8 @@ class $$SnipResponsesTableTableManager extends RootTableManager<
             displayName: displayName,
             date: date,
             uid: uid,
+            reports: reports,
+            reportIds: reportIds,
             lastUpdatedMillis: lastUpdatedMillis,
             discussionUsers: discussionUsers,
           ),
@@ -4113,6 +4426,8 @@ class $$SnipResponsesTableTableManager extends RootTableManager<
             required String displayName,
             required DateTime date,
             required String uid,
+            required int reports,
+            required String reportIds,
             required int lastUpdatedMillis,
             required String discussionUsers,
           }) =>
@@ -4123,6 +4438,8 @@ class $$SnipResponsesTableTableManager extends RootTableManager<
             displayName: displayName,
             date: date,
             uid: uid,
+            reports: reports,
+            reportIds: reportIds,
             lastUpdatedMillis: lastUpdatedMillis,
             discussionUsers: discussionUsers,
           ),
@@ -4159,6 +4476,16 @@ class $$SnipResponsesTableFilterComposer
 
   ColumnFilters<String> get uid => $state.composableBuilder(
       column: $state.table.uid,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get reports => $state.composableBuilder(
+      column: $state.table.reports,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get reportIds => $state.composableBuilder(
+      column: $state.table.reportIds,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
@@ -4203,6 +4530,16 @@ class $$SnipResponsesTableOrderingComposer
 
   ColumnOrderings<String> get uid => $state.composableBuilder(
       column: $state.table.uid,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get reports => $state.composableBuilder(
+      column: $state.table.reports,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get reportIds => $state.composableBuilder(
+      column: $state.table.reportIds,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
@@ -4598,6 +4935,7 @@ typedef $$UserDataTableTableCreateCompanionBuilder = UserDataTableCompanion
   required int messagesSent,
   required int discussionsStarted,
   required int streak,
+  required String profileStrikes,
   required DateTime streakDate,
 });
 typedef $$UserDataTableTableUpdateCompanionBuilder = UserDataTableCompanion
@@ -4625,6 +4963,7 @@ typedef $$UserDataTableTableUpdateCompanionBuilder = UserDataTableCompanion
   Value<int> messagesSent,
   Value<int> discussionsStarted,
   Value<int> streak,
+  Value<String> profileStrikes,
   Value<DateTime> streakDate,
 });
 
@@ -4668,6 +5007,7 @@ class $$UserDataTableTableTableManager extends RootTableManager<
             Value<int> messagesSent = const Value.absent(),
             Value<int> discussionsStarted = const Value.absent(),
             Value<int> streak = const Value.absent(),
+            Value<String> profileStrikes = const Value.absent(),
             Value<DateTime> streakDate = const Value.absent(),
           }) =>
               UserDataTableCompanion(
@@ -4694,6 +5034,7 @@ class $$UserDataTableTableTableManager extends RootTableManager<
             messagesSent: messagesSent,
             discussionsStarted: discussionsStarted,
             streak: streak,
+            profileStrikes: profileStrikes,
             streakDate: streakDate,
           ),
           createCompanionCallback: ({
@@ -4720,6 +5061,7 @@ class $$UserDataTableTableTableManager extends RootTableManager<
             required int messagesSent,
             required int discussionsStarted,
             required int streak,
+            required String profileStrikes,
             required DateTime streakDate,
           }) =>
               UserDataTableCompanion.insert(
@@ -4746,6 +5088,7 @@ class $$UserDataTableTableTableManager extends RootTableManager<
             messagesSent: messagesSent,
             discussionsStarted: discussionsStarted,
             streak: streak,
+            profileStrikes: profileStrikes,
             streakDate: streakDate,
           ),
         ));
@@ -4866,6 +5209,11 @@ class $$UserDataTableTableFilterComposer
 
   ColumnFilters<int> get streak => $state.composableBuilder(
       column: $state.table.streak,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get profileStrikes => $state.composableBuilder(
+      column: $state.table.profileStrikes,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
@@ -4994,6 +5342,11 @@ class $$UserDataTableTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
+  ColumnOrderings<String> get profileStrikes => $state.composableBuilder(
+      column: $state.table.profileStrikes,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
   ColumnOrderings<DateTime> get streakDate => $state.composableBuilder(
       column: $state.table.streakDate,
       builder: (column, joinBuilders) =>
@@ -5010,6 +5363,8 @@ typedef $$SavedMessagesTableTableCreateCompanionBuilder
   required String senderUsername,
   required DateTime date,
   required String senderDisplayName,
+  required int reports,
+  required String reportIds,
 });
 typedef $$SavedMessagesTableTableUpdateCompanionBuilder
     = SavedMessagesTableCompanion Function({
@@ -5021,6 +5376,8 @@ typedef $$SavedMessagesTableTableUpdateCompanionBuilder
   Value<String> senderUsername,
   Value<DateTime> date,
   Value<String> senderDisplayName,
+  Value<int> reports,
+  Value<String> reportIds,
 });
 
 class $$SavedMessagesTableTableTableManager extends RootTableManager<
@@ -5049,6 +5406,8 @@ class $$SavedMessagesTableTableTableManager extends RootTableManager<
             Value<String> senderUsername = const Value.absent(),
             Value<DateTime> date = const Value.absent(),
             Value<String> senderDisplayName = const Value.absent(),
+            Value<int> reports = const Value.absent(),
+            Value<String> reportIds = const Value.absent(),
           }) =>
               SavedMessagesTableCompanion(
             id: id,
@@ -5059,6 +5418,8 @@ class $$SavedMessagesTableTableTableManager extends RootTableManager<
             senderUsername: senderUsername,
             date: date,
             senderDisplayName: senderDisplayName,
+            reports: reports,
+            reportIds: reportIds,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -5069,6 +5430,8 @@ class $$SavedMessagesTableTableTableManager extends RootTableManager<
             required String senderUsername,
             required DateTime date,
             required String senderDisplayName,
+            required int reports,
+            required String reportIds,
           }) =>
               SavedMessagesTableCompanion.insert(
             id: id,
@@ -5079,6 +5442,8 @@ class $$SavedMessagesTableTableTableManager extends RootTableManager<
             senderUsername: senderUsername,
             date: date,
             senderDisplayName: senderDisplayName,
+            reports: reports,
+            reportIds: reportIds,
           ),
         ));
 }
@@ -5125,6 +5490,16 @@ class $$SavedMessagesTableTableFilterComposer
       column: $state.table.senderDisplayName,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get reports => $state.composableBuilder(
+      column: $state.table.reports,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get reportIds => $state.composableBuilder(
+      column: $state.table.reportIds,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
 }
 
 class $$SavedMessagesTableTableOrderingComposer
@@ -5167,6 +5542,16 @@ class $$SavedMessagesTableTableOrderingComposer
 
   ColumnOrderings<String> get senderDisplayName => $state.composableBuilder(
       column: $state.table.senderDisplayName,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get reports => $state.composableBuilder(
+      column: $state.table.reports,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get reportIds => $state.composableBuilder(
+      column: $state.table.reportIds,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }
