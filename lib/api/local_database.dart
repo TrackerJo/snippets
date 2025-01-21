@@ -157,10 +157,9 @@ class LocalDatabase {
   Future<void> deleteDB() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'db.sqlite'));
-    //check if file exists
-    if (file.existsSync()) {
-      await file.delete();
-    }
+    await file.delete();
+    print("Database deleted successfully.");
+
     //recreate db
     // await recreateDB();
   }

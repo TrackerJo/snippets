@@ -35,6 +35,7 @@ import 'package:snippets/pages/community_guidelines_page.dart';
 import 'package:snippets/pages/create_account_page.dart';
 import 'package:snippets/pages/discussion_page.dart';
 import 'package:snippets/pages/forgot_password_page.dart';
+import 'package:snippets/pages/loading_page.dart';
 import 'package:snippets/pages/no_wifi_page.dart';
 import 'package:snippets/pages/onboarding_page.dart';
 import 'package:snippets/pages/profile_page.dart';
@@ -335,6 +336,14 @@ final router = GoRouter(
       },
     ),
     GoRoute(
+      path: '/loading/:isLoggedIn',
+      builder: (_, __) {
+        return LoadingPage(
+          isLoggedIn: __.pathParameters["isLoggedIn"] == "true",
+        );
+      },
+    ),
+    GoRoute(
         path: '/onBoarding/:uid/:toProfile',
         builder: (_, __) {
           return OnBoardingPage(
@@ -517,11 +526,8 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
   bool isSignedIn = false;
   getUserLoggedInState() async {
-    int updateLocalDB = await HelperFunctions.getLocalDatabaseUpdateSF();
-    if (updateLocalDB < 30) {
-      await LocalDatabase().deleteDB();
-      await HelperFunctions.saveLocalDatabaseUpdateSF(30);
-    }
+    bool status = await Auth().isUserLoggedIn();
+
     // bool setNewYearIcon = await HelperFunctions.getSetNewYearIconSF();
     // if (!setNewYearIcon && Platform.isIOS) {
     //   await AppIconChanger.changeIcon("NewYear");
@@ -539,8 +545,13 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       await HelperFunctions.saveThemeSF(theme);
     }
     styling.setTheme(theme);
+    int updateLocalDB = await HelperFunctions.getLocalDatabaseUpdateSF();
+    if (updateLocalDB < 44) {
+      await HelperFunctions.saveLocalDatabaseUpdateSF(44);
+      router.pushReplacement("/loading/$status");
+      return;
+    }
 
-    bool status = await Auth().isUserLoggedIn();
     if (status) {
       // if (!isUserLoggedIn) {
       //   Auth().signOut();
@@ -577,7 +588,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     if (!status) {
       router.go('/login');
     }
+
     Auth().listenToAuthState(currentUserStream);
+
     bool needsUpdate = await RemoteConfig().checkUpdates();
     if (needsUpdate) {
       //Show update dialog

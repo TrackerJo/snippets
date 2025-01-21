@@ -110,6 +110,7 @@ class _ProfilePageState extends State<ProfilePage> {
     String userDisplayName = "";
     bool currentUser = false;
     if (widget.uid == "") {
+      print("CURRENTUSER");
       userStreamSub = currentUserStream.stream.listen((event) {
         event.friends.sort((a, b) {
           bool ABestFriend =
@@ -150,6 +151,7 @@ class _ProfilePageState extends State<ProfilePage> {
       currentUser = true;
       User viewerData = await Database().getCurrentUserData();
       userDisplayName = viewerData.displayName;
+      print("User DisplayName: $userDisplayName");
 
       viewerData.friends.sort((a, b) {
         bool ABestFriend =
